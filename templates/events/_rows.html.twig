@@ -1,0 +1,23 @@
+{% for e in result.items %}
+    {% set sev = e.severity %}
+    <a href="{{ path('app_event_panel', {id: e.id}) }}" data-turbo-frame="event-detail" role="listitem"
+       class="event-row grid grid-cols-[auto_1fr] gap-x-3 border-b border-line px-4 py-2.5 hover:bg-surface-2 aria-[current=true]:bg-surface-2"
+       data-action="event-list#select" {% if selected == e.id.toRfc4122 %}aria-current="true"{% endif %}>
+        <span class="mt-1.5 dot {{ sev.rank >= 4 ? 'text-err' : (sev.rank == 3 ? 'text-warn' : (sev.rank == 2 ? 'text-blue' : 'text-fg-3')) }}" aria-hidden="true"></span>
+        <span class="min-w-0">
+            <span class="flex items-center gap-2">
+                <span class="t-meta flex-none">{{ e.occurredAt|date('M j H:i:s.v') }}</span>
+                <span class="flex-none text-2xs text-fg-3">{{ e.type.label }}</span>
+                <span class="ml-auto flex-none truncate text-2xs text-fg-3">{{ e.service }}</span>
+            </span>
+            <span class="mt-0.5 block truncate text-sm {{ sev.rank >= 4 ? 'text-fg' : 'text-fg-2' }}">{{ e.exceptionClass ? e.exceptionClass|split('\\')|last ~ ': ' : '' }}{{ e.name and e.type.value not in ['log', 'exception'] ? e.name : e.message }}</span>
+        </span>
+    </a>
+{% endfor %}
+{% if result.next %}
+    <turbo-frame id="more-{{ result.next|slice(-20) }}" src="{{ path('app_events', filters|filter((v, k) => k != 'environment' and v)|merge({before: result.next, event: selected})) }}" loading="lazy">
+        <div class="p-4"><twig:Skeleton rows="3" /></div>
+    </turbo-frame>
+{% else %}
+    <p class="px-4 py-3 text-center text-xs text-fg-3">End of results</p>
+{% endif %}

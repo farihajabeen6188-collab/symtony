@@ -1,2 +1,26 @@
 framework:
-    workflows: null
+    workflows:
+        incident:
+            type: state_machine
+            audit_trail:
+                enabled: false
+            marking_store:
+                type: method
+                property: marking
+            supports:
+                - App\Domain\Incident\Incident
+            initial_marking: new
+            places: [new, investigating, identified, resolved, reopened]
+            transitions:
+                start_investigation:
+                    from: [new, reopened]
+                    to: investigating
+                identify:
+                    from: [new, investigating, reopened]
+                    to: identified
+                resolve:
+                    from: [new, investigating, identified, reopened]
+                    to: resolved
+                reopen:
+                    from: resolved
+                    to: reopened

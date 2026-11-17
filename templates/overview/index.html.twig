@@ -1,0 +1,135 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Overview{% endblock %}
+
+{% macro activity_line(log) %}
+    {% set m = log.metadata %}
+    {% set labels = {
+        'incident.created': ['lucide:siren', 'text-err', 'New incident ' ~ (m.reference ?? '')],
+        'incident.reopened': ['lucide:rotate-ccw', 'text-err', (m.reference ?? 'Incident') ~ ' reopened by a new occurrence'],
+        'incident.resolve': ['lucide:circle-check', 'text-ok', (m.reference ?? 'Incident') ~ ' resolved'],
+        'incident.start_investigation': ['lucide:scan-search', 'text-warn', (m.reference ?? 'Incident') ~ ' marked investigating'],
+        'incident.identify': ['lucide:target', 'text-ai', (m.reference ?? 'Incident') ~ ' marked identified'],
+        'incident.reopen': ['lucide:rotate-ccw', 'text-err', (m.reference ?? 'Incident') ~ ' reopened'],
+        'incident.assigned': ['lucide:user-check', 'text-fg-3', (m.reference ?? 'Incident') ~ ((m.assignee ?? null) ? ' assigned' : ' unassigned')],
+        'incident.note_added': ['lucide:message-square', 'text-fg-3', 'Note added to ' ~ (m.reference ?? 'an incident')],
+        'application.created': ['lucide:boxes', 'text-accent', 'Application ' ~ (m.name ?? '') ~ ' connected'],
+        'application.updated': ['lucide:boxes', 'text-fg-3', 'Application settings changed'],
+        'application.deleted': ['lucide:trash-2', 'text-fg-3', 'Application ' ~ (m.name ?? '') ~ ' deleted'],
+        'demo.scenario_run': ['lucide:flame', 'text-warn', 'Demo failure scenario ran (' ~ (m.failed ?? 0) ~ ' failed checkouts)'],
+    } %}
+    {% set l = labels[log.action] ?? ['lucide:dot', 'text-fg-3', log.action|replace({'.': ' ', '_': ' '})] %}
+    <li class="flex items-start gap-3 px-4 py-2.5">
+        {{ ux_icon(l[0], {class: 'mt-0.5 h-4 w-4 flex-none ' ~ l[1]}) }}
+        <span class="min-w-0 flex-1 text-sm text-fg-2">
+            {% if m.reference is defined and log.action starts with 'incident.' %}
+                <a href="{{ path('app_incident_show', {number: m.reference|replace({'SYM-': ''})}) }}" class="text-fg hover:text-accent">{{ l[2] }}</a>
+            {% else %}{{ l[2] }}{% endif %}
+            <span class="block text-2xs text-fg-3">{{ log.actorType == 'system' ? 'SYMTONY' : log.actor }} · {{ log.createdAt|ago }}</span>
+        </span>
+    </li>
+{% endmacro %}
+
+{% block content %}
+<twig:PageHeader title="Overview" description="Health, incidents and investigations across your applications · {{ range.label|lower }}." />
+
+{% if metrics.applications == 0 %}
+    <div class="panel">
+        <twig:EmptyState title="Connect your first application" illustration="no-apps">
+            SYMTONY groups your application's failures into incidents, reconstructs what happened, and investigates with evidence. Start with your own app, or try the bundled demo shop with a real checkout bug.
+            <twig:block name="actions">
+                <a href="{{ path('app_applications_new') }}" class="btn btn-primary">{{ ux_icon('lucide:plus') }}Connect application</a>
+                <a href="{{ path('app_applications_new', {method: 'demo'}) }}" class="btn btn-secondary">{{ ux_icon('lucide:shopping-cart') }}Use the demo shop</a>
+            </twig:block>
+        </twig:EmptyState>
+    </div>
+{% else %}
+    <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <twig:MetricCard label="Applications" value="{{ metrics.applications }}" hint="{{ metrics.connected }} sending events now" href="{{ path('app_applications') }}" />
+        <twig:MetricCard label="Open incidents" value="{{ metrics.open_incidents }}" tone="{{ metrics.open_incidents > 0 ? 'fg' : 'ok' }}" hint="Across all applications" href="{{ path('app_incidents') }}" />
+        <twig:MetricCard label="Critical incidents" value="{{ metrics.critical_open }}" tone="{{ metrics.critical_open > 0 ? 'err' : 'ok' }}" hint="Open and critical" href="{{ path('app_incidents', {severity: 'critical'}) }}" />
+        <twig:MetricCard label="Events" value="{{ metrics.events|compact }}" hint="{{ metrics.errors|compact }} errors" />
+        {% block investigation_metrics %}
+            <twig:MetricCard label="Investigations" empty_hint="None run yet" />
+            <twig:MetricCard label="Median investigation" empty_hint="None run yet" />
+        {% endblock %}
+    </div>
+
+    <div class="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <section class="panel" aria-labelledby="chart-h">
+            <div class="panel-header"><h2 id="chart-h" class="t-h2">Incident activity</h2><span class="text-xs text-fg-3">Failure occurrences · {{ range.label|lower }}</span></div>
+            <div class="panel-body">
+                <div class="h-56" data-controller="chart" data-chart-series-value="{{ series|json_encode }}" data-chart-label-value="Occurrences" data-chart-tone-value="err"></div>
+            </div>
+        </section>
+        <section class="panel" aria-labelledby="act-h">
+            <div class="panel-header"><h2 id="act-h" class="t-h2">Activity</h2></div>
+            {% if activity is empty %}
+                <p class="p-4 text-sm text-fg-3">No activity yet.</p>
+            {% else %}
+                <ul class="max-h-72 divide-y divide-line overflow-y-auto">{% for log in activity %}{{ _self.activity_line(log) }}{% endfor %}</ul>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-2">
+        <section class="panel overflow-hidden" aria-labelledby="inc-h">
+            <div class="panel-header"><h2 id="inc-h" class="t-h2">Recent incidents</h2><a href="{{ path('app_incidents') }}" class="text-sm text-accent hover:underline">All incidents</a></div>
+            {% if incidents is empty %}
+                <twig:EmptyState title="No incidents" illustration="no-incidents" compact>Your applications have not reported failures.</twig:EmptyState>
+            {% else %}
+                <ul class="divide-y divide-line">
+                    {% for i in incidents %}
+                        <li>
+                            <a href="{{ path('app_incident_show', {number: i.number}) }}" class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 hover:bg-surface-2">
+                                <span class="badge badge-{{ i.severity.badge }} w-16 justify-center">{{ i.severity.label }}</span>
+                                <span class="min-w-0">
+                                    <span class="block truncate text-sm text-fg">{{ i.title }}</span>
+                                    <span class="block truncate text-2xs text-fg-3">{{ i.reference }} · {{ i.application.name }} · {{ i.occurrences }} events{% if i.seeded %} · seeded{% endif %}</span>
+                                </span>
+                                <span class="text-right">
+                                    <span class="badge badge-{{ i.status.badge }}">{{ i.status.label }}</span>
+                                    <span class="block pt-0.5 text-2xs text-fg-3">{{ i.lastSeenAt|ago }}</span>
+                                </span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+
+        <section class="panel overflow-hidden" aria-labelledby="svc-h">
+            <div class="panel-header"><h2 id="svc-h" class="t-h2">Service health</h2><span class="text-xs text-fg-3">{{ range.label }}</span></div>
+            {% if services is empty %}
+                <p class="p-4 text-sm text-fg-3">No events in {{ range.label|lower }}.</p>
+            {% else %}
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead><tr><th>Service</th><th class="text-right">Events</th><th class="text-right">Errors</th><th class="text-right">Error rate</th><th class="text-right">Open</th><th>Last event</th></tr></thead>
+                        <tbody>
+                            {% for s in services %}
+                                {% set tone = s.open_incidents > 0 or s.error_rate >= 5 ? 'err' : (s.errors > 0 ? 'warn' : 'ok') %}
+                                <tr>
+                                    <td><span class="inline-flex items-center gap-2"><span class="dot text-{{ tone }}"></span><a class="text-fg hover:text-accent" href="{{ path('app_events', {service: s.service}) }}">{{ s.service }}</a></span></td>
+                                    <td class="num text-right">{{ s.events|compact }}</td>
+                                    <td class="num text-right {{ s.errors > 0 ? 'text-err' : 'text-fg-3' }}">{{ s.errors|compact }}</td>
+                                    <td class="num text-right">{{ s.error_rate }}%</td>
+                                    <td class="num text-right">{{ s.open_incidents }}</td>
+                                    <td class="t-meta">{{ s.last_event|ago }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    {% block active_investigations %}
+    <section class="panel mt-4" aria-labelledby="inv-h">
+        <div class="panel-header"><h2 id="inv-h" class="t-h2">Active investigations</h2></div>
+        <p class="p-4 text-sm text-fg-3">No investigations are running. Open an incident to start one.</p>
+    </section>
+    {% endblock %}
+{% endif %}
+{% endblock %}

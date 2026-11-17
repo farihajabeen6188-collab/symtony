@@ -1,0 +1,23 @@
+<turbo-frame id="{{ frame_id ?? 'occurrences-root' }}">
+    {% if occurrences.items is empty %}
+        <p class="p-4 text-sm text-fg-3">No stored occurrences.</p>
+    {% else %}
+        <ul class="divide-y divide-line">
+            {% for e in occurrences.items %}
+                <li>
+                    <a href="{{ path('app_events', {event: e.id, trace_id: e.traceId}) }}" data-turbo-frame="_top" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 hover:bg-surface-2">
+                        <span class="t-meta w-44 flex-none">{{ e.occurredAt|date('Y-m-d H:i:s.v') }}</span>
+                        <span class="min-w-0 flex-1 truncate text-sm text-fg">{{ e.exceptionMessage ?? e.message }}</span>
+                        {% if e.requestId %}<code class="hidden text-2xs text-fg-3 lg:inline">{{ e.requestId }}</code>{% endif %}
+                        {% if e.context.seeded ?? false %}<span class="badge badge-outline-dashed">seeded</span>{% endif %}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        {% if occurrences.next %}
+            <turbo-frame id="occurrences-more-{{ occurrences.next|slice(0, 24) }}" src="{{ path('app_incident_occurrences', {number: incident.number, before: occurrences.next}) }}" loading="lazy" target="_top">
+                <div class="p-4"><twig:Skeleton rows="2" /></div>
+            </turbo-frame>
+        {% endif %}
+    {% endif %}
+</turbo-frame>

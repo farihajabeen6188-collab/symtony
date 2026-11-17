@@ -1,0 +1,103 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Incidents{% endblock %}
+
+{% macro sort_link(label, key, filters) %}
+    {% set active = filters.sort == key %}
+    {% set dir = active and filters.dir == 'desc' ? 'asc' : 'desc' %}
+    <a href="{{ path('app_incidents', filters|filter((v, k) => k != 'environment' and v)|merge({sort: key, dir: dir})) }}" {% if active %}aria-sort="{{ filters.dir == 'asc' ? 'ascending' : 'descending' }}"{% endif %}>
+        {{ label }}{% if active %}{{ ux_icon(filters.dir == 'asc' ? 'lucide:arrow-up' : 'lucide:arrow-down', {class: 'h-3 w-3'}) }}{% endif %}
+    </a>
+{% endmacro %}
+
+{% block content %}
+{% set open_count = (status_counts.new ?? 0) + (status_counts.investigating ?? 0) + (status_counts.identified ?? 0) + (status_counts.reopened ?? 0) %}
+<twig:PageHeader title="Incidents" description="Failures grouped by fingerprint. Repeats are counted on the same incident, and a recurrence reopens it." />
+
+<div class="panel overflow-hidden">
+    <form method="get" class="flex flex-wrap items-center gap-2 border-b border-line p-3" data-controller="autosubmit" data-turbo-action="advance">
+        <div class="tabs -mb-3 mr-auto border-0" role="tablist" aria-label="Status">
+            {% for s in [['open', 'Open', open_count], ['resolved', 'Resolved', status_counts.resolved ?? 0], ['all', 'All', status_counts|reduce((c, v) => c + v, 0)]] %}
+                <a class="tab" href="{{ path('app_incidents', filters|filter((v, k) => k not in ['environment', 'status'] and v)|merge({status: s[0]})) }}" {% if filters.status == s[0] %}aria-current="page"{% endif %}>{{ s[1] }} <span class="count">{{ s[2] }}</span></a>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="status" value="{{ filters.status }}">
+        <label class="sr-only" for="q">Search incidents</label>
+        <div class="relative">
+            {{ ux_icon('lucide:search', {class: 'pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-fg-3'}) }}
+            <input id="q" name="q" value="{{ filters.q }}" class="input h-9 w-64 pl-8" placeholder="Search title, exception, SYM-12" data-action="input->autosubmit#debounced">
+        </div>
+        <label class="sr-only" for="severity">Severity</label>
+        <select id="severity" name="severity" class="select h-9 w-36" data-action="autosubmit#submit">
+            <option value="">All severities</option>
+            {% for s in severities %}<option value="{{ s.value }}" {% if filters.severity == s.value %}selected{% endif %}>{{ s.label }}</option>{% endfor %}
+        </select>
+        <label class="sr-only" for="app">Application</label>
+        <select id="app" name="app" class="select h-9 w-44" data-action="autosubmit#submit">
+            <option value="">All applications</option>
+            {% for a in applications %}<option value="{{ a.slug }}" {% if filters.app == a.slug %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+        </select>
+        <input type="hidden" name="sort" value="{{ filters.sort }}"><input type="hidden" name="dir" value="{{ filters.dir }}">
+        {% if filters.q or filters.severity or filters.app %}
+            <a href="{{ path('app_incidents', {status: filters.status}) }}" class="btn btn-ghost btn-sm">Clear filters</a>
+        {% endif %}
+    </form>
+
+    {% if result.items is empty %}
+        {% if filters.q or filters.severity or filters.app %}
+            <twig:EmptyState title="No incidents match these filters" illustration="no-results" compact>Try a broader search or clear the filters.</twig:EmptyState>
+        {% else %}
+            <twig:EmptyState title="{{ filters.status == 'resolved' ? 'Nothing resolved yet' : 'No open incidents' }}" illustration="no-incidents" compact>
+                {{ filters.status == 'resolved' ? 'Resolved incidents appear here with their resolution notes.' : 'New failures from your applications are grouped here automatically.' }}
+            </twig:EmptyState>
+        {% endif %}
+    {% else %}
+        <div class="overflow-x-auto">
+            <table class="table" data-controller="row-link">
+                <thead>
+                    <tr>
+                        <th>{{ _self.sort_link('Incident', 'number', filters) }}</th>
+                        <th>{{ _self.sort_link('Severity', 'severity', filters) }}</th>
+                        <th>Status</th>
+                        <th class="hidden lg:table-cell">Application</th>
+                        <th class="hidden md:table-cell text-right">{{ _self.sort_link('Events', 'occurrences', filters) }}</th>
+                        <th class="hidden xl:table-cell">{{ _self.sort_link('First seen', 'first_seen', filters) }}</th>
+                        <th>{{ _self.sort_link('Last seen', 'last_seen', filters) }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in result.items %}
+                        <tr data-href="{{ path('app_incident_show', {number: i.number}) }}" data-action="click->row-link#open">
+                            <td class="w-full max-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="t-meta flex-none">{{ i.reference }}</span>
+                                    <a href="{{ path('app_incident_show', {number: i.number}) }}" class="truncate font-medium text-fg hover:text-accent">{{ i.title }}</a>
+                                    {% if i.seeded %}<span class="badge badge-outline-dashed flex-none">seeded</span>{% endif %}
+                                </div>
+                                <p class="mt-0.5 truncate text-xs text-fg-3">{{ i.service }}{% if i.exceptionClass %} · <span class="mono">{{ i.exceptionClass }}</span>{% endif %}{% if i.assignee %} · {{ i.assignee.name }}{% endif %}</p>
+                            </td>
+                            <td><span class="badge badge-{{ i.severity.badge }}">{{ i.severity.label }}</span></td>
+                            <td><span class="badge badge-{{ i.status.badge }}">{{ i.status.label }}</span>{% if i.reopenCount > 0 %}<span class="ml-1 text-2xs text-fg-3" title="Reopened {{ i.reopenCount }}×">↺{{ i.reopenCount }}</span>{% endif %}</td>
+                            <td class="hidden text-fg-2 lg:table-cell">{{ i.application.name }}</td>
+                            <td class="num hidden text-right md:table-cell">{{ i.occurrences|number_format }}</td>
+                            <td class="t-meta hidden xl:table-cell" title="{{ i.firstSeenAt|date('Y-m-d H:i:s') }} UTC">{{ i.firstSeenAt|ago }}</td>
+                            <td class="t-meta" title="{{ i.lastSeenAt|date('Y-m-d H:i:s') }} UTC">{{ i.lastSeenAt|ago }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="flex items-center justify-between border-t border-line px-4 py-2.5 text-sm text-fg-2">
+            <span class="num">{{ result.total }} incident{{ result.total == 1 ? '' : 's' }}</span>
+            {% if result.pages > 1 %}
+                <nav class="flex items-center gap-1" aria-label="Pagination">
+                    {% set base = filters|filter((v, k) => k != 'environment' and v) %}
+                    <a class="btn btn-ghost btn-sm {{ result.page <= 1 ? 'pointer-events-none opacity-40' : '' }}" href="{{ path('app_incidents', base|merge({page: result.page - 1})) }}" aria-label="Previous page">{{ ux_icon('lucide:chevron-left') }}</a>
+                    <span class="num px-2">Page {{ result.page }} of {{ result.pages }}</span>
+                    <a class="btn btn-ghost btn-sm {{ result.page >= result.pages ? 'pointer-events-none opacity-40' : '' }}" href="{{ path('app_incidents', base|merge({page: result.page + 1})) }}" aria-label="Next page">{{ ux_icon('lucide:chevron-right') }}</a>
+                </nav>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

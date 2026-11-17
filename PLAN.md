@@ -71,12 +71,12 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Reference fix patch exists; demo-shop suite passes on buggy and patched code; a probe regression test is red on buggy and green on patched
 
 ### Phase 4 — Incidents, Event Explorer, Overview → `prompts/phase-4-incidents.md`
-- [ ] Deterministic fingerprinting; 1,000 identical exceptions ⇒ exactly 1 incident, count 1000 (test)
-- [ ] Concurrent ingestion does not create duplicate incidents (unique constraint + test)
-- [ ] Incident list (search/filter/sort/pagination) + detail (status workflow, assign, notes, reopen)
-- [ ] Event Explorer split pane, cursor pagination, JSON + stack trace highlighting
-- [ ] Overview: only real metrics; onboarding empty state when no apps
-- [ ] With 100k seeded events: list pages p95 < 300 ms, query count asserted
+- [x] Deterministic fingerprinting; 1,000 identical exceptions ⇒ exactly 1 incident, count 1000 (test)
+- [x] Concurrent ingestion does not create duplicate incidents (unique constraint + advisory lock + a real two-process race test)
+- [x] Incident list (search/filter/sort/pagination) + detail (status workflow, assign, notes, reopen)
+- [x] Event Explorer split pane, cursor pagination, JSON + stack trace highlighting
+- [x] Overview: only real metrics; onboarding empty state when no apps
+- [x] With 100k seeded events: list pages p95 < 300 ms in prod mode (worst 291 ms), query count asserted. Dev on a Windows bind mount is ~1.1 s p95 (filesystem, not queries) — documented
 
 ### Phase 5 — Time-travel reconstruction → `prompts/phase-5-timeline.md`
 - [ ] `TimelineBuilder` + `Correlator` (trace → request → parent span → app → time proximity [inferred])
@@ -166,6 +166,18 @@ now keep microseconds (custom `datetimetz_micro` type). Reference fix `fixes/sta
 probe test red on buggy, green on patched. 64 + 8 tests green.
 **Lesson for Phase 7:** a symlinked `vendor/` makes Composer autoload the *original* `src/` — the runner must copy
 vendor (`cp -aL`) and `composer dump-autoload` inside the isolated copy, or red/green results are meaningless.
+
+**2026-11-18 — Phase 4 (incidents, explorer, overview).** Fingerprinter (app|service|class|normalized message|top
+3 in-app frames), IncidentGrouper (advisory lock + unique (app, fingerprint) + ON CONFLICT links; reopen on new
+occurrence after resolution), Workflow state machine, notes/assign/transitions (audited), async via worker,
+`symtony:incidents:group-pending`. Pages: incidents list (search/filters/sort/pagination, SYM-n lookup), incident
+detail (latest occurrence + stack trace, occurrences via lazy Turbo frames, notes, related, chart), Event Explorer
+(keyset cursor, split pane, related trace events), Overview (queried metrics, chart, service health, activity).
+Demo history now has outcomes: SYM-1 pricing resolved with a resolution note, SYM-2 mailer reopened by recurrence,
+SYM-3 flapping low. Perf (100k events, 30-day range, `symtony:perf:seed` in a separate workspace): SQL 2–3 ms
+for explorer queries, 65–75 ms for 30-day aggregates; prod-mode pages p95 80–291 ms; dev on the Windows bind
+mount p95 ~1.1 s (filesystem). Found and fixed: Doctrine phantom TIMESTAMP diffs, Symfony 7.4 stateless CSRF
+needs Origin for scripted logins. 86 + 8 tests green.
 
 ## Blockers
 

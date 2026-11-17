@@ -9,6 +9,9 @@ doctrine:
         profiling_collect_backtrace: '%kernel.debug%'
         types:
             datetimetz_micro: App\Infrastructure\Persistence\Type\MicroDateTimeTzType
+            # DBAL 4 introspects TIMESTAMP WITH TIME ZONE as "datetimetz_immutable"; using the same class keeps
+            # schema comparison stable (no phantom TIMESTAMP(0) diffs). Entities use datetimetz_micro.
+            datetimetz_immutable: App\Infrastructure\Persistence\Type\MicroDateTimeTzType
     orm:
         validate_xml_mapping: true
         naming_strategy: doctrine.orm.naming_strategy.underscore

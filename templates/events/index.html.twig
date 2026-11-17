@@ -1,0 +1,70 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Event Explorer{% endblock %}
+
+{% block content %}
+{% set active = filters|filter((v, k) => k != 'environment' and v) %}
+<twig:PageHeader title="Event Explorer" description="Every event your applications sent: requests, queries, calls, logs and exceptions. Trace and request ID searches ignore the time range." />
+
+<form method="get" class="panel mb-4 flex flex-wrap items-center gap-2 p-3" data-controller="autosubmit" data-turbo-action="advance">
+    <div class="relative min-w-56 flex-1">
+        <label class="sr-only" for="eq">Search events</label>
+        {{ ux_icon('lucide:search', {class: 'pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-fg-3'}) }}
+        <input id="eq" name="q" value="{{ filters.q }}" class="input h-9 pl-8" placeholder="Search message, span name or exception" data-action="input->autosubmit#debounced">
+    </div>
+    <label class="sr-only" for="ftrace">Trace ID</label>
+    <input id="ftrace" name="trace_id" value="{{ filters.trace_id }}" class="input h-9 w-56 font-mono text-xs" placeholder="trace_id" data-action="change->autosubmit#submit">
+    <label class="sr-only" for="freq">Request ID</label>
+    <input id="freq" name="request_id" value="{{ filters.request_id }}" class="input h-9 w-44 font-mono text-xs" placeholder="request_id" data-action="change->autosubmit#submit">
+    <label class="sr-only" for="fsev">Minimum severity</label>
+    <select id="fsev" name="severity" class="select h-9 w-36" data-action="autosubmit#submit">
+        <option value="">Any severity</option>
+        {% for s in severities %}<option value="{{ s.value }}" {% if filters.severity == s.value %}selected{% endif %}>{{ s.value|capitalize }}+</option>{% endfor %}
+    </select>
+    <label class="sr-only" for="ftype">Type</label>
+    <select id="ftype" name="type" class="select h-9 w-40" data-action="autosubmit#submit">
+        <option value="">Any type</option>
+        {% for t in types %}<option value="{{ t.value }}" {% if filters.type == t.value %}selected{% endif %}>{{ t.label }}</option>{% endfor %}
+    </select>
+    <label class="sr-only" for="fsvc">Service</label>
+    <select id="fsvc" name="service" class="select h-9 w-36" data-action="autosubmit#submit">
+        <option value="">Any service</option>
+        {% for s in services %}<option value="{{ s }}" {% if filters.service == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <label class="sr-only" for="fapp">Application</label>
+    <select id="fapp" name="app" class="select h-9 w-40" data-action="autosubmit#submit">
+        <option value="">Any application</option>
+        {% for a in applications %}<option value="{{ a.id }}" {% if filters.app == a.id.toRfc4122 or filters.app == a.slug %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+    </select>
+    {% if active is not empty %}<a href="{{ path('app_events') }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+</form>
+
+{% if result.items is empty %}
+    <div class="panel">
+        {% if active is not empty %}
+            <twig:EmptyState title="No events match" illustration="no-results" compact>Nothing in {{ range.label|lower }} matches these filters. Widen the time range in the top bar or clear filters.</twig:EmptyState>
+        {% else %}
+            <twig:EmptyState title="No events in {{ range.label|lower }}" illustration="no-apps" compact>
+                Events appear here as soon as a connected application sends them.
+                <twig:block name="actions"><a href="{{ path('app_applications') }}" class="btn btn-secondary">Applications</a></twig:block>
+            </twig:EmptyState>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="grid gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+        <section class="panel flex max-h-96 min-h-64 flex-col overflow-hidden xl:max-h-[calc(100dvh-15rem)] xl:min-h-96" aria-label="Events">
+            <div class="flex items-center justify-between border-b border-line px-4 py-2 text-xs text-fg-3">
+                <span>Newest first{% if filters.trace_id or filters.request_id %} · exact ID match{% else %} · {{ range.label|lower }}{% endif %}</span>
+            </div>
+            <div class="flex-1 overflow-y-auto" role="list" data-controller="event-list">
+                {{ include('events/_rows.html.twig') }}
+            </div>
+        </section>
+        <section class="panel min-w-0 overflow-hidden" aria-label="Event details">
+            <turbo-frame id="event-detail" {% if selected %}src="{{ path('app_event_panel', {id: selected}) }}"{% endif %}>
+                <div class="p-5"><twig:Skeleton rows="6" /></div>
+            </turbo-frame>
+        </section>
+    </div>
+{% endif %}
+{% endblock %}

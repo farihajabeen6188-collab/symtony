@@ -55,7 +55,8 @@ export default class extends Controller {
                     stroke: color,
                     fill: color + '40',
                     width: 0,
-                    paths: uPlot.paths.bars({ size: [0.7, 24], align: 0 }),
+                    paths: uPlot.paths.bars({ size: [0.7, 24], align: 1 }),
+                    points: { show: false },
                 },
             ],
             hooks: {

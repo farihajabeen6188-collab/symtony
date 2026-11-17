@@ -26,9 +26,9 @@ services:
 
   worker:
     <<: *app
-    command: ["php", "bin/console", "messenger:consume", "async", "investigations", "--time-limit=3600", "-vv"]
+    # Groups events into incidents and runs investigations. Restarts hourly (or after code changes: docker compose restart worker).
+    command: ["php", "bin/console", "messenger:consume", "async", "investigations", "--time-limit=3600", "--memory-limit=256M", "-v"]
     restart: unless-stopped
-    profiles: ["worker"]
 
   db:
     image: pgvector/pgvector:pg16

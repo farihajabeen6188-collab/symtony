@@ -251,7 +251,8 @@ final class Tracer
             'function' => $function,
             'file' => '' !== $file ? $this->relative($file) : null,
             'line' => $line,
-            'in_app' => '' !== $file && !str_contains($file, '/vendor/'),
+            // The SDK's own frames are never "application" code, even when installed via a symlinked path repository.
+            'in_app' => '' !== $file && !str_contains($file, '/vendor/') && !str_starts_with($file, __DIR__.'/'),
         ], static fn ($v): bool => null !== $v);
     }
 

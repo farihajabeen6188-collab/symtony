@@ -1,0 +1,34 @@
+{# Pretty stack trace: application frames emphasized, consecutive vendor frames collapsed. Input: frames #}
+{% if frames is empty %}
+    <p class="text-sm text-fg-3">No stack trace was sent with this event.</p>
+{% else %}
+    <ol class="well divide-y divide-line overflow-hidden text-xs">
+        {% set vendor_run = [] %}
+        {% for f in frames|merge([{'__end': true}]) %}
+            {% if f.__end is not defined and not (f.in_app ?? false) %}
+                {% set vendor_run = vendor_run|merge([f]) %}
+            {% else %}
+                {% if vendor_run is not empty %}
+                    <li>
+                        <details>
+                            <summary class="cursor-pointer px-3 py-1.5 text-fg-3 hover:text-fg-2">{{ vendor_run|length }} vendor frame{{ vendor_run|length > 1 ? 's' : '' }}</summary>
+                            <ol class="pb-1">
+                                {% for v in vendor_run %}
+                                    <li class="px-3 py-1 font-mono text-fg-3"><span class="text-fg-2">{{ v.class ?? '' }}{{ v.class is defined ? '::' : '' }}{{ v.function ?? '?' }}()</span> <span class="opacity-80">{{ v.file ?? '' }}{% if v.line is defined %}:{{ v.line }}{% endif %}</span></li>
+                                {% endfor %}
+                            </ol>
+                        </details>
+                    </li>
+                    {% set vendor_run = [] %}
+                {% endif %}
+                {% if f.__end is not defined %}
+                    <li class="flex flex-wrap items-baseline gap-x-2 px-3 py-2 font-mono {{ loop.first ? 'bg-err-soft' : '' }}">
+                        <span class="text-fg">{{ f.class ?? '' }}{{ f.class is defined ? '::' : '' }}{{ f.function ?? '?' }}()</span>
+                        <span class="text-fg-3">{{ f.file ?? '' }}{% if f.line is defined %}:<span class="text-fg-2">{{ f.line }}</span>{% endif %}</span>
+                        {% if loop.first %}<span class="badge badge-err ml-auto">thrown here</span>{% endif %}
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </ol>
+{% endif %}

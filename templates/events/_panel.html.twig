@@ -1,0 +1,74 @@
+<turbo-frame id="event-detail">
+{% set sev = event.severity %}
+<article class="grid gap-5 p-5" aria-labelledby="ev-title">
+    <header class="grid gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="badge badge-{{ sev.tone }}">{{ sev.value|capitalize }}</span>
+            <span class="badge badge-neutral">{{ ux_icon(event.type.icon) }}{{ event.type.label }}</span>
+            <span class="badge badge-neutral">{{ event.service }}</span>
+            {% if event.release %}<span class="badge badge-neutral">release {{ event.release }}</span>{% endif %}
+            {% if event.context.seeded ?? false %}<span class="badge badge-outline-dashed" title="Part of seeded demo history">seeded</span>{% endif %}
+            {% if event.redactions > 0 %}<span class="badge badge-neutral" title="Values redacted before storage">{{ ux_icon('lucide:eye-off') }}{{ event.redactions }} redacted</span>{% endif %}
+            {% if incident_number %}<a href="{{ path('app_incident_show', {number: incident_number}) }}" data-turbo-frame="_top" class="badge badge-err hover:underline">SYM-{{ incident_number }}</a>{% endif %}
+        </div>
+        <h2 id="ev-title" class="t-h2 break-words">{{ event.name ?? event.message }}</h2>
+        <p class="t-meta">{{ event.occurredAt|date('Y-m-d H:i:s.u') }} UTC{% if event.durationMs is not null %} · {{ event.durationMs|duration }}{% endif %} · received {{ event.receivedAt|date('H:i:s.v') }}</p>
+    </header>
+
+    {% if event.exceptionClass %}
+        <section class="rounded-md border border-err/30 bg-err-soft p-3">
+            <p class="break-all font-mono text-sm text-err">{{ event.exceptionClass }}</p>
+            <p class="mt-1 text-sm text-fg">{{ event.exceptionMessage }}</p>
+        </section>
+    {% elseif event.message != event.name %}
+        <p class="text-sm text-fg">{{ event.message }}</p>
+    {% endif %}
+
+    <dl class="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[7rem_1fr]">
+        {% for label, value in {'Event ID': event.id.toRfc4122, 'Trace ID': event.traceId, 'Request ID': event.requestId, 'Span ID': event.spanId, 'Parent span': event.parentSpanId} %}
+            {% if value %}
+                <dt class="text-fg-3">{{ label }}</dt>
+                <dd class="flex min-w-0 items-center gap-1">
+                    <code class="truncate text-xs text-fg-2">{{ value }}</code>
+                    <twig:CopyButton value="{{ value }}" label="Copy {{ label }}" icon_only />
+                    {% if label == 'Trace ID' %}<a href="{{ path('app_events', {trace_id: value, event: event.id}) }}" data-turbo-frame="_top" class="text-xs text-accent hover:underline">Filter</a>{% endif %}
+                    {% if label == 'Request ID' %}<a href="{{ path('app_events', {request_id: value, event: event.id}) }}" data-turbo-frame="_top" class="text-xs text-accent hover:underline">Filter</a>{% endif %}
+                </dd>
+            {% endif %}
+        {% endfor %}
+        <dt class="text-fg-3">Application</dt><dd class="text-fg-2">{{ event.application.name }} · {{ event.environment }}</dd>
+        <dt class="text-fg-3">Source</dt><dd class="text-fg-2">{{ event.source }}</dd>
+    </dl>
+
+    {% if event.stackTrace %}
+        <section>
+            <h3 class="t-h3 mb-2">Stack trace</h3>
+            {{ include('_partials/stack_trace.html.twig', {frames: event.stackTrace}) }}
+        </section>
+    {% endif %}
+
+    {% if event.context is not empty %}
+        <section>
+            <h3 class="t-h3 mb-2">Context</h3>
+            <twig:CodeBlock code="{{ event.context|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}" lang="json" title="context (redacted)" max_height="24rem" />
+        </section>
+    {% endif %}
+
+    {% if related|length > 1 %}
+        <section>
+            <h3 class="t-h3 mb-2">Same {{ event.traceId ? 'trace' : 'request' }} <span class="font-normal text-fg-3">· {{ related|length }}{{ related|length >= 60 ? '+' : '' }} events</span></h3>
+            <ol class="well divide-y divide-line text-xs">
+                {% for r in related %}
+                    <li>
+                        <a href="{{ path('app_event_panel', {id: r.id}) }}" class="grid grid-cols-[6.5rem_7rem_1fr] items-center gap-2 px-3 py-1.5 hover:bg-surface-2 {{ r.id == event.id ? 'bg-surface-2 text-fg' : 'text-fg-2' }}">
+                            <span class="mono text-fg-3">+{{ ((r.occurredAt.format('U.u') - related[0].occurredAt.format('U.u')) * 1000)|number_format(1) }} ms</span>
+                            <span class="truncate">{{ r.service }} · {{ r.type.label }}</span>
+                            <span class="truncate {{ r.severity.rank >= 4 ? 'text-err' : '' }}">{{ r.exceptionClass ? r.exceptionClass|split('\\')|last : (r.name ?? r.message) }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
+    {% endif %}
+</article>
+</turbo-frame>

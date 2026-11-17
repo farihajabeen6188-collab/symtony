@@ -1,0 +1,165 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}{{ incident.reference }} · {{ incident.title }}{% endblock %}
+{% block active_nav %}app_incidents{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_incidents') }}" class="text-fg-2 hover:text-fg">Incidents</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">{{ incident.reference }}</li>
+{% endblock %}
+
+{% block content %}
+{% set token = csrf_token('incident-action') %}
+<twig:PageHeader title="{{ incident.title }}">
+    <twig:block name="eyebrow">
+        <span class="t-meta">{{ incident.reference }}</span>
+        <span class="badge badge-{{ incident.severity.badge }}">{{ incident.severity.label }}</span>
+        <span class="badge badge-{{ incident.status.badge }}">{{ incident.status.label }}</span>
+        {% if incident.reopenCount > 0 %}<span class="badge badge-neutral">{{ ux_icon('lucide:rotate-ccw') }}Reopened {{ incident.reopenCount }}×</span>{% endif %}
+        {% if incident.seeded %}<span class="badge badge-outline-dashed" title="Created from seeded demo history">seeded</span>{% endif %}
+    </twig:block>
+    <twig:block name="actions">
+        <div class="relative" data-controller="dropdown">
+            <button type="button" class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">Status{{ ux_icon('lucide:chevron-down', {class: 'text-fg-3'}) }}</button>
+            <div class="popover right-0 mt-1 w-56" role="menu" data-dropdown-target="menu" hidden>
+                {% for t in transitions %}
+                    <form method="post" action="{{ path('app_incident_transition', {number: incident.number}) }}">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button name="transition" value="{{ t }}" class="menu-item" role="menuitem">{{ transition_labels[t] ?? t }}</button>
+                    </form>
+                {% else %}
+                    <p class="px-2 py-1.5 text-sm text-fg-3">No status changes available.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <form method="post" action="{{ path('app_incident_assign', {number: incident.number}) }}">
+            <input type="hidden" name="_token" value="{{ token }}">
+            {% if incident.assignee and incident.assignee.id == app.user.id %}
+                <button name="assignee" value="" class="btn btn-ghost">{{ ux_icon('lucide:user-minus') }}Unassign me</button>
+            {% else %}
+                <button name="assignee" value="me" class="btn btn-ghost">{{ ux_icon('lucide:user-plus') }}Assign to me</button>
+            {% endif %}
+        </form>
+    </twig:block>
+</twig:PageHeader>
+
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0">
+        <div class="panel" data-controller="tabs">
+            <div class="px-4">
+                <div class="tabs" role="tablist">
+                    <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="summary">Latest occurrence</button>
+                    <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="events">Events <span class="count">{{ incident.occurrences }}</span></button>
+                    <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="notes">Notes <span class="count">{{ notes|length }}</span></button>
+                    <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="related">Related <span class="count">{{ related|length }}</span></button>
+                </div>
+            </div>
+
+
+            {# Latest occurrence #}
+            <div role="tabpanel" data-tabs-target="panel" class="panel-body grid gap-5">
+                {% if latest %}
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="t-meta">{{ latest.occurredAt|date('Y-m-d H:i:s.v') }} UTC</span>
+                            <span class="t-meta">· {{ latest.service }}</span>
+                            {% if latest.release %}<span class="badge badge-neutral">release {{ latest.release }}</span>{% endif %}
+                            <a class="ml-auto text-sm text-accent hover:underline" href="{{ path('app_events', {event: latest.id, trace_id: latest.traceId}) }}">Open in Event Explorer</a>
+                        </div>
+                        {% if latest.exceptionClass %}<p class="mt-2 break-all font-mono text-sm text-err">{{ latest.exceptionClass }}</p>{% endif %}
+                        <p class="mt-1 text-md text-fg">{{ latest.exceptionMessage ?? latest.message }}</p>
+                    </div>
+                    <dl class="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[8rem_1fr]">
+                        {% for label, value in {'Trace ID': latest.traceId, 'Request ID': latest.requestId, 'Event ID': latest.id.toRfc4122} %}
+                            {% if value %}
+                                <dt class="text-fg-3">{{ label }}</dt>
+                                <dd class="flex min-w-0 items-center gap-1"><code class="truncate text-xs text-fg-2">{{ value }}</code><twig:CopyButton value="{{ value }}" label="Copy {{ label }}" icon_only /></dd>
+                            {% endif %}
+                        {% endfor %}
+                    </dl>
+                    <div>
+                        <h3 class="t-h3 mb-2">Stack trace</h3>
+                        {{ include('_partials/stack_trace.html.twig', {frames: latest.stackTrace ?? []}) }}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-fg-3">The latest occurrence is no longer stored (data retention).</p>
+                {% endif %}
+            </div>
+
+            {# Occurrences #}
+            <div role="tabpanel" data-tabs-target="panel" hidden>
+                {{ include('incidents/_occurrences.html.twig') }}
+            </div>
+
+            {# Notes #}
+            <div role="tabpanel" data-tabs-target="panel" class="panel-body" hidden>
+                {% if notes is empty %}
+                    <p class="mb-4 text-sm text-fg-3">No notes yet. Record what you tried, what you found, and how it was fixed.</p>
+                {% else %}
+                    <ol class="mb-5 grid gap-3">
+                        {% for n in notes %}
+                            <li class="rounded-md border {{ n.kind == 'resolution' ? 'border-ok/40 bg-ok-soft' : 'border-line' }} p-3">
+                                <div class="mb-1 flex flex-wrap items-center gap-2 text-xs text-fg-3">
+                                    <span class="text-fg-2">{{ n.author ? n.author.name : 'System' }}</span>
+                                    <span>{{ n.createdAt|date('M j, Y H:i') }}</span>
+                                    {% if n.kind == 'resolution' %}<span class="badge badge-ok">Resolution</span>{% elseif n.kind == 'status' %}<span class="badge badge-neutral">Status</span>{% endif %}
+                                </div>
+                                <p class="whitespace-pre-line text-sm text-fg">{{ n.body }}</p>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+                <form method="post" action="{{ path('app_incident_note', {number: incident.number}) }}" class="grid gap-2">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <label for="note-body" class="t-label">Add a note</label>
+                    <textarea id="note-body" name="body" class="textarea" required maxlength="10000" placeholder="What did you find?"></textarea>
+                    <div><button class="btn btn-secondary">Add note</button></div>
+                </form>
+            </div>
+
+            {# Related #}
+            <div role="tabpanel" data-tabs-target="panel" hidden>
+                {% if related is empty %}
+                    <twig:EmptyState title="No related incidents" illustration="no-results" compact>Related incidents share an exception class or occurred in the same request.</twig:EmptyState>
+                {% else %}
+                    <ul class="divide-y divide-line">
+                        {% for r in related %}
+                            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+                                <span class="t-meta">{{ r.incident.reference }}</span>
+                                <a href="{{ path('app_incident_show', {number: r.incident.number}) }}" class="min-w-0 flex-1 truncate text-sm text-fg hover:text-accent">{{ r.incident.title }}</a>
+                                <span class="badge badge-{{ r.incident.status.badge }}">{{ r.incident.status.label }}</span>
+                                <span class="w-full text-xs text-fg-3">{{ r.reason }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <aside class="grid content-start gap-4">
+        <section class="panel" aria-labelledby="occ-h">
+            <div class="panel-header"><h2 id="occ-h" class="t-h3">Occurrences</h2><span class="text-xs text-fg-3">{{ range.label }}</span></div>
+            <div class="panel-body">
+                <div class="h-28" data-controller="chart" data-chart-series-value="{{ series|json_encode }}" data-chart-label-value="Occurrences" data-chart-tone-value="err"></div>
+            </div>
+        </section>
+        <section class="panel panel-body" aria-label="Details">
+            <dl class="grid grid-cols-[7.5rem_1fr] gap-y-2.5 text-sm">
+                <dt class="text-fg-3">Application</dt><dd><a class="text-fg hover:text-accent" href="{{ path('app_applications_show', {id: incident.application.id}) }}">{{ incident.application.name }}</a></dd>
+                <dt class="text-fg-3">Service</dt><dd class="text-fg">{{ incident.service }}</dd>
+                <dt class="text-fg-3">Events</dt><dd class="num text-fg">{{ incident.occurrences|number_format }}</dd>
+                <dt class="text-fg-3">First seen</dt><dd class="text-fg" title="{{ incident.firstSeenAt|date('Y-m-d H:i:s.v') }} UTC">{{ incident.firstSeenAt|ago }}</dd>
+                <dt class="text-fg-3">Last seen</dt><dd class="text-fg" title="{{ incident.lastSeenAt|date('Y-m-d H:i:s.v') }} UTC">{{ incident.lastSeenAt|ago }}</dd>
+                {% if incident.resolvedAt %}<dt class="text-fg-3">Resolved</dt><dd class="text-fg">{{ incident.resolvedAt|ago }}</dd>{% endif %}
+                <dt class="text-fg-3">Assignee</dt><dd class="text-fg">{{ incident.assignee ? incident.assignee.name : 'Unassigned' }}</dd>
+                <dt class="text-fg-3">Services in traces</dt>
+                <dd class="flex flex-wrap gap-1">{% for s in services %}<span class="badge badge-neutral">{{ s }}</span>{% endfor %}</dd>
+                <dt class="text-fg-3">Fingerprint</dt>
+                <dd class="flex min-w-0 items-center gap-1"><code class="truncate text-2xs text-fg-3">{{ incident.fingerprint|slice(0, 16) }}…</code><twig:CopyButton value="{{ incident.fingerprint }}" label="Copy fingerprint" icon_only /></dd>
+            </dl>
+        </section>
+    </aside>
+</div>
+{% endblock %}

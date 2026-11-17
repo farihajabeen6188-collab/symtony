@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Demo;
 
+use App\Application\Incident\IncidentGrouper;
+use App\Application\Incident\PendingGrouping;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,6 +21,9 @@ final class DemoInstallCommand extends Command
         private readonly DemoInstaller $installer,
         private readonly DemoHistory $history,
         private readonly IngestionClient $client,
+        private readonly DemoStories $stories,
+        private readonly IncidentGrouper $grouper,
+        private readonly Connection $db,
     ) {
         parent::__construct();
     }
@@ -38,6 +44,7 @@ final class DemoInstallCommand extends Command
 
         if (!$input->getOption('no-history')) {
             $now = new \DateTimeImmutable();
+            $appId = $result['application']->getId()->toRfc4122();
             foreach ([
                 'Healthy storefront traffic (24 h)' => $this->history->background($now),
                 'Resolved pricing incident (21 days ago)' => $this->history->pricingIncident($now),
@@ -47,6 +54,16 @@ final class DemoInstallCommand extends Command
                 $totals = $this->client->send($result['token'], $events);
                 $io->writeln(\sprintf('  %-42s %4d accepted, %d already present', $label, $totals['accepted'], $totals['duplicates']));
             }
+
+            // Group now (do not wait for the worker), then give the history its outcomes.
+            PendingGrouping::run($this->db, $this->grouper, $appId);
+            foreach ($this->stories->resolveHistory($result['application'], $now) as $line) {
+                $io->writeln('  '.$line);
+            }
+            $totals = $this->client->send($result['token'], $this->history->mailerTimeouts($now, true));
+            $io->writeln(\sprintf('  %-42s %4d accepted, %d already present', 'Mailer timeouts recur (5 hours ago)', $totals['accepted'], $totals['duplicates']));
+            $grouped = PendingGrouping::run($this->db, $this->grouper, $appId);
+            $io->writeln(\sprintf('  Grouping: %d incidents reopened by new occurrences.', $grouped['reopened']));
         }
 
         $io->success('Demo ready. Sign in, open Applications → Acme Shop, and run the failure scenario.');
