@@ -57,6 +57,9 @@ final class KernelSubscriber implements EventSubscriberInterface
             return;
         }
         $request = $event->getRequest();
+        // Events are delivered after the response; a client that disconnects early must not abort that work
+        // (otherwise the request root span — closed on kernel.terminate — would be lost).
+        ignore_user_abort(true);
         $this->tracer->context()->begin($request->headers->get('traceparent'), $request->headers->get('X-Request-Id'));
         $this->root = $this->tracer->start($request->getMethod().' '.$request->getPathInfo(), 'http_request', [
             'component' => 'http',

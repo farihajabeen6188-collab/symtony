@@ -31,6 +31,12 @@ final class Tracer
         private readonly string $projectDir = '',
     ) {
         $this->captured = new \WeakMap();
+        // Safety net for fatal errors and aborted requests: close open spans (marked unfinished) and deliver.
+        register_shutdown_function(function (): void {
+            if ([] !== $this->context->openSpans() || $this->buffer->count() > 0) {
+                $this->flush();
+            }
+        });
     }
 
     public function context(): TraceContext

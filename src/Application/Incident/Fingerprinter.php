@@ -43,10 +43,14 @@ final class Fingerprinter
     {
         $out = [];
         foreach ($event->getStackTrace() ?? [] as $frame) {
-            if (!($frame['in_app'] ?? false)) {
+            $class = $frame['class'] ?? '';
+            // Instrumentation frames are never part of the failure's identity, whatever the SDK reported.
+            if (!($frame['in_app'] ?? false) || str_starts_with($class, 'Symtony\\')) {
                 continue;
             }
-            $out[] = ($frame['class'] ?? '').'::'.($frame['function'] ?? '');
+            // PHP 8.4 closure names embed line numbers ("{closure:Foo::bar():38}"); strip them.
+            $function = (string) preg_replace('/(\{closure:.*?)(?::\d+)+\}$/', '$1}', $frame['function'] ?? '');
+            $out[] = $class.'::'.$function;
             if (\count($out) >= self::FRAMES) {
                 break;
             }

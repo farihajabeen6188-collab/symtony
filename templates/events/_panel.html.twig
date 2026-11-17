@@ -31,7 +31,7 @@
                 <dd class="flex min-w-0 items-center gap-1">
                     <code class="truncate text-xs text-fg-2">{{ value }}</code>
                     <twig:CopyButton value="{{ value }}" label="Copy {{ label }}" icon_only />
-                    {% if label == 'Trace ID' %}<a href="{{ path('app_events', {trace_id: value, event: event.id}) }}" data-turbo-frame="_top" class="text-xs text-accent hover:underline">Filter</a>{% endif %}
+                    {% if label == 'Trace ID' %}<a href="{{ path('app_events', {trace_id: value, event: event.id}) }}" data-turbo-frame="_top" class="text-xs text-accent hover:underline">Filter</a><a href="{{ path('app_trace', {traceId: value}) }}" data-turbo-frame="_top" class="ml-2 text-xs text-accent hover:underline">Timeline</a>{% endif %}
                     {% if label == 'Request ID' %}<a href="{{ path('app_events', {request_id: value, event: event.id}) }}" data-turbo-frame="_top" class="text-xs text-accent hover:underline">Filter</a>{% endif %}
                 </dd>
             {% endif %}

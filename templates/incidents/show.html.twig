@@ -49,7 +49,8 @@
         <div class="panel" data-controller="tabs">
             <div class="px-4">
                 <div class="tabs" role="tablist">
-                    <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="summary">Latest occurrence</button>
+                    <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="timeline">{{ ux_icon('lucide:git-commit-horizontal') }}Timeline</button>
+                    <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="summary">Latest occurrence</button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="events">Events <span class="count">{{ incident.occurrences }}</span></button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="notes">Notes <span class="count">{{ notes|length }}</span></button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="related">Related <span class="count">{{ related|length }}</span></button>
@@ -57,8 +58,24 @@
             </div>
 
 
+            {# Timeline #}
+            <div role="tabpanel" data-tabs-target="panel" class="panel-body">
+                {% if timeline and not timeline.empty %}
+                    {% set occ = timeline.items|filter(i => i.event.exceptionClass and i.isProven)|first %}
+                    <p class="mb-3 text-sm text-fg-2">
+                        Reconstructed from {{ timeline.traceId ? 'trace' : 'request' }}
+                        {% if timeline.traceId %}<a href="{{ path('app_trace', {traceId: timeline.traceId}) }}" class="font-mono text-xs text-accent hover:underline">{{ timeline.traceId|slice(0, 16) }}…</a>{% endif %}
+                        {% if occ %}· occurrence at {{ occ.event.occurredAt|date('Y-m-d H:i:s.v') }} UTC{% endif %}.
+                        Only identifiers prove a link; anything else is marked inferred.
+                    </p>
+                    {{ include('timeline/_timeline.html.twig') }}
+                {% else %}
+                    <twig:EmptyState title="No trace to reconstruct" illustration="no-results" compact>The occurrences of this incident were sent without a trace or request id, so there is nothing to link them to. The Symfony bundle adds both automatically.</twig:EmptyState>
+                {% endif %}
+            </div>
+
             {# Latest occurrence #}
-            <div role="tabpanel" data-tabs-target="panel" class="panel-body grid gap-5">
+            <div role="tabpanel" data-tabs-target="panel" class="panel-body grid gap-5" hidden>
                 {% if latest %}
                     <div>
                         <div class="flex flex-wrap items-center gap-2">

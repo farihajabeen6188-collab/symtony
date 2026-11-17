@@ -79,11 +79,11 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] With 100k seeded events: list pages p95 < 300 ms in prod mode (worst 291 ms), query count asserted. Dev on a Windows bind mount is ~1.1 s p95 (filesystem, not queries) — documented
 
 ### Phase 5 — Time-travel reconstruction → `prompts/phase-5-timeline.md`
-- [ ] `TimelineBuilder` + `Correlator` (trace → request → parent span → app → time proximity [inferred])
-- [ ] Swimlane waterfall: zoom, service/type filters, error highlight, solid vs dashed links, first-failure pin
-- [ ] Event detail drawer; prev/next related event navigation
-- [ ] Usable at 390px (vertical list mode)
-- [ ] Unit tests for correlation rules, including "time proximity is never marked proven"
+- [x] `TimelineBuilder` + `Correlator` (trace → request → parent span → app → time proximity [inferred])
+- [x] Swimlane waterfall: zoom, service/type filters, error highlight, solid vs dashed links, first-failure pin
+- [x] Event detail drawer; prev/next related event navigation (arrow keys)
+- [x] Usable at 390px (vertical list mode, also the accessible text equivalent)
+- [x] Unit tests for correlation rules, including "time proximity is never marked proven"
 
 ### Phase 6 — Investigation engine → `prompts/phase-6-investigation.md`
 - [ ] Evidence package builder (redacted, size-bounded, every item has an ID)
@@ -178,6 +178,17 @@ SYM-3 flapping low. Perf (100k events, 30-day range, `symtony:perf:seed` in a se
 for explorer queries, 65–75 ms for 30-day aggregates; prod-mode pages p95 80–291 ms; dev on the Windows bind
 mount p95 ~1.1 s (filesystem). Found and fixed: Doctrine phantom TIMESTAMP diffs, Symfony 7.4 stateless CSRF
 needs Origin for scripted logins. 86 + 8 tests green.
+
+**2026-11-18 — Phase 5 (timeline).** Correlator (trace/request membership, parent-span and cross-service links
+proven; same-app writes/logs/deploys from other traces only as labelled inferred context), TimelineBuilder (lanes
+service/component, first failure = earliest failing leaf, 2,000-event cap with truncation notice), SVG swimlanes
+(zoom, pan, minimap brush, request/show-all, errors-only, service filter, Δt tooltips, first-failure crosshair,
+keyboard ←/→/Enter/E, details drawer), list view for small screens, trace page + JSON endpoints.
+Bugs found by watching real data: (1) SDK lost the request root span when the client disconnected before
+kernel.terminate → `ignore_user_abort(true)` + shutdown flush; (2) fingerprints depended on SDK frame
+classification and PHP 8.4 closure line numbers → instrumentation frames ignored, closure names normalized,
+`symtony:incidents:refingerprint` merges duplicates (SYM-6 → SYM-5); (3) stale `public/assets` from a prod
+measurement shadowed live CSS. 93 + 10 tests green.
 
 ## Blockers
 

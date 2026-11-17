@@ -1,0 +1,26 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Trace {{ trace_id|slice(0, 12) }}…{% endblock %}
+{% block active_nav %}app_events{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_events') }}" class="text-fg-2 hover:text-fg">Event Explorer</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">Trace</li>
+{% endblock %}
+
+{% block content %}
+{% set root = timeline.items|filter(i => i.isProven)|first %}
+<twig:PageHeader title="Request timeline" description="Everything this trace recorded, in order. Events from other traces appear only as labelled, inferred context.">
+    <twig:block name="eyebrow">
+        <code class="text-xs text-fg-2">{{ trace_id }}</code><twig:CopyButton value="{{ trace_id }}" label="Copy trace id" icon_only />
+        {% if root %}<span class="badge badge-neutral">{{ root.event.application.name }}</span>{% endif %}
+    </twig:block>
+    <twig:block name="actions">
+        <a href="{{ path('app_events', {trace_id: trace_id}) }}" class="btn btn-secondary">{{ ux_icon('lucide:list-tree') }}Events in this trace</a>
+    </twig:block>
+</twig:PageHeader>
+<section class="panel panel-body">
+    {{ include('timeline/_timeline.html.twig') }}
+</section>
+{% endblock %}

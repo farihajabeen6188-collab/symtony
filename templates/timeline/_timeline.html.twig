@@ -1,0 +1,78 @@
+{#
+  Reconstructed timeline. Inputs: timeline (App\Application\Timeline\Timeline)
+  Desktop: interactive SVG swimlanes (timeline_controller.js). Small screens / no JS: the ordered list below.
+#}
+{% set data = timeline.toArray %}
+{% set first = timeline.firstFailureId ? timeline.item(timeline.firstFailureId) : null %}
+<div class="grid gap-3" data-controller="timeline" data-timeline-data-value="{{ data|json_encode }}" data-timeline-panel-url-value="{{ path('app_event_panel', {id: '__ID__'}) }}">
+
+    {# Toolbar #}
+    <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex overflow-hidden rounded-md border border-line-strong">
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="timeline#zoomIn" aria-label="Zoom in">{{ ux_icon('lucide:zoom-in') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-x border-line-strong" data-action="timeline#zoomOut" aria-label="Zoom out">{{ ux_icon('lucide:zoom-out') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-r border-line-strong" data-action="timeline#reset" title="Zoom to the request">Request</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="timeline#showAll" title="Include inferred context such as the deploy">Show all</button>
+        </div>
+        {% if first %}
+            <button type="button" class="btn btn-secondary btn-sm" data-action="timeline#jumpToFirstFailure">{{ ux_icon('lucide:crosshair', {class: 'text-err'}) }}First failure</button>
+        {% endif %}
+        <label class="inline-flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" data-timeline-target="errorsOnly" data-action="timeline#render"> Errors only <kbd class="kbd">E</kbd></label>
+        <label class="inline-flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" checked data-timeline-target="showContext" data-action="timeline#render"> Inferred context</label>
+        <div class="relative" data-controller="dropdown">
+            <button type="button" class="btn btn-ghost btn-sm" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">{{ ux_icon('lucide:filter') }}Services</button>
+            <div class="popover mt-1 w-56" role="menu" data-dropdown-target="menu" hidden>
+                {% for s in timeline.lanes|map(l => l.service)|reduce((c, s) => s in c ? c : c|merge([s]), []) %}
+                    <label class="menu-item"><input type="checkbox" class="checkbox" checked value="{{ s }}" data-timeline-target="service" data-action="timeline#render">{{ s }}</label>
+                {% endfor %}
+            </div>
+        </div>
+        <span class="ml-auto text-xs text-fg-3" data-timeline-target="readout">{{ timeline.items|length }} events · {{ timeline.durationMs|duration }}</span>
+    </div>
+
+    {# Legend #}
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-fg-3" aria-label="Legend">
+        <span class="inline-flex items-center gap-1.5"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--fg-2)" stroke-width="1.5"/></svg>Proven link (span / trace id)</span>
+        <span class="inline-flex items-center gap-1.5"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>Inferred from timing only</span>
+        <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-4 rounded-sm bg-err-soft ring-1 ring-err"></span>Failed span</span>
+        <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-4 rounded-sm border border-dashed border-warn"></span>Context from another trace</span>
+        <span class="inline-flex items-center gap-1.5">{{ ux_icon('lucide:crosshair', {class: 'h-3 w-3 text-err'}) }}First failure</span>
+    </div>
+
+    {% if timeline.truncated %}
+        <p class="rounded-md border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-fg">Showing the first {{ timeline.items|length }} of {{ timeline.total }} events in this trace. Narrow it down in the Event Explorer.</p>
+    {% endif %}
+
+    {# Interactive swimlanes #}
+    <div class="well relative hidden overflow-hidden md:block" data-timeline-target="canvas" tabindex="0" role="application"
+         aria-label="Timeline. Left and right arrows move between events, Enter opens details, E toggles errors only."
+         data-action="keydown->timeline#key">
+        <div class="p-6"><twig:Skeleton rows="6" /></div>
+    </div>
+    <div class="hidden h-10 md:block" data-timeline-target="minimap" aria-hidden="true"></div>
+    <div class="pointer-events-none fixed z-50 hidden max-w-sm rounded-md bg-surface px-3 py-2 text-xs shadow-pop" data-timeline-target="tooltip" role="tooltip"></div>
+
+    {# List view: small screens, and an accessible text equivalent #}
+    <ol class="well divide-y divide-line md:hidden" aria-label="Timeline events in order">
+        {% for i in timeline.items %}
+            {% set e = i.event %}
+            <li class="grid grid-cols-[4.5rem_1fr] gap-2 px-3 py-2 {{ i.id == timeline.firstFailureId ? 'bg-err-soft' : '' }}">
+                <span class="mono text-2xs text-fg-3">+{{ i.offsetMs|number_format(1) }}ms</span>
+                <span class="min-w-0">
+                    <span class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-2xs text-fg-3">{{ i.lane }}</span>
+                        {% if not i.isProven %}<span class="badge badge-outline-dashed">inferred</span>{% endif %}
+                        {% if i.id == timeline.firstFailureId %}<span class="badge badge-err">first failure</span>{% endif %}
+                    </span>
+                    <a href="{{ path('app_events', {event: e.id, trace_id: e.traceId}) }}" class="block truncate text-sm {{ i.error ? 'text-err' : 'text-fg' }}">{{ e.exceptionClass ? e.exceptionClass|split('\\')|last ~ ': ' : '' }}{{ e.name ?? e.message }}</a>
+                    {% if i.durationMs is not null %}<span class="text-2xs text-fg-3">{{ i.durationMs|duration }}</span>{% endif %}
+                    {% if i.reason %}<span class="block text-2xs text-warn">{{ i.reason }}</span>{% endif %}
+                </span>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <twig:Drawer id="timeline-drawer" title="Event details">
+        <turbo-frame id="event-detail" data-timeline-target="frame"><p class="text-sm text-fg-3">Select an event on the timeline.</p></turbo-frame>
+    </twig:Drawer>
+</div>
