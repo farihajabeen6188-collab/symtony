@@ -3,6 +3,7 @@ parameters:
     paths:
         - src
         - tests
+        - packages/symtony-bundle/src
     tmpDir: var/cache/phpstan
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml

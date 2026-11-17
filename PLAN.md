@@ -65,10 +65,10 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Tests: normalization, redaction, auth, rate limit, payload limits
 
 ### Phase 3 — demo-shop + symtony-bundle → `prompts/phase-3-demo-shop.md`
-- [ ] `packages/symtony-bundle`: Monolog handler, kernel subscriber, DBAL middleware, HttpClient decorator, Messenger middleware, trace/span propagation, async batched sender
-- [ ] `demo-shop` runs in compose, instrumented by the bundle via `composer require` (path repo)
-- [ ] "Break checkout" triggers the real bug; the full evidence trail arrives in SYMTONY
-- [ ] Reference fix patch exists; demo-shop's own test suite passes with it applied
+- [x] `packages/symtony-bundle`: Monolog handler, kernel subscriber, DBAL middleware, HttpClient decorator, Messenger middleware, cache decorator, trace/span propagation (W3C), batched sender after response
+- [x] `demo-shop` runs in compose, instrumented by the bundle via `composer require` (path repo)
+- [x] "Run failure scenario" triggers the real bug; the full evidence trail arrives in SYMTONY (verified in DB: one trace, parent/child spans, cross-service payment-api hop)
+- [x] Reference fix patch exists; demo-shop suite passes on buggy and patched code; a probe regression test is red on buggy and green on patched
 
 ### Phase 4 — Incidents, Event Explorer, Overview → `prompts/phase-4-incidents.md`
 - [ ] Deterministic fingerprinting; 1,000 identical exceptions ⇒ exactly 1 incident, count 1000 (test)
@@ -155,6 +155,17 @@ AuditLog. `POST /api/v1/events`: bearer auth, per-token token-bucket rate limit,
 per-field validation, redaction (keys + secret-shaped values + Luhn cards + emails), message normalization,
 one transaction per batch, `EventsIngested` to the async queue. 6-step connect wizard with live verification
 and a real test event through the public API. Verified in the browser + DB. 53 tests / 201 assertions.
+
+**2026-11-18 — Phase 3 (bundle + demo shop).** `symtony/symfony-bundle`: Tracer API, W3C trace context, kernel /
+DBAL / HttpClient / cache / Messenger / Monolog integrations, delivery after the response (no added latency),
+per-route service names and ignore. `demo-shop/`: Symfony 7.4 + SQLite shop with the release-1.4.0 stale stock
+cache bug; mock payment API traced as service `payment-api`; `/_demo/scenario` reproduces the incident with real
+requests (1 × 201, 2 × 500). SYMTONY: `symtony:demo:install` (demo app, token → demo-shop/.env.local, seeded
+history replayed through the public API, tagged `seeded`), "Run failure scenario" button. Fixed: event timestamps
+now keep microseconds (custom `datetimetz_micro` type). Reference fix `fixes/stale-stock-cache.patch` verified:
+probe test red on buggy, green on patched. 64 + 8 tests green.
+**Lesson for Phase 7:** a symlinked `vendor/` makes Composer autoload the *original* `src/` — the runner must copy
+vendor (`cp -aL`) and `composer dump-autoload` inside the isolated copy, or red/green results are meaningless.
 
 ## Blockers
 

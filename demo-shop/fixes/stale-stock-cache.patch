@@ -1,0 +1,118 @@
+Fix: stale stock cache lets checkout authorize payment for stock that no longer exists
+
+Release 1.4.0 cached stock levels for 10 minutes. After a warehouse sync lowered
+stock in the database, checkout still read the cached (higher) value, authorized
+the card, then failed on the CHECK (stock >= 0) constraint and rolled back,
+leaving an orphaned payment authorization.
+
+- availableStock() reads the authoritative value from the database
+- reserve() uses a conditional decrement and throws OutOfStock instead of
+  relying on the constraint
+- checkout reserves stock before authorizing payment, in one transaction
+
+Apply from demo-shop/:  patch -p1 < fixes/stale-stock-cache.patch
+
+diff -ruN a/src/Catalog/ProductRepository.php b/src/Catalog/ProductRepository.php
+--- a/src/Catalog/ProductRepository.php	2026-11-18 02:30:58.627400600 +0500
++++ b/src/Catalog/ProductRepository.php	2026-11-18 02:31:13.047985900 +0500
+@@ -45,6 +45,16 @@
+         return (int) $this->db->executeStatement('UPDATE product SET stock = stock - ? WHERE sku = ?', [$quantity, $sku]);
+     }
+ 
++    /**
++     * Conditional decrement: succeeds only if enough stock exists at write time.
++     *
++     * @return int affected rows (0 = not enough stock)
++     */
++    public function reserveStock(string $sku, int $quantity): int
++    {
++        return (int) $this->db->executeStatement('UPDATE product SET stock = stock - ? WHERE sku = ? AND stock >= ?', [$quantity, $sku, $quantity]);
++    }
++
+     /** Warehouse sync: sets the authoritative stock level directly in the database. */
+     public function setStock(string $sku, int $stock): void
+     {
+diff -ruN a/src/Checkout/CheckoutService.php b/src/Checkout/CheckoutService.php
+--- a/src/Checkout/CheckoutService.php	2026-11-18 02:30:58.628400000 +0500
++++ b/src/Checkout/CheckoutService.php	2026-11-18 02:31:21.304074600 +0500
+@@ -40,9 +40,12 @@
+ 
+             $orderId = Uuid::v7()->toRfc4122();
+             $total = $product['price_cents'] * $quantity;
+-            $authorization = $this->payments->authorize($customer, $total, $orderId);
+ 
+-            $this->db->transactional(function () use ($orderId, $sku, $quantity, $customer, $total, $authorization): void {
++            // Reserve stock first, inside the transaction; only then charge the card.
++            // If reservation fails nothing is authorized; if payment fails the reservation rolls back.
++            $authorization = $this->db->transactional(function () use ($orderId, $sku, $quantity, $customer, $total): string {
++                $this->inventory->reserve($sku, $quantity);
++                $authorization = $this->payments->authorize($customer, $total, $orderId);
+                 $this->db->insert('orders', [
+                     'id' => $orderId,
+                     'sku' => $sku,
+@@ -52,7 +55,8 @@
+                     'payment_authorization' => $authorization,
+                     'created_at' => gmdate('Y-m-d\TH:i:s\Z'),
+                 ]);
+-                $this->inventory->reserve($sku, $quantity);
++
++                return $authorization;
+             });
+ 
+             $this->logger->info('Order {order} placed for {sku} x{quantity}', ['order' => $orderId, 'sku' => $sku, 'quantity' => $quantity]);
+diff -ruN a/src/Inventory/InventoryService.php b/src/Inventory/InventoryService.php
+--- a/src/Inventory/InventoryService.php	2026-11-18 02:30:58.625399000 +0500
++++ b/src/Inventory/InventoryService.php	2026-11-18 02:31:05.798392600 +0500
+@@ -6,14 +6,10 @@
+ 
+ use App\Catalog\ProductRepository;
+ use Symfony\Contracts\Cache\CacheInterface;
+-use Symfony\Contracts\Cache\ItemInterface;
+ use Symtony\Tracer;
+ 
+ final class InventoryService
+ {
+-    /** Release 1.4.0: stock levels are cached to take load off the database during sales. */
+-    private const STOCK_TTL = 600;
+-
+     public function __construct(
+         private readonly ProductRepository $products,
+         private readonly CacheInterface $cache,
+@@ -21,22 +17,28 @@
+     ) {
+     }
+ 
++    /**
++     * Stock shown to shoppers. Read from the database: the cached value introduced in 1.4.0 could be
++     * stale after a warehouse sync and was used to decide whether a checkout may proceed.
++     */
+     public function availableStock(string $sku): int
+     {
+-        return $this->tracer->span('InventoryService::availableStock', fn (): int => $this->cache->get(
+-            'stock_'.$sku,
+-            function (ItemInterface $item) use ($sku): int {
+-                $item->expiresAfter(self::STOCK_TTL);
+-
+-                return $this->products->stock($sku);
+-            },
+-        ), context: ['component' => 'inventory', 'inventory' => ['sku' => $sku]]);
++        return $this->tracer->span('InventoryService::availableStock', fn (): int => $this->products->stock($sku),
++            context: ['component' => 'inventory', 'inventory' => ['sku' => $sku]]);
+     }
+ 
++    /**
++     * Atomically reserves stock: the decrement only happens if enough stock exists right now.
++     *
++     * @throws OutOfStock when the database has fewer units than requested
++     */
+     public function reserve(string $sku, int $quantity): void
+     {
+         $this->tracer->span('InventoryService::reserve', function () use ($sku, $quantity): void {
+-            $this->products->decrementStock($sku, $quantity);
++            if (0 === $this->products->reserveStock($sku, $quantity)) {
++                throw new OutOfStock($sku, $quantity, $this->products->stock($sku));
++            }
++            $this->cache->delete('stock_'.$sku);
+         }, context: ['component' => 'inventory', 'inventory' => ['sku' => $sku, 'quantity' => $quantity]]);
+     }
+ 

@@ -1,0 +1,20 @@
+monolog:
+    channels:
+        - deprecation
+        - shop
+    handlers:
+        # Warnings and above go to SYMTONY, linked to the current trace (packages/symtony-bundle).
+        symtony:
+            type: service
+            id: symtony.monolog_handler
+            channels: ['!event', '!deprecation', '!symtony']
+        main:
+            type: stream
+            path: '%kernel.logs_dir%/%kernel.environment%.log'
+            level: info
+            channels: ['!event']
+
+when@test:
+    monolog:
+        handlers:
+            symtony: null

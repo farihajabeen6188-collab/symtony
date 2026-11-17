@@ -84,7 +84,9 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\Tests\\": "tests/"
+            "App\\Tests\\": "tests/",
+            "Symtony\\": "packages/symtony-bundle/src/",
+            "Symtony\\Tests\\": "packages/symtony-bundle/tests/"
         }
     },
     "replace": {

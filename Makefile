@@ -15,7 +15,7 @@ build: ## Build images
 	$(DC) build
 
 up: ## Start the stack (http://localhost:8080), migrate, create the demo account, build CSS
-	$(DC) up -d --wait
+	$(DC) up -d --wait app db
 	$(APP) composer install --no-interaction
 	$(CON) doctrine:migrations:migrate --no-interaction --allow-no-migration
 	$(CON) symtony:setup
@@ -44,14 +44,19 @@ stan: ## PHPStan
 	$(CON) cache:warmup --env=dev >/dev/null
 	$(APP) vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 
-test: ## PHPUnit
+test: ## PHPUnit (SYMTONY + bundle, then the demo shop suite)
 	$(APP) php bin/console doctrine:database:create --env=test --if-not-exists --quiet
 	$(APP) php bin/phpunit
+	$(DC) exec -T demo-shop php bin/phpunit
 
 check: lint stan test ## Everything that must be green before a commit
 
-demo: ## Reset and seed the demo (implemented in Phase 3)
-	@echo "Demo seeding arrives in Phase 3."
+demo: up ## Start everything, install the demo shop, create the demo app + token, replay seeded history
+	$(DC) up -d demo-shop
+	$(DC) exec -T demo-shop composer install --no-interaction
+	$(DC) exec -T demo-shop sh -c "mkdir -p var/data && php bin/console cache:clear -q"
+	$(CON) symtony:demo:install
+	@echo "Open http://localhost:8080 (demo@symtony.local / symtony-demo), then Applications → Acme Shop → Run failure scenario."
 
 mcp-stdio: ## Run the MCP server over STDIO (for MCP clients)
 	$(DC) exec -T app php bin/console mcp:server

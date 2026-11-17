@@ -6,6 +6,7 @@ namespace App\Domain\Event;
 
 use App\Domain\Application\Application;
 use App\Domain\Workspace\Workspace;
+use App\Infrastructure\Persistence\Type\MicroDateTimeTzType;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -43,10 +44,10 @@ class Event
     #[ORM\Column(length: 64, nullable: true)]
     private ?string $externalId;
 
-    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[ORM\Column(type: MicroDateTimeTzType::NAME)]
     private \DateTimeImmutable $occurredAt;
 
-    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[ORM\Column(type: MicroDateTimeTzType::NAME)]
     private \DateTimeImmutable $receivedAt;
 
     #[ORM\Column(length: 12, enumType: Severity::class)]

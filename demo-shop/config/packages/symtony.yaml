@@ -1,0 +1,20 @@
+symtony:
+    endpoint: '%env(SYMTONY_ENDPOINT)%'
+    token: '%env(SYMTONY_TOKEN)%'
+    service: 'shop'
+    release: '%env(default::APP_RELEASE)%'
+
+when@test:
+    # Tests record events in memory instead of sending them.
+    symtony:
+        transport: App\Tests\Support\RecordingTransport
+
+    services:
+        App\Tests\Support\RecordingTransport:
+            public: true
+        App\Tests\Support\MockPaymentApi:
+            public: true
+
+    framework:
+        http_client:
+            mock_response_factory: App\Tests\Support\MockPaymentApi

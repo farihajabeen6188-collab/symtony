@@ -1,0 +1,30 @@
+{
+    "name": "symtony/symfony-bundle",
+    "description": "Send traces, exceptions and logs from Symfony (or any Monolog app) to SYMTONY for incident reconstruction.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": ["symfony", "observability", "tracing", "monolog", "incident"],
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0 || ^12.0 || ^13.0"
+    },
+    "suggest": {
+        "symfony/framework-bundle": "Automatic request, controller, exception and terminate tracing",
+        "doctrine/doctrine-bundle": "Database query and transaction spans (DBAL middleware)",
+        "symfony/http-client": "Outgoing HTTP spans and traceparent propagation",
+        "symfony/messenger": "Queue dispatch/handle spans with trace propagation",
+        "symfony/cache": "Cache hit/miss spans with item age",
+        "monolog/monolog": "Forward log records (works without Symfony)",
+        "ext-curl": "Faster event delivery (falls back to PHP streams)"
+    },
+    "autoload": {
+        "psr-4": { "Symtony\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Symtony\\Tests\\": "tests/" }
+    },
+    "minimum-stability": "stable"
+}

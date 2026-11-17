@@ -1,12 +1,21 @@
 # SYMTONY developer commands for Windows without `make`. Same targets as the Makefile.
-# Usage: ./dev.ps1 up | down | check | test | stan | lint | shell | spike-ai | mcp-stdio | console "<args>" | composer "<args>"
+# Usage: ./dev.ps1 up | demo | down | check | test | stan | lint | shell | spike-ai | mcp-stdio | console "<args>" | composer "<args>"
 param([Parameter(Position = 0)][string]$Target = 'help', [Parameter(Position = 1)][string]$Rest = '')
 
 $ErrorActionPreference = 'Stop'
 function App([string]$cmd) { docker compose exec -T app sh -c $cmd; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
+function Shop([string]$cmd) { docker compose exec -T demo-shop sh -c $cmd; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
 
 switch ($Target) {
-    'up'        { docker compose up -d --wait; App 'composer install --no-interaction'; App 'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration'; App 'php bin/console symtony:setup'; App 'php bin/console tailwind:build'; App 'php bin/console cache:warmup' }
+    'up'        { docker compose up -d --wait app db; App 'composer install --no-interaction'; App 'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration'; App 'php bin/console symtony:setup'; App 'php bin/console tailwind:build'; App 'php bin/console cache:warmup' }
+    'demo'      {
+        & $PSCommandPath up; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        docker compose up -d demo-shop
+        Shop 'composer install --no-interaction'
+        Shop 'mkdir -p var/data && php bin/console cache:clear -q'
+        App 'php bin/console symtony:demo:install'
+        Write-Host 'Open http://localhost:8080 (demo@symtony.local / symtony-demo), then Applications > Acme Shop > Run failure scenario.' -ForegroundColor Green
+    }
     'down'      { docker compose down }
     'build'     { docker compose build }
     'shell'     { docker compose exec app bash }
@@ -14,7 +23,7 @@ switch ($Target) {
     'composer'  { App "composer $Rest" }
     'lint'      { App 'sh bin/check-templates.sh && php bin/console lint:container && php bin/console lint:yaml config --parse-tags && php bin/console lint:twig templates' }
     'stan'      { App 'php bin/console cache:warmup --env=dev >/dev/null && vendor/bin/phpstan analyse --no-progress --memory-limit=1G' }
-    'test'      { App 'php bin/console doctrine:database:create --env=test --if-not-exists --quiet && php bin/phpunit' }
+    'test'      { App 'php bin/console doctrine:database:create --env=test --if-not-exists --quiet && php bin/phpunit'; Shop 'php bin/phpunit' }
     'check'     { foreach ($t in 'lint', 'stan', 'test') { & $PSCommandPath $t; if ($LASTEXITCODE -ne 0) { Write-Host "check failed at: $t" -ForegroundColor Red; exit $LASTEXITCODE } }; Write-Host 'check: all green' -ForegroundColor Green }
     'spike-ai'  { App 'php bin/console app:spike:ai' }
     'mcp-stdio' { docker compose exec -T app php bin/console mcp:server }

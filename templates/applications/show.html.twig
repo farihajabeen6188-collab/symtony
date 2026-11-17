@@ -19,7 +19,13 @@
         <span class="badge badge-neutral">{{ ux_icon(application.ingestionMethod.icon) }}{{ application.ingestionMethod.label }}</span>
     </twig:block>
     <twig:block name="actions">
-        {% if application.firstEventAt is null %}
+        {% if application.ingestionMethod.value == 'demo' %}
+            <form method="post" action="{{ path('app_demo_scenario', {id: application.id}) }}" data-controller="busy" data-action="submit->busy#start">
+                <input type="hidden" name="_token" value="{{ csrf_token('demo-scenario') }}">
+                <button class="btn btn-danger" data-busy-target="button" title="Deploys release 1.4.0 to the demo shop and sends real checkout requests">{{ ux_icon('lucide:flame') }}Run failure scenario</button>
+            </form>
+        {% endif %}
+        {% if application.firstEventAt is null and application.ingestionMethod.value != 'demo' %}
             <a href="{{ path('app_applications_connect', {id: application.id}) }}" class="btn btn-primary">{{ ux_icon('lucide:plug-zap') }}Finish connecting</a>
         {% else %}
             <a href="{{ path('app_events', {app: application.id}) }}" class="btn btn-secondary">{{ ux_icon('lucide:list-tree') }}View events</a>

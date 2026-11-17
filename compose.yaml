@@ -46,10 +46,28 @@ services:
       timeout: 5s
       retries: 20
 
-  # demo-shop: added in Phase 3
+  # A small, real Symfony shop with a real checkout bug, instrumented by packages/symtony-bundle.
+  demo-shop:
+    image: symtony-app:dev
+    working_dir: /app
+    volumes:
+      - ./demo-shop:/app
+      - ./packages:/packages
+      - shop_var:/app/var
+      - shop_vendor:/app/vendor
+    environment:
+      APP_ENV: dev
+      SYMTONY_ENDPOINT: http://app/api/v1/events
+      DEMO_SHOP_SECRET: ${DEMO_SHOP_SECRET:-local-demo-secret}
+    ports:
+      - "${SYMTONY_SHOP_PORT:-8081}:80"
+    depends_on:
+      - app
   # runner:    added in Phase 7 (network_mode: none)
 
 volumes:
   db_data:
   app_var:
   app_vendor:
+  shop_var:
+  shop_vendor:
