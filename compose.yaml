@@ -1,0 +1,55 @@
+name: symtony
+
+x-app: &app
+  build:
+    context: .
+    target: dev
+  image: symtony-app:dev
+  volumes:
+    - ./:/app
+    # Keep var/ (cache, logs) inside the container: bind-mounted cache is very slow on Windows/macOS.
+    - app_var:/app/var
+    # vendor/ lives in a volume too: autoloading thousands of files over a Windows bind mount costs ~10 s/request.
+    # Run `composer` inside the container (make composer c=...). See README for IDE autocompletion.
+    - app_vendor:/app/vendor
+  environment:
+    DATABASE_URL: "postgresql://symtony:symtony@db:5432/symtony?serverVersion=16&charset=utf8"
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+    ports:
+      - "${SYMTONY_HTTP_PORT:-8080}:80"
+
+  worker:
+    <<: *app
+    command: ["php", "bin/console", "messenger:consume", "async", "investigations", "--time-limit=3600", "-vv"]
+    restart: unless-stopped
+    profiles: ["worker"]
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: symtony
+      POSTGRES_USER: symtony
+      POSTGRES_PASSWORD: symtony
+    ports:
+      - "${SYMTONY_DB_PORT:-5433}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U symtony -d symtony"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  # demo-shop: added in Phase 3
+  # runner:    added in Phase 7 (network_mode: none)
+
+volumes:
+  db_data:
+  app_var:
+  app_vendor:

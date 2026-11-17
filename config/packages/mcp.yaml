@@ -1,0 +1,13 @@
+mcp:
+    servers:
+        default:
+            name: symtony
+            version: 0.1.0
+            description: 'SYMTONY application forensics: incidents, events, timelines and evidence-grounded investigations.'
+            # Only expose SYMTONY's own MCP services, never third-party ones.
+            registry: 'App\Mcp\'
+            transports:
+                stdio: true   # bin/console mcp:server (Claude Code / Claude Desktop)
+                http: true    # /mcp (Streamable HTTP)
+            http:
+                path: /mcp

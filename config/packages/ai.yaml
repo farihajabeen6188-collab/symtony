@@ -1,0 +1,17 @@
+ai:
+    # https://symfony.com/doc/current/ai/components/platform.html
+    platform:
+        huggingface:
+            api_key: '%env(HUGGINGFACE_API_KEY)%'
+            # Leave empty to let Hugging Face route to an available inference provider.
+            provider: '%env(default::HUGGINGFACE_PROVIDER)%'
+
+    # https://symfony.com/doc/current/ai/bundles/ai-bundle.html
+    agent:
+        # Phase 0 spike agent (removed with src/Spike once the investigator agent exists)
+        spike:
+            platform: 'ai.platform.huggingface'
+            model: '%env(SYMTONY_AI_MODEL)%'
+            tools:
+                services:
+                    - 'App\Spike\ClockTool'
