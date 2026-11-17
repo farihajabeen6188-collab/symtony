@@ -1,0 +1,144 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}{{ application.name }}{% endblock %}
+{% block active_nav %}app_applications{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_applications') }}" class="text-fg-2 hover:text-fg">Applications</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">{{ application.name }}</li>
+{% endblock %}
+
+{% block content %}
+{% set st = application.connectionStatus %}
+<twig:PageHeader title="{{ application.name }}" description="{{ application.description ?: 'No description.' }}">
+    <twig:block name="eyebrow">
+        <span class="inline-flex items-center gap-2 text-sm text-fg-2"><span class="dot text-{{ st.tone }} {{ st.value == 'connected' ? 'dot-live' : '' }}"></span>{{ st.label }}</span>
+        <span class="badge badge-neutral">{{ application.environment.label }}</span>
+        <span class="badge badge-neutral">{{ application.framework.label }}</span>
+        <span class="badge badge-neutral">{{ ux_icon(application.ingestionMethod.icon) }}{{ application.ingestionMethod.label }}</span>
+    </twig:block>
+    <twig:block name="actions">
+        {% if application.firstEventAt is null %}
+            <a href="{{ path('app_applications_connect', {id: application.id}) }}" class="btn btn-primary">{{ ux_icon('lucide:plug-zap') }}Finish connecting</a>
+        {% else %}
+            <a href="{{ path('app_events', {app: application.id}) }}" class="btn btn-secondary">{{ ux_icon('lucide:list-tree') }}View events</a>
+        {% endif %}
+    </twig:block>
+</twig:PageHeader>
+
+{% if token %}<div class="mb-6">{{ include('applications/_token.html.twig') }}</div>{% endif %}
+
+<div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <twig:MetricCard label="Events" value="{{ counts ? counts.events|compact : null }}" hint="{{ range.label }}" empty_hint="None in {{ range.label|lower }}" />
+    <twig:MetricCard label="Errors" value="{{ counts ? counts.errors|compact : null }}" tone="{{ counts and counts.errors > 0 ? 'err' : null }}" hint="Error and critical" empty_hint="None in {{ range.label|lower }}" />
+    <twig:MetricCard label="Last event" value="{{ application.lastEventAt ? application.lastEventAt|ago : null }}" hint="{{ application.lastEventAt ? application.lastEventAt|date('M j, H:i:s') ~ ' UTC' : '' }}" empty_hint="Nothing received yet" />
+    <twig:MetricCard label="Connected since" value="{{ application.firstEventAt ? application.firstEventAt|date('M j, Y') : null }}" hint="First event received" empty_hint="Waiting for first event" />
+</div>
+
+<div class="panel" data-controller="tabs">
+    <div class="px-4">
+        <div class="tabs" role="tablist">
+            <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="setup">Setup</button>
+            <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="credentials">Tokens <span class="count">{{ credentials|filter(c => not c.revoked)|length }}</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="failures">Rejected events <span class="count">{{ failures|length }}</span></button>
+            <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="settings">Settings</button>
+        </div>
+    </div>
+
+    {# Setup #}
+    <div role="tabpanel" data-tabs-target="panel" class="panel-body">
+        <div class="mb-4 flex flex-wrap items-center gap-2 text-sm text-fg-2">
+            Endpoint <code class="text-fg">{{ endpoint }}</code><twig:CopyButton value="{{ endpoint }}" label="Copy endpoint URL" icon_only />
+        </div>
+        {{ include('applications/_snippets.html.twig') }}
+    </div>
+
+    {# Credentials #}
+    <div role="tabpanel" data-tabs-target="panel" hidden>
+        <div class="flex flex-wrap items-end justify-between gap-3 border-b border-line p-4">
+            <p class="max-w-xl text-sm text-fg-2">Tokens authenticate ingestion requests. Only a hash is stored. Rotating issues a new token and revokes the old one immediately.</p>
+            <form method="post" action="{{ path('app_credentials_create', {id: application.id}) }}" class="flex items-center gap-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('credential') }}">
+                <label class="sr-only" for="token-label">Token label</label>
+                <input id="token-label" name="label" class="input h-8 w-40" placeholder="Label, e.g. CI" maxlength="80">
+                <button class="btn btn-secondary">{{ ux_icon('lucide:plus') }}New token</button>
+            </form>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead><tr><th>Token</th><th>Label</th><th>Created</th><th>Last used</th><th>Status</th><th class="text-right"><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody>
+                    {% for c in credentials %}
+                        <tr class="{{ c.revoked ? 'opacity-60' : '' }}">
+                            <td><code class="text-xs text-fg">{{ c.prefix }}…</code></td>
+                            <td class="text-fg-2">{{ c.label }}</td>
+                            <td class="t-meta">{{ c.createdAt|date('Y-m-d H:i') }}</td>
+                            <td class="t-meta">{{ c.lastUsedAt ? c.lastUsedAt|ago : 'Never' }}</td>
+                            <td>{% if c.revoked %}<span class="badge badge-neutral">Revoked {{ c.revokedAt|ago }}</span>{% else %}<span class="badge badge-ok">Active</span>{% endif %}</td>
+                            <td class="text-right">
+                                {% if not c.revoked %}
+                                    <div class="inline-flex gap-1">
+                                        <form method="post" action="{{ path('app_credentials_rotate', {id: application.id, credentialId: c.id}) }}" data-controller="confirm" data-confirm-title-value="Rotate {{ c.prefix }}…?" data-confirm-message-value="A new token is created and this one stops working immediately. Update your app with the new token." data-confirm-label-value="Rotate token">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('credential') }}">
+                                            <button class="btn btn-ghost btn-sm">{{ ux_icon('lucide:refresh-cw') }}Rotate</button>
+                                        </form>
+                                        <form method="post" action="{{ path('app_credentials_revoke', {id: application.id, credentialId: c.id}) }}" data-controller="confirm" data-confirm-title-value="Revoke {{ c.prefix }}…?" data-confirm-message-value="Requests using this token will be rejected immediately. This cannot be undone." data-confirm-label-value="Revoke token">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('credential') }}">
+                                            <button class="btn btn-ghost btn-sm text-err">{{ ux_icon('lucide:ban') }}Revoke</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Ingestion failures #}
+    <div role="tabpanel" data-tabs-target="panel" hidden>
+        {% if failures is empty %}
+            <twig:EmptyState title="No rejected events" illustration="no-incidents" compact>Requests that fail validation, authentication or size limits appear here with the reason.</twig:EmptyState>
+        {% else %}
+            <ul class="divide-y divide-line">
+                {% for f in failures %}
+                    <li class="grid gap-2 p-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="badge badge-err">{{ f.reason|replace({'_': ' '}) }}</span>
+                            {% if f.credentialPrefix %}<code class="text-2xs text-fg-3">{{ f.credentialPrefix }}…</code>{% endif %}
+                            <span class="t-meta ml-auto">{{ f.receivedAt|date('Y-m-d H:i:s') }} UTC</span>
+                        </div>
+                        <pre class="whitespace-pre-wrap text-sm text-fg-2">{{ f.detail }}</pre>
+                        {% if f.excerpt %}<twig:CodeBlock code="{{ f.excerpt }}" lang="text" title="Payload excerpt (redacted)" />{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    {# Settings #}
+    <div role="tabpanel" data-tabs-target="panel" class="panel-body" hidden>
+        <form method="post" action="{{ path('app_applications_update', {id: application.id}) }}" class="grid max-w-xl gap-4">
+            <input type="hidden" name="_token" value="{{ csrf_token('application-update') }}">
+            <div class="field"><label class="t-label" for="s-name">Name</label><input id="s-name" name="name" class="input" value="{{ application.name }}" maxlength="80" required></div>
+            <div class="field"><label class="t-label" for="s-desc">Description</label><textarea id="s-desc" name="description" class="textarea" maxlength="500">{{ application.description }}</textarea></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="field"><label class="t-label" for="s-env">Environment</label><select id="s-env" name="environment" class="select">{% for e in environments %}<option value="{{ e.value }}" {% if application.environment == e %}selected{% endif %}>{{ e.label }}</option>{% endfor %}</select></div>
+                <div class="field"><label class="t-label" for="s-fw">Framework</label><select id="s-fw" name="framework" class="select">{% for f in frameworks %}<option value="{{ f.value }}" {% if application.framework == f %}selected{% endif %}>{{ f.label }}</option>{% endfor %}</select></div>
+            </div>
+            <div><button class="btn btn-primary">Save changes</button></div>
+        </form>
+
+        <div class="mt-8 max-w-xl rounded-lg border border-err/30 p-4">
+            <p class="text-sm font-medium text-fg">Delete application</p>
+            <p class="mt-1 text-sm text-fg-2">Deletes {{ application.name }}, its tokens, events and incidents. This cannot be undone.</p>
+            <form method="post" action="{{ path('app_applications_delete', {id: application.id}) }}" class="mt-3" data-controller="confirm" data-confirm-title-value="Delete {{ application.name }}?" data-confirm-message-value="All tokens, events and incidents of this application are permanently deleted." data-confirm-label-value="Delete application">
+                <input type="hidden" name="_token" value="{{ csrf_token('application-delete') }}">
+                <button class="btn btn-danger">{{ ux_icon('lucide:trash-2') }}Delete application</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

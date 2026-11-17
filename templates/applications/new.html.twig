@@ -1,0 +1,105 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Connect application{% endblock %}
+{% block active_nav %}app_applications{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_applications') }}" class="text-fg-2 hover:text-fg">Applications</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">Connect</li>
+{% endblock %}
+
+{% set preset_method = app.request.query.get('method') %}
+{% set selected_method = preset_method in methods|map(m => m.value) ? preset_method : input.method %}
+{% set start_step = errors is empty ? 1 : (errors.name is defined or errors.description is defined ? 1 : (errors.method is defined ? 3 : 2)) %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl">
+    <twig:PageHeader title="Connect an application" description="Three questions, then SYMTONY gives you a token and setup instructions for your app." />
+
+    {% set steps = ['Details', 'Framework', 'Method', 'Instructions', 'Verify', 'Done'] %}
+    <form method="post" action="{{ path('app_applications_create') }}" novalidate
+          data-controller="wizard" data-wizard-step-value="{{ start_step }}" data-turbo="false">
+        <input type="hidden" name="_token" value="{{ csrf_token('application-create') }}">
+
+        <ol class="mb-6 grid grid-cols-6 gap-1.5" aria-label="Progress">
+            {% for s in steps %}
+                <li class="grid gap-1.5" data-wizard-target="indicator" data-index="{{ loop.index }}">
+                    <span class="h-1 rounded-full bg-surface-3" data-bar></span>
+                    <span class="hidden truncate text-2xs text-fg-3 sm:block"><span class="num">{{ loop.index }}</span> {{ s }}</span>
+                </li>
+            {% endfor %}
+        </ol>
+
+        {# Step 1 — details #}
+        <section class="panel" data-wizard-target="step" data-index="1" aria-labelledby="w1">
+            <div class="panel-header"><h2 id="w1" class="t-h2">What should we call it?</h2></div>
+            <div class="panel-body grid gap-4">
+                <div class="field">
+                    <label for="name" class="t-label">Application name</label>
+                    <input id="name" name="name" class="input" maxlength="80" required value="{{ input.name }}" placeholder="Shop API" {% if errors.name is defined %}aria-invalid="true" aria-describedby="name-error"{% endif %} data-wizard-target="required" autofocus>
+                    {% if errors.name is defined %}<p id="name-error" class="field-error">{{ errors.name }}</p>{% else %}<p class="field-help">Shown on incidents, timelines and MCP results.</p>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="description" class="t-label">Description <span class="text-fg-3">(optional)</span></label>
+                    <textarea id="description" name="description" class="textarea" maxlength="500" placeholder="Checkout, cart and inventory for the storefront">{{ input.description }}</textarea>
+                    {% if errors.description is defined %}<p class="field-error">{{ errors.description }}</p>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        {# Step 2 — framework & environment #}
+        <section class="panel" data-wizard-target="step" data-index="2" aria-labelledby="w2" hidden>
+            <div class="panel-header"><h2 id="w2" class="t-h2">Framework and environment</h2></div>
+            <div class="panel-body grid gap-5">
+                <fieldset>
+                    <legend class="t-label mb-2">Framework</legend>
+                    <div class="grid gap-2 sm:grid-cols-2">
+                        {% for f in frameworks %}
+                            <label class="flex cursor-pointer items-center gap-3 rounded-md border border-line p-3 has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+                                <input type="radio" name="framework" value="{{ f.value }}" class="checkbox" {% if input.framework == f.value %}checked{% endif %}>
+                                <span class="text-sm text-fg">{{ f.label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if errors.framework is defined %}<p class="field-error mt-2">{{ errors.framework }}</p>{% endif %}
+                </fieldset>
+                <div class="field max-w-xs">
+                    <label for="environment" class="t-label">Environment</label>
+                    <select id="environment" name="environment" class="select">
+                        {% for e in environments %}<option value="{{ e.value }}" {% if input.environment == e.value %}selected{% endif %}>{{ e.label }}</option>{% endfor %}
+                    </select>
+                    <p class="field-help">Each environment gets its own token. Connect staging and production separately.</p>
+                </div>
+            </div>
+        </section>
+
+        {# Step 3 — ingestion method #}
+        <section class="panel" data-wizard-target="step" data-index="3" aria-labelledby="w3" hidden>
+            <div class="panel-header"><h2 id="w3" class="t-h2">How will it send events?</h2></div>
+            <div class="panel-body grid gap-2">
+                {% for m in methods %}
+                    <label class="flex cursor-pointer items-start gap-3 rounded-md border border-line p-3.5 has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+                        <input type="radio" name="method" value="{{ m.value }}" class="checkbox mt-0.5" {% if selected_method == m.value %}checked{% endif %}>
+                        <span class="grid h-8 w-8 flex-none place-items-center rounded-md bg-surface-2 text-fg-2">{{ ux_icon(m.icon, {class: 'h-4 w-4'}) }}</span>
+                        <span>
+                            <span class="block text-sm font-medium text-fg">{{ m.label }}{% if m.value == 'symfony_bundle' %} <span class="badge badge-accent ml-1">Recommended</span>{% endif %}</span>
+                            <span class="mt-0.5 block text-sm text-fg-2">{{ m.description }}</span>
+                        </span>
+                    </label>
+                {% endfor %}
+                {% if errors.method is defined %}<p class="field-error">{{ errors.method }}</p>{% endif %}
+            </div>
+        </section>
+
+        <div class="mt-4 flex items-center justify-between gap-2">
+            <button type="button" class="btn btn-ghost" data-action="wizard#back" data-wizard-target="back">{{ ux_icon('lucide:arrow-left') }}Back</button>
+            <div class="flex items-center gap-2">
+                <a href="{{ path('app_applications') }}" class="btn btn-ghost">Cancel</a>
+                <button type="button" class="btn btn-primary" data-action="wizard#next" data-wizard-target="next">Continue</button>
+                <button type="submit" class="btn btn-primary" data-wizard-target="submit" hidden>{{ ux_icon('lucide:key-round') }}Create application and token</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

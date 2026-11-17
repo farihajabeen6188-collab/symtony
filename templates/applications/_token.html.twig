@@ -1,0 +1,14 @@
+{# Shown exactly once after a token is created or rotated. #}
+<div class="rounded-lg border border-warn/40 bg-warn-soft p-4" role="status">
+    <div class="flex items-start gap-3">
+        {{ ux_icon('lucide:key-round', {class: 'mt-0.5 h-4 w-4 flex-none text-warn'}) }}
+        <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-fg">Copy your ingestion token now</p>
+            <p class="mt-0.5 text-sm text-fg-2">SYMTONY stores only a hash of it. Once you leave this page it cannot be shown again; rotate it to get a new one.</p>
+            <div class="mt-3 flex items-center gap-2 rounded-md border border-line-strong bg-bg-deep px-3 py-2">
+                <code class="min-w-0 flex-1 truncate text-sm text-fg" data-token>{{ token }}</code>
+                <twig:CopyButton value="{{ token }}" label="Copy token" />
+            </div>
+        </div>
+    </div>
+</div>

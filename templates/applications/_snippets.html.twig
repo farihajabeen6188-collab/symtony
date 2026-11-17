@@ -1,0 +1,14 @@
+<ol class="grid gap-5">
+    {% for s in snippets %}
+        <li class="grid gap-2">
+            <div class="flex items-start gap-3">
+                <span class="num grid h-6 w-6 flex-none place-items-center rounded-full bg-surface-3 text-2xs font-semibold text-fg">{{ loop.index }}</span>
+                <div>
+                    <p class="text-sm font-medium text-fg">{{ s.title }}</p>
+                    <p class="text-sm text-fg-2">{{ s.description }}</p>
+                </div>
+            </div>
+            <twig:CodeBlock code="{{ s.code }}" lang="{{ s.lang in ['php', 'json'] ? s.lang : 'text' }}" title="{{ s.filename ?? s.lang }}" class="ml-9" />
+        </li>
+    {% endfor %}
+</ol>

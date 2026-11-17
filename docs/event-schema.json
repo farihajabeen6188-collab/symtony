@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/farihajabeen6188-collab/symtony/docs/event-schema.json",
+  "title": "SYMTONY event",
+  "description": "One event sent to POST /api/v1/events. Send a single object or {\"events\": [ ... ]} with up to 500 events. Only timestamp and message (or exception.message / name) are required. Unknown top-level fields are ignored; put custom data in context.",
+  "type": "object",
+  "required": ["timestamp"],
+  "properties": {
+    "id": { "type": "string", "maxLength": 64, "pattern": "^[A-Za-z0-9._:/-]+$", "description": "Client event id. Re-sending the same id for the same application is ignored (idempotent)." },
+    "timestamp": {
+      "description": "When it happened. RFC 3339 with timezone (microseconds kept) or Unix seconds/milliseconds. At most 5 minutes in the future.",
+      "oneOf": [ { "type": "string", "format": "date-time" }, { "type": "number", "exclusiveMinimum": 0 } ]
+    },
+    "severity": { "description": "Alias: level. Monolog names or numeric levels are accepted.", "enum": ["debug", "info", "notice", "warning", "error", "critical", "alert", "emergency", 100, 200, 250, 300, 400, 500, 550, 600], "default": "info" },
+    "type": { "enum": ["http_request", "http_response", "controller", "service_call", "db_query", "transaction", "cache", "external_http", "queue", "exception", "log", "deploy"], "default": "log", "description": "Defaults to exception when an exception object is present." },
+    "service": { "type": "string", "maxLength": 64, "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$", "default": "app" },
+    "name": { "type": "string", "maxLength": 200, "description": "Span or operation name, e.g. \"POST /checkout\" or \"InventoryService::reserve\"." },
+    "message": { "type": "string", "maxLength": 8000 },
+    "environment": { "type": "string", "maxLength": 16, "description": "Overrides the application's environment for this event." },
+    "release": { "type": "string", "maxLength": 64 },
+    "trace_id": { "type": "string", "maxLength": 64 },
+    "span_id": { "type": "string", "maxLength": 32 },
+    "parent_span_id": { "type": "string", "maxLength": 32 },
+    "request_id": { "type": "string", "maxLength": 64 },
+    "duration_ms": { "type": "number", "minimum": 0, "maximum": 86400000 },
+    "exception": {
+      "type": "object",
+      "required": ["class"],
+      "properties": {
+        "class": { "type": "string", "maxLength": 255 },
+        "message": { "type": "string", "maxLength": 8000 },
+        "frames": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "Innermost frame first.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "class": { "type": "string" },
+              "function": { "type": "string" },
+              "file": { "type": "string" },
+              "line": { "type": "integer" },
+              "in_app": { "type": "boolean", "description": "Defaults to true unless the file is under /vendor/." }
+            }
+          }
+        }
+      }
+    },
+    "http": { "type": "object", "description": "e.g. {method, path, route, status}. Stored in context.http." },
+    "db": { "type": "object", "description": "e.g. {operation, table, statement (without parameters), rows}. Stored in context.db." },
+    "cache": { "type": "object", "description": "e.g. {pool, key, hit, age_seconds}. Stored in context.cache." },
+    "queue": { "type": "object" },
+    "external": { "type": "object", "description": "Outgoing HTTP call: {method, host, path, status}." },
+    "user": { "type": "object", "description": "Avoid personal data; it is redacted where recognised." },
+    "deploy": { "type": "object", "description": "For type=deploy: {release, commit, author}." },
+    "context": { "type": "object", "description": "Any extra data, max 32 KB. Secrets are redacted before storage." }
+  }
+}

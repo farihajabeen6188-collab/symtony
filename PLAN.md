@@ -57,12 +57,12 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Browser review at desktop and 375px: no overflow, no console errors
 
 ### Phase 2 — Data model & ingestion → `prompts/phase-2-ingestion.md`
-- [ ] Entities + migrations: Workspace, User, Membership, Application, IngestionCredential, Event, Incident, IncidentEvent, AuditLog
-- [ ] `POST /api/v1/events` (single + batch): token auth, rate limit, size limit, validation, redaction, normalization
-- [ ] Malformed payloads return clear 4xx and are recorded as ingestion failures
-- [ ] Token shown once (`sym_...`), stored hashed, rotation works
-- [ ] Connect-application wizard (6 steps) with copy buttons; step 5 waits for a real first event
-- [ ] Tests: normalization, redaction, auth, rate limit, payload limits
+- [x] Entities + migrations: Workspace, User, Membership, Application, IngestionCredential, Event, IngestionFailure, AuditLog (Incident + IncidentEvent arrive with grouping in Phase 4)
+- [x] `POST /api/v1/events` (single + batch): token auth, rate limit, size limit, validation, redaction, normalization
+- [x] Malformed payloads return clear 4xx and are recorded as ingestion failures
+- [x] Token shown once (`sym_...`), stored hashed, rotation works
+- [x] Connect-application wizard (6 steps) with copy buttons; step 5 waits for a real first event
+- [x] Tests: normalization, redaction, auth, rate limit, payload limits
 
 ### Phase 3 — demo-shop + symtony-bundle → `prompts/phase-3-demo-shop.md`
 - [ ] `packages/symtony-bundle`: Monolog handler, kernel subscriber, DBAL middleware, HttpClient decorator, Messenger middleware, trace/span propagation, async batched sender
@@ -148,6 +148,13 @@ artwork (hat + glasses, cyan lens glints; hover tip, scanning loader, reduced-mo
 components, 12 Stimulus controllers, uPlot chart, highlight.js. Auth: User/Workspace/Membership entities,
 form login with CSRF + throttling, `symtony:setup` demo account. Check green: 20 tests / 79 assertions,
 PHPStan L6, template token guard.
+
+**2026-11-18 — Phase 2 (data model & ingestion).** Application, IngestionCredential (sha256, shown once,
+rotate/revoke, audited), Event (UUIDv7, jsonb context, 8 indexes, idempotent client ids), IngestionFailure,
+AuditLog. `POST /api/v1/events`: bearer auth, per-token token-bucket rate limit, 1 MiB / 500-event limits,
+per-field validation, redaction (keys + secret-shaped values + Luhn cards + emails), message normalization,
+one transaction per batch, `EventsIngested` to the async queue. 6-step connect wizard with live verification
+and a real test event through the public API. Verified in the browser + DB. 53 tests / 201 assertions.
 
 ## Blockers
 

@@ -29,6 +29,7 @@
     --surface-3: #203049;
     --line: rgb(155 170 192 / 0.13);
     --line-strong: rgb(155 170 192 / 0.24);
+    --field: #0b1020;
 
     --fg: #edf3fc;
     --fg-2: #9baac0;
@@ -64,6 +65,7 @@
     --surface-3: #e3e9f2;
     --line: rgb(13 20 36 / 0.1);
     --line-strong: rgb(13 20 36 / 0.18);
+    --field: #ffffff;
 
     --fg: #0d1424;
     --fg-2: #46546b;
@@ -99,6 +101,7 @@
         --surface-3: #e3e9f2;
         --line: rgb(13 20 36 / 0.1);
         --line-strong: rgb(13 20 36 / 0.18);
+        --field: #ffffff;
         --fg: #0d1424;
         --fg-2: #46546b;
         --fg-3: #6f7c91;

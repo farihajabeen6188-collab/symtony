@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Twig;
 
+use App\Application\Query\ApplicationQueries;
 use App\Domain\Shared\TimeRange;
 use App\Infrastructure\Http\UiPreferences;
 use App\Infrastructure\Security\WorkspaceContext;
@@ -25,6 +26,7 @@ final class AppExtensionTest extends TestCase
             new Navigation(),
             new UiPreferences(new RequestStack()),
             new WorkspaceContext($this->createStub(Security::class), $this->createStub(EntityManagerInterface::class)),
+            new ApplicationQueries($this->createStub(EntityManagerInterface::class)),
         );
     }
 

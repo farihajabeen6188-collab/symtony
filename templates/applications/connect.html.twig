@@ -1,0 +1,113 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Connect {{ application.name }}{% endblock %}
+{% block active_nav %}app_applications{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_applications') }}" class="text-fg-2 hover:text-fg">Applications</a></li>
+    <li class="text-fg-3">/</li>
+    <li><a href="{{ path('app_applications_show', {id: application.id}) }}" class="text-fg-2 hover:text-fg">{{ application.name }}</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">Connect</li>
+{% endblock %}
+
+{% block content %}
+{% set connected = application.firstEventAt is not null %}
+<div class="mx-auto max-w-3xl"
+     data-controller="connect"
+     data-connect-status-url-value="{{ path('app_applications_status', {id: application.id}) }}"
+     data-connect-endpoint-value="{{ endpoint }}"
+     data-connect-service-value="{{ application.slug }}"
+     data-connect-connected-value="{{ connected ? 'true' : 'false' }}">
+
+    <twig:PageHeader title="Connect {{ application.name }}" description="{{ application.ingestionMethod.label }} · {{ application.environment.label }} · {{ application.framework.label }}" />
+
+    {% set steps = ['Details', 'Framework', 'Method', 'Instructions', 'Verify', 'Done'] %}
+    <ol class="mb-6 grid grid-cols-6 gap-1.5" aria-label="Progress">
+        {% for s in steps %}
+            {% set done = loop.index <= 3 or (loop.index <= 5 and connected) %}
+            <li class="grid gap-1.5" {% if loop.index == 5 %}data-connect-target="verifyStep"{% elseif loop.index == 6 %}data-connect-target="doneStep"{% endif %}>
+                <span class="h-1 rounded-full {{ done or (loop.index == 6 and connected) ? 'bg-accent' : (loop.index == 4 ? 'bg-accent' : 'bg-surface-3') }}" data-bar></span>
+                <span class="hidden truncate text-2xs {{ loop.index <= 4 ? 'text-fg-2' : 'text-fg-3' }} sm:block"><span class="num">{{ loop.index }}</span> {{ s }}</span>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <div class="grid gap-5">
+        {% if token %}{{ include('applications/_token.html.twig') }}{% endif %}
+
+        {# Step 4 — instructions #}
+        <section class="panel" aria-labelledby="c4">
+            <div class="panel-header">
+                <h2 id="c4" class="t-h2">Set up {{ application.ingestionMethod.label|lower }}</h2>
+                <div class="flex items-center gap-1.5">
+                    <span class="hidden text-xs text-fg-3 sm:inline">Endpoint</span>
+                    <code class="hidden max-w-60 truncate text-xs text-fg-2 sm:inline">{{ endpoint }}</code>
+                    <twig:CopyButton value="{{ endpoint }}" label="Copy endpoint URL" icon_only />
+                </div>
+            </div>
+            <div class="panel-body">
+                {% if application.ingestionMethod.value == 'demo' %}
+                    <div class="mb-5 rounded-md border border-line bg-surface-2 p-3 text-sm text-fg-2">
+                        The demo shop is a separate Symfony app in this repository with a real checkout bug. Once it is running, open this application and use <span class="text-fg">Run failure scenario</span>. You can also send events by hand with the request below.
+                    </div>
+                {% endif %}
+                {% if not token %}
+                    <p class="mb-4 flex items-start gap-2 text-sm text-fg-2">{{ ux_icon('lucide:info', {class: 'mt-0.5 h-4 w-4 flex-none text-fg-3'}) }}The token was shown when it was created. Use your saved copy, or <a class="text-accent hover:underline" href="{{ path('app_applications_show', {id: application.id, _fragment: 'credentials'}) }}">rotate it</a> to get a new one.</p>
+                {% endif %}
+                {{ include('applications/_snippets.html.twig') }}
+            </div>
+        </section>
+
+        {# Step 5 — verify #}
+        <section class="panel" aria-labelledby="c5" aria-live="polite">
+            <div class="panel-header">
+                <h2 id="c5" class="t-h2">Verify the connection</h2>
+                <span class="inline-flex items-center gap-2 text-sm" data-connect-target="statusBadge">
+                    {% set st = application.connectionStatus %}
+                    <span class="dot text-{{ st.tone }} {{ st.value == 'connected' ? 'dot-live' : '' }}"></span><span class="text-fg-2" data-connect-target="statusLabel">{{ st.label }}</span>
+                </span>
+            </div>
+            <div class="panel-body">
+                <div data-connect-target="waiting" {% if connected %}hidden{% endif %}>
+                    <div class="flex items-center gap-4">
+                        <twig:Loader class="h-10 w-12 text-fg-2" label="Waiting for the first event" />
+                        <div>
+                            <p class="text-sm text-fg">Waiting for the first event…</p>
+                            <p class="text-sm text-fg-2">This page checks every 2 seconds. Run your app, or send a test event.</p>
+                        </div>
+                    </div>
+                    {% if token %}
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <button type="button" class="btn btn-secondary" data-action="connect#sendTest" data-connect-target="testButton" data-token="{{ token }}">{{ ux_icon('lucide:send') }}Send test event</button>
+                            <span class="text-xs text-fg-3">Sends a real request from your browser to the public ingestion API with this token.</span>
+                        </div>
+                    {% endif %}
+                    <p class="mt-3 hidden text-sm text-err" data-connect-target="testError" role="alert"></p>
+                </div>
+
+                {# Step 6 — done #}
+                <div data-connect-target="success" {% if not connected %}hidden{% endif %}>
+                    <div class="flex items-start gap-3">
+                        <span class="grid h-9 w-9 flex-none place-items-center rounded-full bg-ok-soft text-ok">{{ ux_icon('lucide:check', {class: 'h-5 w-5'}) }}</span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-fg">{{ application.name }} is connected</p>
+                            <p class="text-sm text-fg-2">SYMTONY received its first event. Failures will now be grouped into incidents automatically.</p>
+                            <div class="well mt-3 p-3 text-sm" data-connect-target="latest">
+                                {% if latest %}
+                                    <p class="t-meta">{{ latest.occurredAt|date('Y-m-d H:i:s.v') }} UTC · {{ latest.service }} · {{ latest.type.label }}</p>
+                                    <p class="mt-1 truncate text-fg">{{ latest.message }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <a href="{{ path('app_events', {app: application.id}) }}" class="btn btn-primary">{{ ux_icon('lucide:list-tree') }}Open Event Explorer</a>
+                                <a href="{{ path('app_applications_show', {id: application.id}) }}" class="btn btn-secondary">Application settings</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

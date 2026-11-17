@@ -22,7 +22,7 @@ framework:
             sync: 'sync://'
 
         routing:
-            # Routes are added per message class as phases introduce them.
+            'App\Infrastructure\Ingestion\Message\EventsIngested': async
 
 when@test:
     framework:

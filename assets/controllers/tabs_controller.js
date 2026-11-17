@@ -1,6 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
 
-/* Client-side tabs with arrow-key navigation (WAI-ARIA tabs pattern). */
+/*
+ * Client-side tabs with arrow-key navigation (WAI-ARIA tabs pattern).
+ * Tabs with data-hash are deep-linkable: #credentials opens that tab and selecting a tab updates the URL hash.
+ */
 export default class extends Controller {
     static targets = ['tab', 'panel'];
 
@@ -13,10 +16,16 @@ export default class extends Controller {
                 this.tabTargets[next].focus();
             });
         });
+        const hash = window.location.hash.slice(1);
+        const fromHash = this.tabTargets.findIndex((t) => t.dataset.hash && t.dataset.hash === hash);
+        this.activate(fromHash >= 0 ? fromHash : Math.max(0, this.tabTargets.findIndex((t) => t.getAttribute('aria-selected') === 'true')));
     }
 
     select(event) {
-        this.activate(this.tabTargets.indexOf(event.currentTarget));
+        const index = this.tabTargets.indexOf(event.currentTarget);
+        this.activate(index);
+        const hash = event.currentTarget.dataset.hash;
+        if (hash) history.replaceState(null, '', `#${hash}`);
     }
 
     activate(index) {

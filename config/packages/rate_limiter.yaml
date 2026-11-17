@@ -1,0 +1,20 @@
+framework:
+    rate_limiter:
+        # Per ingestion token: bursts up to 200 requests, refilling 100 every 10 seconds.
+        ingestion:
+            policy: token_bucket
+            limit: 200
+            rate: { interval: '10 seconds', amount: 100 }
+        # Per MCP token (Phase 8)
+        mcp:
+            policy: sliding_window
+            limit: 120
+            interval: '1 minute'
+
+when@test:
+    framework:
+        rate_limiter:
+            ingestion:
+                policy: token_bucket
+                limit: 3
+                rate: { interval: '1 hour', amount: 1 }

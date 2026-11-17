@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Application\Query\ApplicationQueries;
 use App\Domain\Shared\TimeRange;
 use App\Infrastructure\Http\UiPreferences;
 use App\Infrastructure\Security\WorkspaceContext;
@@ -16,6 +17,7 @@ final class AppExtension
         private readonly Navigation $navigation,
         private readonly UiPreferences $preferences,
         private readonly WorkspaceContext $workspaceContext,
+        private readonly ApplicationQueries $applications,
     ) {
     }
 
@@ -37,6 +39,19 @@ final class AppExtension
     public function navItems(): array
     {
         return $this->navigation->items();
+    }
+
+    /** @return list<string> */
+    #[AsTwigFunction('workspace_environments')]
+    public function workspaceEnvironments(): array
+    {
+        return $this->workspaceContext->hasWorkspace() ? $this->applications->environments($this->workspaceContext->workspace()) : [];
+    }
+
+    #[AsTwigFunction('current_environment')]
+    public function currentEnvironment(): ?string
+    {
+        return $this->preferences->environment();
     }
 
     #[AsTwigFunction('time_range')]

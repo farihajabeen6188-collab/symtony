@@ -1,0 +1,61 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Applications{% endblock %}
+
+{% block content %}
+<twig:PageHeader title="Applications" description="Applications that send events to SYMTONY, and the tokens they use.">
+    <twig:block name="actions">
+        {% if applications is not empty %}
+            <a href="{{ path('app_applications_new') }}" class="btn btn-primary">{{ ux_icon('lucide:plus') }}Connect application</a>
+        {% endif %}
+    </twig:block>
+</twig:PageHeader>
+
+{% if applications is empty %}
+    <div class="panel">
+        <twig:EmptyState title="Connect your first application" illustration="no-apps">
+            Send events from a Symfony app, any Monolog logger, or plain HTTP. Or start with the demo shop to see a real failure investigated end to end.
+            <twig:block name="actions">
+                <a href="{{ path('app_applications_new') }}" class="btn btn-primary">{{ ux_icon('lucide:plus') }}Connect application</a>
+                <a href="{{ path('app_applications_new', {method: 'demo'}) }}" class="btn btn-secondary">{{ ux_icon('lucide:shopping-cart') }}Use the demo shop</a>
+            </twig:block>
+        </twig:EmptyState>
+    </div>
+{% else %}
+    <div class="panel overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table" data-controller="row-link">
+                <thead>
+                    <tr>
+                        <th>Application</th>
+                        <th>Status</th>
+                        <th class="hidden md:table-cell">Environment</th>
+                        <th class="hidden lg:table-cell">Method</th>
+                        <th class="text-right">Events <span class="font-normal text-fg-3">· {{ range.label|lower }}</span></th>
+                        <th class="text-right">Errors</th>
+                        <th class="hidden sm:table-cell">Last event</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in applications %}
+                        {% set status = a.connectionStatus %}
+                        {% set c = counts[a.id.toRfc4122] ?? null %}
+                        <tr data-href="{{ path('app_applications_show', {id: a.id}) }}" data-action="click->row-link#open">
+                            <td>
+                                <a href="{{ path('app_applications_show', {id: a.id}) }}" class="font-medium text-fg hover:text-accent">{{ a.name }}</a>
+                                <p class="t-meta">{{ a.slug }}</p>
+                            </td>
+                            <td><span class="inline-flex items-center gap-2 text-sm text-fg-2"><span class="dot text-{{ status.tone }} {{ status.value == 'connected' ? 'dot-live' : '' }}"></span>{{ status.label }}</span></td>
+                            <td class="hidden md:table-cell"><span class="badge badge-neutral">{{ a.environment.label }}</span></td>
+                            <td class="hidden text-fg-2 lg:table-cell">{{ a.ingestionMethod.label }}</td>
+                            <td class="num text-right">{{ c ? c.events|number_format : '0' }}</td>
+                            <td class="num text-right {{ c and c.errors > 0 ? 'text-err' : 'text-fg-3' }}">{{ c ? c.errors|number_format : '0' }}</td>
+                            <td class="t-meta hidden sm:table-cell" title="{{ a.lastEventAt ? a.lastEventAt|date('Y-m-d H:i:s T') : '' }}">{{ a.lastEventAt|ago }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

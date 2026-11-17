@@ -72,6 +72,26 @@
             <button type="button" class="btn btn-ghost btn-icon md:hidden" data-action="palette#open" aria-label="Search">{{ ux_icon('lucide:search') }}</button>
 
             {% block topbar_filters %}
+            {% set envs = workspace_environments() %}
+            {% if envs|length > 1 %}
+            <div class="relative hidden lg:block" data-controller="dropdown">
+                <button type="button" class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">
+                    {{ ux_icon('lucide:server') }}<span>{{ current_environment() ? current_environment()|capitalize : 'All environments' }}</span>{{ ux_icon('lucide:chevron-down', {class: 'text-fg-3'}) }}
+                </button>
+                <div class="popover right-0 mt-1" role="menu" data-dropdown-target="menu" hidden>
+                    {% for env in [''] | merge(envs) %}
+                        <form method="post" action="{{ path('app_pref_environment') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('ui-pref') }}">
+                            <input type="hidden" name="_back" value="{{ app.request.requestUri }}">
+                            <button name="environment" value="{{ env }}" class="menu-item" role="menuitemradio" aria-checked="{{ (current_environment() ?? '') == env ? 'true' : 'false' }}">
+                                <span class="flex-1">{{ env ? env|capitalize : 'All environments' }}</span>
+                                {% if (current_environment() ?? '') == env %}{{ ux_icon('lucide:check', {class: 'text-accent'}) }}{% endif %}
+                            </button>
+                        </form>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             <div class="relative hidden sm:block" data-controller="dropdown">
                 <button type="button" class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">
                     {{ ux_icon('lucide:clock') }}<span>{{ time_range().label }}</span>{{ ux_icon('lucide:chevron-down', {class: 'text-fg-3'}) }}
