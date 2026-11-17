@@ -25,4 +25,20 @@ return [
     '@hotwired/turbo' => [
         'version' => '8.0.23',
     ],
+    'uplot' => [
+        'version' => '1.6.32',
+    ],
+    'highlight.js/lib/core' => [
+        'version' => '11.12.0',
+    ],
+    'highlight.js/lib/languages/php' => [
+        'version' => '11.12.0',
+    ],
+    'highlight.js/lib/languages/json' => [
+        'version' => '11.12.0',
+    ],
+    'uplot/dist/uPlot.min.css' => [
+        'version' => '1.6.32',
+        'type' => 'css',
+    ],
 ];

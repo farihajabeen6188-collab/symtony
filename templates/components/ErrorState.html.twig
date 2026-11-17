@@ -1,0 +1,9 @@
+{% props title = 'Something went wrong', detail = null %}
+<div {{ attributes.defaults({class: 'flex gap-3 rounded-lg border border-err/30 bg-err-soft p-4', role: 'alert'}) }}>
+    {{ ux_icon('lucide:octagon-alert', {class: 'mt-0.5 h-4 w-4 flex-none text-err'}) }}
+    <div class="min-w-0">
+        <p class="text-sm font-medium text-fg">{{ title }}</p>
+        <div class="mt-1 text-sm text-fg-2">{% block content %}{% endblock %}</div>
+        {% if detail %}<pre class="mt-2 overflow-x-auto whitespace-pre-wrap rounded-sm bg-bg-deep p-2 font-mono text-2xs text-fg-2">{{ detail }}</pre>{% endif %}
+    </div>
+</div>

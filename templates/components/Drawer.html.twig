@@ -1,0 +1,13 @@
+{% props id, title, subtitle = null %}
+<dialog id="{{ id }}" {{ attributes.defaults({class: 'drawer'}) }} aria-labelledby="{{ id }}-title">
+    <div class="flex h-full flex-col">
+        <div class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+            <div class="min-w-0">
+                <h2 id="{{ id }}-title" class="t-h2 truncate">{{ title }}</h2>
+                {% if subtitle %}<p class="mt-0.5 truncate t-meta">{{ subtitle }}</p>{% endif %}
+            </div>
+            <form method="dialog"><button class="btn btn-ghost btn-icon btn-sm" aria-label="Close">{{ ux_icon('lucide:x') }}</button></form>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4">{% block content %}{% endblock %}</div>
+    </div>
+</dialog>

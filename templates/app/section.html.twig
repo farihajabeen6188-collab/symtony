@@ -1,0 +1,12 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <twig:PageHeader title="{{ title }}" description="{{ description }}" />
+    <div class="panel">
+        <twig:EmptyState title="{{ empty_title }}" illustration="{{ app.request.attributes.get('_route') in ['app_applications', 'app_overview'] ? 'no-apps' : (app.request.attributes.get('_route') == 'app_incidents' ? 'no-incidents' : 'no-results') }}">
+            {{ empty_text }}
+        </twig:EmptyState>
+    </div>
+{% endblock %}

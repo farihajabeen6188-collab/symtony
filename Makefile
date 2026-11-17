@@ -14,9 +14,12 @@ help: ## List targets
 build: ## Build images
 	$(DC) build
 
-up: ## Start the stack (http://localhost:8080)
+up: ## Start the stack (http://localhost:8080), migrate, create the demo account, build CSS
 	$(DC) up -d --wait
 	$(APP) composer install --no-interaction
+	$(CON) doctrine:migrations:migrate --no-interaction --allow-no-migration
+	$(CON) symtony:setup
+	$(CON) tailwind:build
 	$(CON) cache:warmup
 
 down: ## Stop the stack
@@ -31,7 +34,8 @@ composer: ## Run composer, e.g. make composer c="require foo/bar"
 console: ## Run bin/console, e.g. make console c="debug:router"
 	$(CON) $(c)
 
-lint: ## Container, Twig and YAML lint
+lint: ## Container, Twig, YAML lint + design-token guard
+	$(APP) sh bin/check-templates.sh
 	$(CON) lint:container
 	$(CON) lint:yaml config --parse-tags
 	$(CON) lint:twig templates
@@ -41,6 +45,7 @@ stan: ## PHPStan
 	$(APP) vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 
 test: ## PHPUnit
+	$(APP) php bin/console doctrine:database:create --env=test --if-not-exists --quiet
 	$(APP) php bin/phpunit
 
 check: lint stan test ## Everything that must be green before a commit

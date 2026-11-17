@@ -1,0 +1,14 @@
+{#
+  A metric backed by a real query. Pass value = null when there is no data: it renders "—" and the
+  empty hint instead of a fake zero.
+#}
+{% props label, value = null, unit = null, hint = null, empty_hint = 'No data in this range', tone = null, href = null %}
+{% set tag = href ? 'a' : 'div' %}
+<{{ tag }} {{ attributes.defaults({class: 'panel block p-4 ' ~ (href ? 'transition-colors hover:border-line-strong' : '')}) }} {% if href %}href="{{ href }}"{% endif %}>
+    <p class="t-label">{{ label }}</p>
+    <p class="mt-2 flex items-baseline gap-1">
+        <span class="num text-2xl font-semibold tracking-tight {{ value is null ? 'text-fg-3' : (tone ? 'text-' ~ tone : 'text-fg') }}">{{ value ?? '—' }}</span>
+        {% if unit and value is not null %}<span class="text-sm text-fg-3">{{ unit }}</span>{% endif %}
+    </p>
+    <p class="mt-1 truncate text-xs text-fg-3">{{ value is null ? empty_hint : hint }}</p>
+</{{ tag }}>

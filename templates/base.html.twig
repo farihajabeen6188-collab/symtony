@@ -1,24 +1,53 @@
 <!DOCTYPE html>
-<html>
+{% set theme_pref = app.user ? app.user.theme.value : 'dark' %}
+<html lang="en" data-theme="{{ theme_pref }}" data-theme-pref="{{ theme_pref }}">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
-
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-
-        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphp_hot_reload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="dark light">
+        <title>{% block title %}SYMTONY{% endblock %}{% block title_suffix %} · SYMTONY{% endblock %}</title>
+        <meta name="description" content="{% block meta_description %}SYMTONY — application forensics for Symfony. Every error has a story.{% endblock %}">
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="preload" href="{{ asset('fonts/Geist-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <script>
+            /* Apply a guest's stored theme before paint (signed-in users get it from the server). */
+            (function () {
+                try {
+                    var el = document.documentElement;
+                    if (!{{ app.user ? 'true' : 'false' }}) {
+                        var t = localStorage.getItem('symtony.theme');
+                        if (t === 'dark' || t === 'light' || t === 'system') { el.dataset.theme = t; el.dataset.themePref = t; }
+                    }
+                } catch (e) {}
+            })();
+        </script>
+        {% block stylesheets %}{% endblock %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
     </head>
-    <body>
+    <body class="{% block body_class %}{% endblock %}" data-controller="theme toast" data-theme-url-value="{{ app.user ? path('app_pref_theme') : '' }}" data-theme-token-value="{{ app.user ? csrf_token('ui-pref') : '' }}">
         {% block body %}{% endblock %}
+
+        <div class="toast-stack" data-toast-target="stack" aria-live="polite" aria-atomic="false">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="toast" role="status" data-toast-target="item">
+                        {% if type == 'error' %}{{ ux_icon('lucide:circle-alert', {class: 'text-err'}) }}{% elseif type == 'warning' %}{{ ux_icon('lucide:triangle-alert', {class: 'text-warn'}) }}{% else %}{{ ux_icon('lucide:circle-check', {class: 'text-ok'}) }}{% endif %}
+                        <div class="flex-1 text-fg">{{ message }}</div>
+                        <button type="button" class="text-fg-3 hover:text-fg" data-action="toast#dismiss" aria-label="Dismiss">{{ ux_icon('lucide:x') }}</button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <dialog class="modal" id="confirm-dialog" data-controller="confirm-dialog" aria-labelledby="confirm-title">
+            <form method="dialog" class="p-5">
+                <h2 id="confirm-title" class="t-h2" data-confirm-dialog-target="title">Are you sure?</h2>
+                <p class="mt-2 t-body" data-confirm-dialog-target="message"></p>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button value="cancel" class="btn btn-secondary">Cancel</button>
+                    <button value="confirm" class="btn btn-danger" data-confirm-dialog-target="confirm">Confirm</button>
+                </div>
+            </form>
+        </dialog>
     </body>
 </html>

@@ -1,0 +1,6 @@
+{% props rows = 3 %}
+<div {{ attributes.defaults({class: 'grid gap-2.5', 'aria-busy': 'true', 'aria-label': 'Loading'}) }}>
+    {% for i in 1..rows %}
+        <div class="skeleton h-3.5" style="width: {{ [92, 74, 86, 60, 80][(i - 1) % 5] }}%"></div>
+    {% endfor %}
+</div>

@@ -1,0 +1,29 @@
+{# Command palette (Ctrl/Cmd+K). Navigation works now; server-side search is added in Phase 9. #}
+<dialog class="modal modal-palette" data-palette-target="dialog" aria-label="Command palette"
+        data-action="close->palette#reset">
+    <div class="flex items-center gap-2 border-b border-line px-4">
+        {{ ux_icon('lucide:search', {class: 'h-4 w-4 text-fg-3'}) }}
+        <input type="text" class="h-12 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-3" placeholder="Jump to a page or action…"
+               data-palette-target="input" data-action="input->palette#filter keydown->palette#navigate" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list">
+        <kbd class="kbd">Esc</kbd>
+    </div>
+    <ul id="palette-list" role="listbox" class="max-h-[50vh] overflow-y-auto p-2" data-palette-target="list">
+        {% for item in nav_items() %}
+            <li>
+                <a href="{{ path(item.route) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="{{ (item.label ~ ' ' ~ item.keywords)|lower }}">
+                    {{ ux_icon(item.icon) }}<span class="flex-1">{{ item.label }}</span><span class="text-2xs text-fg-3">{{ item.section }}</span>
+                </a>
+            </li>
+        {% endfor %}
+        <li>
+            <a href="{{ path('app_styleguide') }}" class="menu-item" role="option" data-palette-target="item" data-keywords="design system styleguide components">
+                {{ ux_icon('lucide:swatch-book') }}<span class="flex-1">Design system</span><span class="text-2xs text-fg-3">Reference</span>
+            </a>
+        </li>
+    </ul>
+    <p class="px-4 py-6 text-center text-sm text-fg-3" data-palette-target="empty" hidden>No matches. Try another word.</p>
+    <div class="flex items-center gap-3 border-t border-line px-4 py-2 text-2xs text-fg-3">
+        <span class="flex items-center gap-1"><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> to move</span>
+        <span class="flex items-center gap-1"><kbd class="kbd">Enter</kbd> to open</span>
+    </div>
+</dialog>

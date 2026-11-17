@@ -1,0 +1,123 @@
+/*
+ * SYMTONY design tokens. Every color, size and duration in the UI comes from here.
+ * Color carries meaning:  cyan = interactive · violet = AI-generated · dashed = inferred.
+ * Dark is the primary design; light is a separately tuned set (WCAG AA), not an inversion.
+ */
+
+@font-face {
+    font-family: 'Geist';
+    src: url('../fonts/Geist-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../fonts/JetBrainsMono-Variable.woff2') format('woff2');
+    font-weight: 100 800;
+    font-display: swap;
+}
+
+:root,
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --bg-deep: #0b1020;
+    --bg: #0d1424;
+    --surface: #141e30;
+    --surface-2: #19263a;
+    --surface-3: #203049;
+    --line: rgb(155 170 192 / 0.13);
+    --line-strong: rgb(155 170 192 / 0.24);
+
+    --fg: #edf3fc;
+    --fg-2: #9baac0;
+    --fg-3: #6c7b93;
+
+    --accent: #66d9ff;
+    --accent-fg: #03202c;
+    --accent-soft: rgb(102 217 255 / 0.12);
+    --blue: #7ca9ff;
+    --blue-soft: rgb(124 169 255 / 0.13);
+    --ai: #a78bfa;
+    --ai-soft: rgb(167 139 250 / 0.14);
+    --ok: #36c99a;
+    --ok-soft: rgb(54 201 154 / 0.13);
+    --warn: #f2b966;
+    --warn-soft: rgb(242 185 102 / 0.13);
+    --err: #ff6b79;
+    --err-soft: rgb(255 107 121 / 0.13);
+
+    --focus: #66d9ff;
+    --overlay: rgb(5 8 16 / 0.62);
+    --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line-strong);
+    --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.03) inset;
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+
+    --bg-deep: #e9eef6;
+    --bg: #f4f6fa;
+    --surface: #ffffff;
+    --surface-2: #eef2f8;
+    --surface-3: #e3e9f2;
+    --line: rgb(13 20 36 / 0.1);
+    --line-strong: rgb(13 20 36 / 0.18);
+
+    --fg: #0d1424;
+    --fg-2: #46546b;
+    --fg-3: #6f7c91;
+
+    --accent: #0a7ca6;
+    --accent-fg: #ffffff;
+    --accent-soft: rgb(10 124 166 / 0.1);
+    --blue: #2f5fd0;
+    --blue-soft: rgb(47 95 208 / 0.1);
+    --ai: #6a4bd6;
+    --ai-soft: rgb(106 75 214 / 0.1);
+    --ok: #0f8460;
+    --ok-soft: rgb(15 132 96 / 0.1);
+    --warn: #9a620c;
+    --warn-soft: rgb(196 128 20 / 0.13);
+    --err: #cf2f42;
+    --err-soft: rgb(207 47 66 / 0.1);
+
+    --focus: #0a7ca6;
+    --overlay: rgb(13 20 36 / 0.35);
+    --shadow-pop: 0 12px 32px -10px rgb(13 20 36 / 0.25), 0 0 0 1px var(--line-strong);
+    --shadow-panel: 0 1px 2px 0 rgb(13 20 36 / 0.04);
+}
+
+@media (prefers-color-scheme: light) {
+    :root[data-theme='system'] {
+        color-scheme: light;
+        --bg-deep: #e9eef6;
+        --bg: #f4f6fa;
+        --surface: #ffffff;
+        --surface-2: #eef2f8;
+        --surface-3: #e3e9f2;
+        --line: rgb(13 20 36 / 0.1);
+        --line-strong: rgb(13 20 36 / 0.18);
+        --fg: #0d1424;
+        --fg-2: #46546b;
+        --fg-3: #6f7c91;
+        --accent: #0a7ca6;
+        --accent-fg: #ffffff;
+        --accent-soft: rgb(10 124 166 / 0.1);
+        --blue: #2f5fd0;
+        --blue-soft: rgb(47 95 208 / 0.1);
+        --ai: #6a4bd6;
+        --ai-soft: rgb(106 75 214 / 0.1);
+        --ok: #0f8460;
+        --ok-soft: rgb(15 132 96 / 0.1);
+        --warn: #9a620c;
+        --warn-soft: rgb(196 128 20 / 0.13);
+        --err: #cf2f42;
+        --err-soft: rgb(207 47 66 / 0.1);
+        --focus: #0a7ca6;
+        --overlay: rgb(13 20 36 / 0.35);
+        --shadow-pop: 0 12px 32px -10px rgb(13 20 36 / 0.25), 0 0 0 1px var(--line-strong);
+        --shadow-panel: 0 1px 2px 0 rgb(13 20 36 / 0.04);
+    }
+}

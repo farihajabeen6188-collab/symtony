@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Functional;
+
+final class SecurityTest extends WebTestCase
+{
+    public function testAnonymousUserIsRedirectedToLogin(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/app/incidents');
+
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testDemoUserCanSignIn(): void
+    {
+        $client = static::createClient();
+        $this->demoUser();
+
+        $crawler = $client->request('GET', '/login');
+        $client->submit($crawler->selectButton('Sign in')->form([
+            'email' => 'demo@symtony.local',
+            'password' => 'symtony-demo',
+        ]));
+
+        self::assertResponseRedirects('/app');
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Overview');
+    }
+
+    public function testWrongPasswordShowsAnError(): void
+    {
+        $client = static::createClient();
+        $this->demoUser();
+
+        $crawler = $client->request('GET', '/login');
+        $client->submit($crawler->selectButton('Sign in')->form([
+            'email' => 'demo@symtony.local',
+            'password' => 'not-the-password',
+        ]));
+        $client->followRedirect();
+
+        self::assertSelectorExists('[role="alert"]');
+    }
+
+    public function testRootRedirectsByAuthState(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/');
+        self::assertResponseRedirects('/login');
+
+        $client->loginUser($this->demoUser());
+        $client->request('GET', '/');
+        self::assertResponseRedirects('/app');
+    }
+}

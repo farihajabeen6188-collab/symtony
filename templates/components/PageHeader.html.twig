@@ -1,0 +1,11 @@
+{% props title, description = null %}
+<div {{ attributes.defaults({class: 'mb-6 flex flex-wrap items-end justify-between gap-4'}) }}>
+    <div class="min-w-0">
+        {% if block('eyebrow') is defined %}<div class="mb-2 flex flex-wrap items-center gap-2">{% block eyebrow %}{% endblock %}</div>{% endif %}
+        <h1 class="t-h1">{{ title }}</h1>
+        {% if description %}<p class="mt-1 t-body">{{ description }}</p>{% endif %}
+    </div>
+    {% if block('actions') is defined %}
+        <div class="flex flex-wrap items-center gap-2">{% block actions %}{% endblock %}</div>
+    {% endif %}
+</div>

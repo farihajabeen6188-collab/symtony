@@ -50,11 +50,11 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] `make check` passes (run as `./dev.ps1 check`; `make` itself is not installed on this machine)
 
 ### Phase 1 — Design system & app shell → `prompts/phase-1-design-system.md`
-- [ ] Tokens (dark + light), self-hosted fonts, logo (horizontal, compact, favicon, loader)
-- [ ] `/styleguide` shows every component in both themes
-- [ ] Shell: sidebar (collapsible), topbar, breadcrumb, env selector, time range, ⌘K stub
-- [ ] Login with seeded user + single workspace; CSRF; security voters scaffolded
-- [ ] Screenshot review at 1440px and 390px: no overflow, no console errors
+- [x] Tokens (dark + light), self-hosted fonts, logo (vectorised investigator mark: full, compact, favicon, scanning loader)
+- [x] `/styleguide` shows every component in both themes
+- [x] Shell: sidebar (collapsible + mobile drawer), topbar, breadcrumb, time range, working ⌘K palette (navigation). Environment selector deferred to Phase 2 (needs applications)
+- [x] Login with seeded user + single workspace; CSRF; workspace voter
+- [x] Browser review at desktop and 375px: no overflow, no console errors
 
 ### Phase 2 — Data model & ingestion → `prompts/phase-2-ingestion.md`
 - [ ] Entities + migrations: Workspace, User, Membership, Application, IngestionCredential, Event, Incident, IncidentEvent, AuditLog
@@ -141,6 +141,13 @@ Postgres 16), Symfony 7.4.23, Symfony AI + MCP bundle 1.0.0-BETA1, `mcp/sdk` 0.9
 verified over STDIO (Inspector CLI) and HTTP (JSON-RPC handshake). `./dev.ps1 check` green: lint, PHPStan L6,
 2 tests / 10 assertions. Perf fix: `vendor/` + `var/` in Docker volumes (request time 11 s → 0.3 s).
 Spike code lives in `src/Spike/` until the AI spike passes, then it is deleted.
+
+**2026-11-18 — Phase 1 (design system & shell).** Tokens (dark + tuned light, Tailwind v4 with the default
+palette removed), Geist + JetBrains Mono self-hosted, brand mark vectorised from the user's investigator
+artwork (hat + glasses, cyan lens glints; hover tip, scanning loader, reduced-motion safe). 13 Twig
+components, 12 Stimulus controllers, uPlot chart, highlight.js. Auth: User/Workspace/Membership entities,
+form login with CSRF + throttling, `symtony:setup` demo account. Check green: 20 tests / 79 assertions,
+PHPStan L6, template token guard.
 
 ## Blockers
 

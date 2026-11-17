@@ -1,0 +1,14 @@
+{#
+  Highlighted, copyable code. lang: php | json | bash | text. Highlighting happens client-side (code controller);
+  without JS the plain escaped code is still readable.
+#}
+{% props code, lang = 'text', title = null, line_numbers = false, max_height = null, copy = true %}
+<div {{ attributes.defaults({class: 'code'}) }} data-controller="code" data-code-lang-value="{{ lang }}" data-code-lines-value="{{ line_numbers ? 'true' : 'false' }}">
+    {% if title or copy %}
+        <div class="flex items-center justify-between gap-2 border-b border-line px-3 py-1.5">
+            <span class="truncate text-2xs text-fg-3">{{ title ?? lang }}</span>
+            {% if copy %}<twig:CopyButton value="{{ code }}" label="Copy code" icon_only />{% endif %}
+        </div>
+    {% endif %}
+    <pre class="{{ max_height ? 'overflow-y-auto' : '' }}" {% if max_height %}data-max-height="{{ max_height }}"{% endif %}><code data-code-target="source" class="language-{{ lang }}">{{ code }}</code></pre>
+</div>

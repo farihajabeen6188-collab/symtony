@@ -172,4 +172,13 @@ controller needs a PSR-17 factory).
 request ~11 s; with volumes ~0.3 s). Run Composer **inside** the container. The host `vendor/` folder
 is not used by the app.
 
-**Chart library:** chosen in Phase 1.
+**Chart library:** uPlot 1.6 (importmap), wrapped by `chart_controller.js`; colors read from tokens at draw time.
+**Code highlighting:** highlight.js core + php/json via `code_controller.js`.
+**Tailwind:** v4.3 via symfonycasts/tailwind-bundle; tokens mapped in `assets/styles/app.css` `@theme inline`
+with `--color-*: initial` (only token colors exist). Classes built dynamically in Twig must be listed in
+`@source inline(...)`. Run `tailwind:build` after template changes (or `tailwind:build --watch`).
+**Brand mark:** `templates/components/Logo.html.twig` — the investigator (hat + glasses) vectorised from the
+user-supplied artwork. `motion="hover|scan|none"`. Use `scan` (or `<twig:Loader>`) only for real work in
+progress. Standalone files: `public/favicon.svg`, `public/brand/symtony-mark.svg`.
+**Auth:** demo account from `SYMTONY_DEMO_EMAIL` / `SYMTONY_DEMO_PASSWORD` via `symtony:setup`.
+`WorkspaceContext::workspace()` is the entry point for every scoped query; `WorkspaceVoter` for subjects.

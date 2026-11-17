@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+{% set current_route = app.request.attributes.get('_route') %}
+{% set active_section = block('active_nav') is defined ? block('active_nav')|trim : current_route %}
+<div class="shell" data-controller="shell palette" data-shell-target="root" {% if app.request.cookies.get('symtony_sidebar') == 'collapsed' %}data-collapsed{% endif %}
+     data-action="keydown.meta+k@window->palette#open:prevent keydown.ctrl+k@window->palette#open:prevent">
+
+    <aside class="sidebar" id="sidebar" aria-label="Primary">
+        <div class="flex h-13 items-center justify-between gap-2 px-4">
+            <a href="{{ path('app_overview') }}" class="flex items-center gap-2 text-fg" aria-label="SYMTONY home">
+                <twig:Logo variant="mark" class="h-6 w-6" />
+                <span class="nav-label text-sm font-[650] tracking-[0.14em]">SYMTONY</span>
+            </a>
+            <button type="button" class="btn btn-ghost btn-icon btn-sm lg:hidden" data-action="shell#closeMobile" aria-label="Close navigation">{{ ux_icon('lucide:x') }}</button>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-2">
+            {% for section, items in nav_groups() %}
+                <div class="mb-3">
+                    <p class="collapse-hide px-5 pb-1 pt-2 text-2xs font-medium text-fg-3">{{ section }}</p>
+                    <ul class="grid gap-px">
+                        {% for item in items %}
+                            <li>
+                                <a href="{{ path(item.route) }}" class="nav-item tooltip" {% if active_section == item.route %}aria-current="page"{% endif %} data-shell-tip="{{ item.label }}">
+                                    {{ ux_icon(item.icon) }}
+                                    <span class="nav-label">{{ item.label }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </nav>
+
+        <div class="grid gap-1 border-t border-line p-2">
+            {% if app.user %}
+                {% set ws = workspace_name() %}
+                <div class="flex items-center gap-2 rounded-md px-2.5 py-2">
+                    <span class="grid h-6 w-6 flex-none place-items-center rounded-sm bg-surface-3 text-2xs font-semibold text-fg">{{ ws|slice(0, 1)|upper }}</span>
+                    <div class="collapse-hide min-w-0">
+                        <p class="truncate text-sm text-fg">{{ ws }}</p>
+                        <p class="text-2xs text-fg-3">Workspace</p>
+                    </div>
+                </div>
+            {% endif %}
+            <a href="https://github.com/farihajabeen6188-collab/symtony#readme" class="nav-item" target="_blank" rel="noopener">
+                {{ ux_icon('lucide:book-open') }}<span class="nav-label">Documentation</span>
+            </a>
+            <button type="button" class="nav-item hidden lg:flex" data-action="shell#toggleCollapse" aria-controls="sidebar" data-shell-target="collapseButton" aria-expanded="true">
+                {{ ux_icon('lucide:panel-left-close') }}<span class="nav-label">Collapse</span>
+            </button>
+        </div>
+    </aside>
+    <div class="sidebar-scrim lg:hidden" data-action="click->shell#closeMobile" data-shell-target="scrim" hidden></div>
+
+    <div class="min-w-0">
+        <header class="topbar">
+            <button type="button" class="btn btn-ghost btn-icon lg:hidden" data-action="shell#openMobile" aria-controls="sidebar" aria-label="Open navigation">{{ ux_icon('lucide:menu') }}</button>
+
+            <nav aria-label="Breadcrumb" class="min-w-0 flex-1">
+                <ol class="flex min-w-0 items-center gap-1.5 text-sm">
+                    {% block breadcrumbs %}
+                        <li class="truncate text-fg">{{ block('title') }}</li>
+                    {% endblock %}
+                </ol>
+            </nav>
+
+            <button type="button" class="btn btn-secondary hidden w-60 justify-start text-fg-3 md:inline-flex" data-action="palette#open">
+                {{ ux_icon('lucide:search') }}<span class="flex-1 text-left font-normal">Search or jump to…</span><kbd class="kbd" data-palette-target="shortcut">Ctrl K</kbd>
+            </button>
+            <button type="button" class="btn btn-ghost btn-icon md:hidden" data-action="palette#open" aria-label="Search">{{ ux_icon('lucide:search') }}</button>
+
+            {% block topbar_filters %}
+            <div class="relative hidden sm:block" data-controller="dropdown">
+                <button type="button" class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">
+                    {{ ux_icon('lucide:clock') }}<span>{{ time_range().label }}</span>{{ ux_icon('lucide:chevron-down', {class: 'text-fg-3'}) }}
+                </button>
+                <div class="popover right-0 mt-1" role="menu" data-dropdown-target="menu" hidden>
+                    {% for range in time_ranges() %}
+                        <form method="post" action="{{ path('app_pref_range') }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('ui-pref') }}">
+                            <input type="hidden" name="_back" value="{{ app.request.requestUri }}">
+                            <button name="range" value="{{ range.value }}" class="menu-item" role="menuitemradio" aria-checked="{{ range == time_range() ? 'true' : 'false' }}">
+                                <span class="flex-1">{{ range.label }}</span>
+                                {% if range == time_range() %}{{ ux_icon('lucide:check', {class: 'text-accent'}) }}{% endif %}
+                            </button>
+                        </form>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endblock %}
+
+            <button type="button" class="btn btn-ghost btn-icon" data-action="theme#cycle" aria-label="Switch theme" data-theme-target="button">
+                <span data-theme-icon="dark">{{ ux_icon('lucide:moon') }}</span>
+                <span data-theme-icon="light" hidden>{{ ux_icon('lucide:sun') }}</span>
+                <span data-theme-icon="system" hidden>{{ ux_icon('lucide:monitor') }}</span>
+            </button>
+
+            {% if app.user %}
+            <div class="relative" data-controller="dropdown">
+                <button type="button" class="grid h-8 w-8 place-items-center rounded-full bg-surface-3 text-xs font-semibold text-fg ring-1 ring-line-strong" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">
+                    {{ app.user.initials }}
+                </button>
+                <div class="popover right-0 mt-1 w-60" role="menu" data-dropdown-target="menu" hidden>
+                    <div class="px-2 py-2">
+                        <p class="text-sm text-fg">{{ app.user.name }}</p>
+                        <p class="truncate text-xs text-fg-3">{{ app.user.email }}</p>
+                    </div>
+                    <hr class="divider my-1">
+                    <a href="{{ path('app_settings') }}" class="menu-item" role="menuitem">{{ ux_icon('lucide:settings') }}Settings</a>
+                    <a href="{{ path('app_styleguide') }}" class="menu-item" role="menuitem">{{ ux_icon('lucide:swatch-book') }}Design system</a>
+                    <a href="{{ path('app_logout') }}" class="menu-item" role="menuitem">{{ ux_icon('lucide:log-out') }}Sign out</a>
+                </div>
+            </div>
+            {% endif %}
+        </header>
+
+        <main id="main" class="page" {% block main_attrs %}{% endblock %}>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {{ include('app/_palette.html.twig') }}
+</div>
+{% endblock %}

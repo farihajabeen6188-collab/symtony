@@ -1,0 +1,7 @@
+{% props value, label = 'Copy', icon_only = false, size = 'sm' %}
+<button type="button" {{ attributes.defaults({class: 'btn btn-ghost ' ~ (size == 'sm' ? 'btn-sm ' : '') ~ (icon_only ? 'btn-icon' : '')}) }}
+        data-controller="clipboard" data-clipboard-value-value="{{ value }}" data-action="clipboard#copy"
+        aria-label="{{ label }}" {% if icon_only %}title="{{ label }}"{% endif %}>
+    <span data-clipboard-target="idle" class="inline-flex items-center gap-1.5">{{ ux_icon('lucide:copy') }}{% if not icon_only %}{{ label }}{% endif %}</span>
+    <span data-clipboard-target="done" class="inline-flex items-center gap-1.5 text-ok" hidden>{{ ux_icon('lucide:check') }}{% if not icon_only %}Copied{% endif %}</span>
+</button>

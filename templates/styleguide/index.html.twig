@@ -1,0 +1,215 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Design system{% endblock %}
+
+{% block content %}
+<twig:PageHeader title="Design system" description="Every component SYMTONY uses, in one place. Values on this page are samples for documentation, not product data.">
+    <twig:block name="actions">
+        <span class="badge badge-outline-dashed">Sample data</span>
+    </twig:block>
+</twig:PageHeader>
+
+<div class="grid gap-6">
+
+    {# ---------------- Color ---------------- #}
+    <section class="panel" aria-labelledby="sg-color">
+        <div class="panel-header"><h2 id="sg-color" class="t-h2">Color</h2><span class="text-xs text-fg-3">Each accent has one meaning</span></div>
+        <div class="panel-body grid gap-6">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                {% for t in [['bg-deep','Deep'],['bg','Background'],['surface','Surface'],['surface-2','Surface 2'],['surface-3','Surface 3'],['fg','Text'],['fg-2','Text 2']] %}
+                    <div><div class="h-12 rounded-md border border-line" style="background: var(--{{ t[0] }})"></div><p class="mt-1.5 text-xs text-fg">{{ t[1] }}</p><p class="t-meta">--{{ t[0] }}</p></div>
+                {% endfor %}
+            </div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {% for t in [['accent','Interactive','Links, primary actions, focus'],['ai','AI-generated','Only for model output'],['blue','Information','Requests, neutral signals'],['ok','Healthy','Passed, resolved'],['warn','Warning','Degraded, medium severity'],['err','Failure','Errors, critical, red tests']] %}
+                    <div class="rounded-md border border-line p-3">
+                        <div class="h-8 rounded-sm" style="background: var(--{{ t[0] }})"></div>
+                        <p class="mt-2 text-sm text-fg">{{ t[1] }}</p>
+                        <p class="text-xs text-fg-3">{{ t[2] }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# ---------------- Type ---------------- #}
+    <section class="panel" aria-labelledby="sg-type">
+        <div class="panel-header"><h2 id="sg-type" class="t-h2">Typography</h2><span class="text-xs text-fg-3">Geist · JetBrains Mono</span></div>
+        <div class="panel-body grid gap-4">
+            <p class="t-display">Every error has a story.</p>
+            <p class="t-h1">Page heading — Checkout fails with CheckViolation</p>
+            <p class="t-h2">Section heading — Root-cause hypotheses</p>
+            <p class="t-h3">Subsection heading — Supporting evidence</p>
+            <p class="t-body">Body copy explains what happened in plain language and stays under 72 characters per line so long explanations remain easy to read.</p>
+            <p class="t-label">Label — Assigned to</p>
+            <p class="t-meta">EV-7 · 2026-11-17 14:02:31.482 · trace 4bf92f3577b34da6</p>
+        </div>
+    </section>
+
+    {# ---------------- Buttons & badges ---------------- #}
+    <section class="panel" aria-labelledby="sg-actions">
+        <div class="panel-header"><h2 id="sg-actions" class="t-h2">Buttons and badges</h2></div>
+        <div class="panel-body grid gap-5">
+            <div class="flex flex-wrap items-center gap-2">
+                <button class="btn btn-primary">{{ ux_icon('lucide:play') }}Start investigation</button>
+                <button class="btn btn-secondary">{{ ux_icon('lucide:download') }}Export</button>
+                <button class="btn btn-ghost">Cancel</button>
+                <button class="btn btn-danger">{{ ux_icon('lucide:trash-2') }}Revoke token</button>
+                <button class="btn btn-ai">{{ ux_icon('lucide:sparkles') }}Ask the assistant</button>
+                <button class="btn btn-secondary" data-loading>Saving</button>
+                <button class="btn btn-secondary" disabled>Disabled</button>
+                <button class="btn btn-secondary btn-icon" aria-label="More">{{ ux_icon('lucide:ellipsis') }}</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="badge badge-err-solid">Critical</span>
+                <span class="badge badge-err">High</span>
+                <span class="badge badge-warn">Medium</span>
+                <span class="badge badge-blue">Low</span>
+                <span class="badge badge-neutral">Info</span>
+                <span class="mx-2 h-4 w-px bg-line"></span>
+                <span class="badge badge-accent">New</span>
+                <span class="badge badge-warn">Investigating</span>
+                <span class="badge badge-ai">Identified</span>
+                <span class="badge badge-ok">Resolved</span>
+                <span class="badge badge-err">Reopened</span>
+                <span class="mx-2 h-4 w-px bg-line"></span>
+                <span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}AI · qwen3.5</span>
+                <span class="badge badge-neutral">{{ ux_icon('lucide:cpu') }}Heuristic</span>
+                <span class="badge badge-ok">{{ ux_icon('lucide:shield-check') }}Verified</span>
+                <span class="badge badge-outline-dashed">Inferred</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-5 text-sm text-fg-2">
+                <span class="flex items-center gap-2"><span class="dot dot-live text-ok"></span>Receiving events</span>
+                <span class="flex items-center gap-2"><span class="dot text-warn"></span>Silent for 12m</span>
+                <span class="flex items-center gap-2"><span class="dot text-fg-3"></span>Waiting for first event</span>
+                <span class="flex items-center gap-1"><kbd class="kbd">Ctrl</kbd><kbd class="kbd">K</kbd></span>
+            </div>
+        </div>
+    </section>
+
+    {# ---------------- Metrics ---------------- #}
+    <section aria-labelledby="sg-metrics">
+        <h2 id="sg-metrics" class="mb-3 t-h2">Metric cards</h2>
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <twig:MetricCard label="Open incidents" value="3" hint="1 critical" />
+            <twig:MetricCard label="Events processed" value="{{ 48210|compact }}" hint="Last 24 hours" />
+            <twig:MetricCard label="Median investigation" value="41" unit="s" hint="6 completed" />
+            <twig:MetricCard label="Critical incidents" />
+        </div>
+    </section>
+
+    {# ---------------- Chart ---------------- #}
+    <section class="panel" aria-labelledby="sg-chart">
+        <div class="panel-header"><h2 id="sg-chart" class="t-h2">Time series</h2><span class="text-xs text-fg-3">uPlot · themed from tokens</span></div>
+        <div class="panel-body">
+            <div class="h-48" data-controller="chart" data-chart-series-value="{{ sample_series|json_encode }}" data-chart-label-value="Incidents" data-chart-tone-value="err"></div>
+        </div>
+    </section>
+
+    {# ---------------- Forms ---------------- #}
+    <section class="panel" aria-labelledby="sg-forms">
+        <div class="panel-header"><h2 id="sg-forms" class="t-h2">Forms</h2></div>
+        <form class="panel-body grid max-w-xl gap-4" onsubmit="return false">
+            <div class="field"><label class="t-label" for="sg-name">Application name</label><input id="sg-name" class="input" placeholder="Shop API"><p class="field-help">Shown in incidents and timelines.</p></div>
+            <div class="field"><label class="t-label" for="sg-env">Environment</label><select id="sg-env" class="select"><option>production</option><option>staging</option></select></div>
+            <div class="field"><label class="t-label" for="sg-bad">Endpoint</label><input id="sg-bad" class="input" aria-invalid="true" value="htp://"><p class="field-error">Enter a full URL starting with http:// or https://</p></div>
+            <div class="field"><label class="t-label" for="sg-notes">Notes</label><textarea id="sg-notes" class="textarea" placeholder="What did you try?"></textarea></div>
+            <label class="flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" checked> Redact email addresses</label>
+        </form>
+    </section>
+
+    {# ---------------- Table ---------------- #}
+    <section class="panel overflow-hidden" aria-labelledby="sg-table">
+        <div class="panel-header"><h2 id="sg-table" class="t-h2">Data table</h2></div>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead><tr><th aria-sort="descending"><a href="#">Last seen {{ ux_icon('lucide:arrow-down') }}</a></th><th>Incident</th><th>Severity</th><th>Status</th><th class="text-right">Events</th></tr></thead>
+                <tbody>
+                    <tr><td class="t-meta">4m ago</td><td><span class="t-meta mr-2">SYM-142</span><span class="text-fg">CheckViolationException in InventoryService</span></td><td><span class="badge badge-err-solid">Critical</span></td><td><span class="badge badge-ai">Identified</span></td><td class="num text-right">87</td></tr>
+                    <tr><td class="t-meta">2h ago</td><td><span class="t-meta mr-2">SYM-139</span><span class="text-fg">Timeout calling payment-api</span></td><td><span class="badge badge-warn">Medium</span></td><td><span class="badge badge-accent">New</span></td><td class="num text-right">12</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {# ---------------- Tabs ---------------- #}
+    <section class="panel" aria-labelledby="sg-tabs" data-controller="tabs">
+        <div class="panel-header"><h2 id="sg-tabs" class="t-h2">Tabs</h2></div>
+        <div class="px-4">
+            <div class="tabs" role="tablist">
+                <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select">Timeline</button>
+                <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select">Events <span class="count">87</span></button>
+                <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select">Notes</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div role="tabpanel" data-tabs-target="panel" class="text-sm text-fg-2">Timeline panel content.</div>
+            <div role="tabpanel" data-tabs-target="panel" class="text-sm text-fg-2" hidden>Events panel content.</div>
+            <div role="tabpanel" data-tabs-target="panel" class="text-sm text-fg-2" hidden>Notes panel content.</div>
+        </div>
+    </section>
+
+    {# ---------------- Code ---------------- #}
+    <section class="grid gap-4 lg:grid-cols-2" aria-label="Code">
+        <twig:CodeBlock code="{{ sample_php }}" lang="php" title="CheckoutStaleStockTest.php" line_numbers />
+        <twig:CodeBlock code="{{ sample_json }}" lang="json" title="Raw event" />
+    </section>
+
+    {# ---------------- Overlays ---------------- #}
+    <section class="panel" aria-labelledby="sg-overlays" data-controller="dialog">
+        <div class="panel-header"><h2 id="sg-overlays" class="t-h2">Overlays and feedback</h2></div>
+        <div class="panel-body flex flex-wrap items-center gap-2">
+            <button class="btn btn-secondary" data-action="dialog#open" data-dialog-id-param="sg-modal">Open modal</button>
+            <button class="btn btn-secondary" data-action="dialog#open" data-dialog-id-param="sg-drawer">Open drawer</button>
+            <form action="#" onsubmit="event.preventDefault(); window.dispatchEvent(new CustomEvent('symtony:toast', {detail: {message: 'Token revoked', type: 'success'}}))"
+                  data-controller="confirm" data-confirm-title-value="Revoke this token?" data-confirm-message-value="Applications using it will stop sending events immediately." data-confirm-label-value="Revoke token">
+                <button class="btn btn-danger">Revoke token…</button>
+            </form>
+            <button class="btn btn-secondary" onclick="window.dispatchEvent(new CustomEvent('symtony:toast', {detail: {message: 'Investigation started', type: 'success'}}))">Show toast</button>
+            <div class="relative" data-controller="dropdown">
+                <button class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">Dropdown {{ ux_icon('lucide:chevron-down') }}</button>
+                <div class="popover mt-1" role="menu" data-dropdown-target="menu" hidden>
+                    <button class="menu-item" role="menuitem">{{ ux_icon('lucide:user-plus') }}Assign to me</button>
+                    <button class="menu-item" role="menuitem">{{ ux_icon('lucide:circle-check') }}Mark resolved</button>
+                </div>
+            </div>
+            <span class="tooltip btn btn-ghost" tabindex="0" data-tip="Inferred from time proximity">Hover for tooltip</span>
+        </div>
+
+        <twig:Modal id="sg-modal" title="Start investigation" description="SYMTONY collects evidence, runs heuristics, then asks the model.">
+            <p class="t-body">The investigation runs in the background. Each stage appears as it completes.</p>
+            <twig:block name="footer">
+                <form method="dialog"><button class="btn btn-secondary">Cancel</button></form>
+                <form method="dialog"><button class="btn btn-primary">Start</button></form>
+            </twig:block>
+        </twig:Modal>
+        <twig:Drawer id="sg-drawer" title="EV-7 · exception" subtitle="2026-11-17 14:02:31.482 · inventory">
+            <dl class="grid grid-cols-[8rem_1fr] gap-y-2 text-sm">
+                <dt class="text-fg-3">Exception</dt><dd class="mono text-xs text-err">Doctrine\DBAL\Exception\DriverException</dd>
+                <dt class="text-fg-3">Trace ID</dt><dd class="mono text-xs">4bf92f3577b34da6a3ce929d0e0e4736</dd>
+                <dt class="text-fg-3">Duration</dt><dd class="num">{{ 12.4|duration }}</dd>
+            </dl>
+        </twig:Drawer>
+    </section>
+
+    {# ---------------- States ---------------- #}
+    <section class="grid gap-4 lg:grid-cols-3" aria-label="States">
+        <div class="panel"><twig:EmptyState title="No incidents" illustration="no-incidents" compact>Incidents appear when a connected application reports an error.</twig:EmptyState></div>
+        <div class="panel p-4"><p class="mb-3 t-label">Loading</p><twig:Skeleton rows="5" /></div>
+        <div class="grid content-start gap-3">
+            <twig:ErrorState title="Hypothesis generation failed" detail="HttpException: 503 Service Unavailable (router.huggingface.co)">The model provider did not respond. Heuristic findings are still available.</twig:ErrorState>
+        </div>
+    </section>
+
+    {# ---------------- Brand ---------------- #}
+    <section class="panel" aria-labelledby="sg-brand">
+        <div class="panel-header"><h2 id="sg-brand" class="t-h2">Brand</h2></div>
+        <div class="panel-body flex flex-wrap items-center gap-10 text-fg">
+            <twig:Logo variant="full" class="h-8" />
+            <twig:Logo variant="mark" class="h-10 w-10" />
+            <img src="{{ asset('favicon.svg') }}" alt="Favicon" class="h-8 w-8">
+            <span class="inline-flex items-center gap-3 text-sm text-fg-2"><twig:Loader class="h-6 w-16" />Loader</span>
+        </div>
+    </section>
+</div>
+{% endblock %}

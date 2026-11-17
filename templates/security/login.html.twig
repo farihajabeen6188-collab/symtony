@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block body %}
+<main class="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <section class="flex flex-col justify-between px-6 py-8 sm:px-12">
+        <a href="{{ path('app_home') }}" class="text-fg"><twig:Logo variant="full" class="h-7" /></a>
+
+        <div class="mx-auto w-full max-w-sm py-12">
+            <h1 class="t-h1">Sign in</h1>
+            <p class="mt-1 t-body">Open your workspace to review incidents and investigations.</p>
+
+            {% if error %}
+                <div class="mt-6 flex gap-2 rounded-md border border-err/30 bg-err-soft px-3 py-2.5 text-sm text-err" role="alert">
+                    {{ ux_icon('lucide:circle-alert', {class: 'mt-0.5 h-4 w-4 flex-none'}) }}
+                    <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+                </div>
+            {% endif %}
+
+            <form method="post" class="mt-6 grid gap-4" data-turbo="false">
+                <div class="field">
+                    <label for="email" class="t-label">Email</label>
+                    <input type="email" id="email" name="email" value="{{ last_email }}" class="input" autocomplete="username" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password" class="t-label">Password</label>
+                    <input type="password" id="password" name="password" class="input" autocomplete="current-password" required>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-fg-2">
+                    <input type="checkbox" name="_remember_me" class="checkbox"> Keep me signed in
+                </label>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <button class="btn btn-primary btn-lg w-full" type="submit">Sign in</button>
+            </form>
+
+            {% if demo %}
+                <div class="mt-8 rounded-lg border border-dashed border-line-strong p-4">
+                    <p class="text-sm font-medium text-fg">Local demo account</p>
+                    <p class="mt-1 text-xs text-fg-3">Created by <code class="text-fg-2">symtony:setup</code>. Shown only outside production.</p>
+                    <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                        <dt class="text-fg-3">Email</dt><dd class="mono text-fg-2">{{ demo.email }}</dd>
+                        <dt class="text-fg-3">Password</dt><dd class="mono text-fg-2">{{ demo.password }}</dd>
+                    </dl>
+                </div>
+            {% endif %}
+        </div>
+
+        <p class="text-xs text-fg-3">Every error has a story.</p>
+    </section>
+
+    <aside class="relative hidden overflow-hidden border-l border-line bg-bg-deep lg:block" aria-hidden="true">
+        <twig:Illustration name="trace" class="absolute inset-0 h-full w-full" />
+        <div class="absolute bottom-12 left-12 right-12 max-w-md">
+            <p class="text-xl font-semibold tracking-tight text-fg">See the signal. Find the cause.</p>
+            <p class="mt-2 t-body">SYMTONY reconstructs what happened before a failure, separates evidence from inference, and proves its regression tests.</p>
+        </div>
+    </aside>
+</main>
+{% endblock %}
