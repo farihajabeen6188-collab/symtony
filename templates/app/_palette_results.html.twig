@@ -1,0 +1,64 @@
+{# Server results for the command palette. Each item is a link or a POST form button (actions); all are palette items. #}
+{% set words = q|lower|split(' ')|filter(w => w) %}
+{% import _self as m %}
+{% macro group(label) %}<li class="px-2 pb-1 pt-3 text-2xs font-medium text-fg-3" role="presentation">{{ label }}</li>{% endmacro %}
+
+{% set actions = [] %}
+{% if r.context_incident %}
+    {% set actions = actions|merge([{kind: 'post', label: 'Start investigation of ' ~ r.context_incident.reference, icon: 'lucide:scan-search', action: path('app_incident_investigate', {number: r.context_incident.number}), token: csrf_token('incident-action'), keywords: 'investigate start investigation analyze root cause'}]) %}
+{% endif %}
+{% for a in r.demo_apps %}
+    {% set actions = actions|merge([{kind: 'post', label: 'Run failure scenario on ' ~ a.name, icon: 'lucide:flame', action: path('app_demo_scenario', {id: a.id}), token: csrf_token('demo-scenario'), keywords: 'run failure scenario demo checkout'}]) %}
+{% endfor %}
+{% set actions = actions|merge([{kind: 'link', label: 'Connect an application', icon: 'lucide:plus', href: path('app_applications_new'), keywords: 'connect new application add install'}]) %}
+{% if q %}
+    {% set actions = actions|merge([{kind: 'link', label: 'Search events for “' ~ q ~ '”', icon: 'lucide:list-filter', href: path('app_events', {q: q}), keywords: q ~ ' search events'}]) %}
+{% endif %}
+
+{% set shown = [] %}{% for a in actions %}{% set ok = true %}{% for w in words %}{% if w not in (a.label ~ ' ' ~ a.keywords)|lower %}{% set ok = false %}{% endif %}{% endfor %}{% if ok %}{% set shown = shown|merge([a]) %}{% endif %}{% endfor %}
+{% if shown is not empty %}
+    {{ m.group('Actions') }}
+    {% for a in shown %}
+        <li>
+            {% if a.kind == 'post' %}
+                <form method="post" action="{{ a.action }}" data-turbo-frame="_top">
+                    <input type="hidden" name="_token" value="{{ a.token }}">
+                    <button class="menu-item w-full" role="option" data-palette-target="item" data-keywords="">{{ ux_icon(a.icon) }}<span class="flex-1 text-left">{{ a.label }}</span><span class="text-2xs text-fg-3">Action</span></button>
+                </form>
+            {% else %}
+                <a href="{{ a.href }}" class="menu-item" role="option" data-palette-target="item" data-keywords="">{{ ux_icon(a.icon) }}<span class="flex-1">{{ a.label }}</span><span class="text-2xs text-fg-3">Action</span></a>
+            {% endif %}
+        </li>
+    {% endfor %}
+{% endif %}
+
+{% if r.incidents is not empty %}
+    {{ m.group('Incidents') }}
+    {% for i in r.incidents %}
+        <li><a href="{{ path('app_incident_show', {number: i.number}) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="" data-recent="{{ i.reference }} · {{ i.title|slice(0, 60) }}">{{ ux_icon('lucide:siren') }}<span class="mono text-xs text-fg-2">{{ i.reference }}</span><span class="min-w-0 flex-1 truncate">{{ i.title }}</span><span class="text-2xs text-fg-3">{{ i.status.value }}</span></a></li>
+    {% endfor %}
+{% endif %}
+
+{% if r.investigations is not empty %}
+    {{ m.group('Investigations') }}
+    {% for v in r.investigations %}
+        <li><a href="{{ path('app_investigation_show', {id: v.id}) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="" data-recent="{{ v.shortId }} · {{ v.incident.reference }}">{{ ux_icon('lucide:scan-search') }}<span class="mono text-xs text-fg-2">{{ v.shortId }}</span><span class="flex-1 truncate">Investigation of {{ v.incident.reference }}</span><span class="text-2xs text-fg-3">{{ v.status.value }}</span></a></li>
+    {% endfor %}
+{% endif %}
+
+{% if r.applications is not empty %}
+    {{ m.group('Applications') }}
+    {% for a in r.applications %}
+        <li><a href="{{ path('app_applications_show', {id: a.id}) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="" data-recent="{{ a.name }}">{{ ux_icon('lucide:boxes') }}<span class="flex-1 truncate">{{ a.name }}</span><span class="mono text-2xs text-fg-3">{{ a.slug }}</span></a></li>
+    {% endfor %}
+{% endif %}
+
+{% if r.event or r.trace %}
+    {{ m.group('Events') }}
+    {% if r.event %}
+        <li><a href="{{ path('app_events', {event: r.event.id, trace_id: r.event.traceId}) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="">{{ ux_icon('lucide:activity') }}<span class="min-w-0 flex-1 truncate">{{ r.event.name ?? r.event.message }}</span><span class="text-2xs text-fg-3">{{ r.event.occurredAt|ago }}</span></a></li>
+    {% endif %}
+    {% if r.trace %}
+        <li><a href="{{ path('app_events', {trace_id: r.trace}) }}" class="menu-item" role="option" data-palette-target="item" data-keywords="">{{ ux_icon('lucide:git-commit-horizontal') }}<span class="flex-1 truncate">Events of trace <span class="mono">{{ r.trace }}</span></span></a></li>
+    {% endif %}
+{% endif %}

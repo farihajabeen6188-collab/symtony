@@ -4,6 +4,8 @@
 {% set current_route = app.request.attributes.get('_route') %}
 {% set active_section = block('active_nav') is defined ? block('active_nav')|trim : current_route %}
 <div class="shell" data-controller="shell palette" data-shell-target="root" {% if app.request.cookies.get('symtony_sidebar') == 'collapsed' %}data-collapsed{% endif %}
+     data-palette-url-value="{{ path('app_palette') }}"
+     data-palette-context-value="{{ app.request.attributes.get('_route') == 'app_incident_show' ? 'incident:' ~ app.request.attributes.get('number') : '' }}"
      data-action="keydown.meta+k@window->palette#open:prevent keydown.ctrl+k@window->palette#open:prevent">
 
     <aside class="sidebar" id="sidebar" aria-label="Primary">
