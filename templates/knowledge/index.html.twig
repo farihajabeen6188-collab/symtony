@@ -1,0 +1,63 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Knowledge Base{% endblock %}
+
+{% block content %}
+<twig:PageHeader title="Knowledge Base" description="Resolved incidents and what fixed them. New investigations search this history and cite matches as evidence." />
+
+<div class="panel overflow-hidden">
+    <form method="get" class="flex flex-wrap items-center gap-3 border-b border-line p-3" data-controller="autosubmit" data-turbo-action="advance">
+        <label class="sr-only" for="kq">Search resolved incidents</label>
+        <div class="relative w-full sm:w-80">
+            {{ ux_icon('lucide:search', {class: 'pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-fg-3'}) }}
+            <input id="kq" name="q" value="{{ result.query }}" class="input h-9 w-full pl-8" placeholder="Exception, service, table, cache key…" data-action="input->autosubmit#debounced">
+        </div>
+        <p class="text-xs text-fg-3">
+            {% if result.method == 'keyword' %}Keyword search (Postgres full-text). Scores are ts_rank: relative within one search, not a probability.
+            {% else %}Semantic search ({{ result.method }}). Scores are cosine similarity.{% endif %}
+        </p>
+    </form>
+
+    {% if result.entries is empty %}
+        {% if result.query %}
+            <twig:EmptyState title="No resolved incident matches" illustration="no-results">Nothing in {{ resolved }} resolved incident{{ resolved == 1 ? '' : 's' }} matches "{{ result.query }}". Try an exception class, a service or a table name.</twig:EmptyState>
+        {% else %}
+            <twig:EmptyState title="Nothing resolved yet" illustration="no-results">
+                When an incident is resolved with a resolution note, it becomes searchable history here and in new investigations.
+                <twig:block name="actions"><a href="{{ path('app_incidents') }}" class="btn btn-primary">Open incidents</a></twig:block>
+            </twig:EmptyState>
+        {% endif %}
+    {% else %}
+        <ul class="divide-y divide-line">
+            {% for e in result.entries %}
+                {% set i = e.incident %}
+                <li class="grid grid-cols-[minmax(0,1fr)] gap-2 p-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ path('app_incident_show', {number: i.number}) }}" class="mono text-sm text-accent hover:underline">{{ i.reference }}</a>
+                        <span class="badge badge-ok">Resolved{% if i.resolvedAt %} {{ i.resolvedAt|ago }}{% endif %}</span>
+                        <span class="badge badge-neutral">{{ i.service }}</span>
+                        {% if e.score is not null %}<span class="t-meta ml-auto" title="ts_rank, relative within this search">score {{ e.score }}</span>{% endif %}
+                    </div>
+                    <p class="min-w-0 truncate font-medium text-fg">{{ i.title }}</p>
+                    {% if i.exceptionClass %}<p class="mono truncate text-xs text-fg-2">{{ i.exceptionClass }}</p>{% endif %}
+                    {% if e.resolution %}
+                        <div class="rounded-md border border-line bg-surface-2 p-3">
+                            <p class="t-label mb-1">What fixed it</p>
+                            <p class="whitespace-pre-line break-words text-sm text-fg">{{ e.resolution|length > 600 ? e.resolution|slice(0, 600) ~ '…' : e.resolution }}</p>
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-fg-3">No resolution note was written.</p>
+                    {% endif %}
+                    <div class="flex flex-wrap items-center gap-2">
+                        {% if e.shared is not empty %}
+                            <span class="text-xs text-fg-3">Matched on</span>
+                            {% for t in e.shared %}<span class="badge badge-outline-dashed">{{ t }}</span>{% endfor %}
+                        {% endif %}
+                        {% if e.investigation %}<a href="{{ path('app_investigation_show', {id: e.investigation}) }}" class="btn btn-ghost btn-sm ml-auto">{{ ux_icon('lucide:scan-search') }}Investigation</a>{% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}
