@@ -1,0 +1,73 @@
+{# Assistant panel (Turbo frame). Answers come only from the model, from the incident's evidence; nothing is canned. #}
+<turbo-frame id="assistant-panel">
+    <section class="panel" aria-labelledby="assistant-h">
+        <div class="panel-header">
+            <h2 id="assistant-h" class="t-h3 inline-flex items-center gap-2">{{ ux_icon('lucide:sparkles', {class: 'text-ai'}) }}Ask about {{ incident.reference }}</h2>
+        </div>
+
+        {% if messages is not empty %}
+            <ol class="grid max-h-[32rem] gap-3 overflow-y-auto p-4" aria-label="Conversation">
+                {% for m in messages %}
+                    {% if m.role == 'user' %}
+                        <li class="justify-self-end rounded-lg bg-surface-2 px-3 py-2 text-sm text-fg">{{ m.content }}</li>
+                    {% elseif m.role == 'error' %}
+                        <li class="rounded-lg border border-err/40 bg-err-soft px-3 py-2 text-sm text-fg" role="alert">{{ m.content }}</li>
+                    {% else %}
+                        <li class="grid gap-2 rounded-lg border border-ai/30 px-3 py-2">
+                            <p class="whitespace-pre-line break-words text-sm text-fg">{{ m.content }}</p>
+                            {% if m.toolCalls is not empty %}
+                                <details class="text-xs text-fg-3">
+                                    <summary class="cursor-pointer">Called {{ m.toolCalls|length }} tool{{ m.toolCalls|length == 1 ? '' : 's' }}</summary>
+                                    <ul class="mt-1 grid gap-0.5">{% for call in m.toolCalls %}<li class="mono">{{ call }}</li>{% endfor %}</ul>
+                                </details>
+                            {% else %}
+                                <p class="text-xs text-fg-3">Answered without reading evidence through tools.</p>
+                            {% endif %}
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                {% for ref in m.evidence %}
+                                    {% if m.investigation %}<a class="badge badge-neutral mono" href="{{ path('app_investigation_show', {id: m.investigation.id}) }}#evidence">{{ ref }}</a>{% else %}<span class="badge badge-neutral mono">{{ ref }}</span>{% endif %}
+                                {% endfor %}
+                                <span class="badge badge-ai ml-auto">{{ m.source|slice(4) }}</span>
+                            </div>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        {% endif %}
+
+        <div class="border-t border-line p-4">
+            {% if unavailable %}
+                <p class="text-sm text-fg-2">{{ unavailable }}</p>
+                {% if investigation is null %}
+                    <p class="mt-2 text-xs text-fg-3">Use Investigate on the incident page.</p>
+                {% else %}
+                    <a href="{{ path('app_settings') }}" class="btn btn-secondary btn-sm mt-3">{{ ux_icon('lucide:settings') }}AI settings</a>
+                {% endif %}
+            {% else %}
+                {% set token = csrf_token('assistant') %}
+                {% if messages is empty %}
+                    <p class="t-label mb-2">Try</p>
+                    <div class="mb-3 flex flex-wrap gap-1.5">
+                        {% for q in ['Why did this happen?', 'What happened, in order?', 'Which service failed first?', 'What evidence supports the leading hypothesis?', 'Have we seen this before?', 'What else was affected?'] %}
+                            <form method="post" action="{{ path('app_assistant_ask', {number: incident.number}) }}" data-controller="busy" data-action="submit->busy#start">
+                                <input type="hidden" name="_token" value="{{ token }}"><input type="hidden" name="question" value="{{ q }}">
+                                <button class="btn btn-ghost btn-sm border border-line" data-busy-target="button">{{ q }}</button>
+                            </form>
+                        {% endfor %}
+                        {% if investigation %}<a class="btn btn-ghost btn-sm border border-line" href="{{ path('app_investigation_show', {id: investigation.id}) }}#repro-h" data-turbo-frame="_top">Generate a regression test</a>{% endif %}
+                    </div>
+                {% endif %}
+                <form method="post" action="{{ path('app_assistant_ask', {number: incident.number}) }}" class="grid gap-2" data-controller="busy" data-action="submit->busy#start">
+                    <input type="hidden" name="_token" value="{{ token }}">
+                    <label for="assistant-q-{{ incident.number }}" class="sr-only">Question</label>
+                    <textarea id="assistant-q-{{ incident.number }}" name="question" rows="2" maxlength="1000" required class="textarea" placeholder="Ask about this incident's evidence…"></textarea>
+                    {% if error %}<p class="text-sm text-err" role="alert">{{ error }}</p>{% endif %}
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-2xs text-fg-3">Answers come from the model and cite evidence. Check the refs.</span>
+                        <button class="btn btn-primary btn-sm" data-busy-target="button">{{ ux_icon('lucide:send') }}Ask</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+</turbo-frame>

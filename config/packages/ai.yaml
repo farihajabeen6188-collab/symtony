@@ -32,6 +32,18 @@ ai:
                     - 'App\Infrastructure\AI\Tool\SourceFileTool'
             max_tool_calls: 12
 
+        # Assistant panel on incident/investigation pages: answers questions from the same evidence tools.
+        assistant:
+            platform: 'ai.platform.huggingface'
+            model: '%env(SYMTONY_AI_MODEL)%'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/assistant.md'
+            tools:
+                services:
+                    - 'App\Infrastructure\AI\Tool\EvidenceTools'
+            max_tool_calls: 8
+            fault_tolerant_toolbox: true
+
         # Phase 0 spike agent (verifies tool calling + structured output; removed once a key is verified)
         spike:
             platform: 'ai.platform.huggingface'

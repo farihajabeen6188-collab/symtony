@@ -186,6 +186,7 @@
                 <dd class="flex min-w-0 items-center gap-1"><code class="truncate text-2xs text-fg-3">{{ incident.fingerprint|slice(0, 16) }}…</code><twig:CopyButton value="{{ incident.fingerprint }}" label="Copy fingerprint" icon_only /></dd>
             </dl>
         </section>
+        <turbo-frame id="assistant-panel" src="{{ path('app_assistant', {number: incident.number}) }}" loading="lazy"><section class="panel panel-body text-sm text-fg-3">Loading assistant…</section></turbo-frame>
     </aside>
 </div>
 {% endblock %}
