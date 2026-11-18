@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\TestLab;
 
+use App\Application\Notification\Notifier;
 use App\Application\Query\InvestigationQueries;
 use App\Domain\Investigation\Investigation;
 use App\Domain\TestLab\RegressionTest;
@@ -36,6 +37,7 @@ final class TestLab
         private readonly StaticChecker $checker,
         private readonly MessageBusInterface $bus,
         private readonly AuditLogger $audit,
+        private readonly Notifier $notifier,
     ) {
     }
 
@@ -156,6 +158,11 @@ final class TestLab
             $done = false;
         }
         $this->em->flush();
+
+        if ($done && [] !== $runs && self::VERIFIED === $this->verdict($runs[0]->getTest())['status']) {
+            $this->notifier->testVerified($runs[0]->getTest(), $batchId);
+            $this->em->flush();
+        }
 
         return $done;
     }

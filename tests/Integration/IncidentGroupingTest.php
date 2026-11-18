@@ -134,7 +134,7 @@ final class IncidentGroupingTest extends KernelTestCase
         $this->em->flush();
 
         // Two real processes race over the same backlog.
-        $cmd = ['php', 'bin/console', 'symtony:incidents:group-pending', '--env=test', '--no-debug'];
+        $cmd = ['php', 'bin/console', 'symtony:incidents:group-pending', '--env=test']; // debug: the cache is checked for freshness
         $a = new Process($cmd, static::getContainer()->getParameter('kernel.project_dir'));
         $b = new Process($cmd, static::getContainer()->getParameter('kernel.project_dir'));
         $a->start();

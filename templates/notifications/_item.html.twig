@@ -1,0 +1,12 @@
+{# One notification: a POST button (marks it read, then opens its page). #}
+<form method="post" action="{{ path('app_notification_open', {id: n.id}) }}" data-turbo-frame="_top">
+    <input type="hidden" name="_token" value="{{ token }}">
+    <button class="flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left hover:bg-surface-2 {{ n.read ? '' : 'bg-surface-2/60' }}" role="menuitem">
+        <span class="dot mt-1.5 {{ n.tone == 'err' ? 'text-err' : (n.tone == 'warn' ? 'text-warn' : 'text-ok') }} {{ n.read ? 'opacity-30' : '' }}" aria-hidden="true"></span>
+        <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm {{ n.read ? 'text-fg-2' : 'font-medium text-fg' }}">{{ n.title }}</span>
+            <span class="line-clamp-2 block text-xs text-fg-3">{{ n.body }}</span>
+            <span class="t-meta block">{{ n.createdAt|ago }}{% if not n.read %} · <span class="sr-only">unread</span><span aria-hidden="true">new</span>{% endif %}</span>
+        </span>
+    </button>
+</form>

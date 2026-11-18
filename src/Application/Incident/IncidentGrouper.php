@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Incident;
 
+use App\Application\Notification\Notifier;
 use App\Domain\Event\Event;
 use App\Domain\Incident\Incident;
 use App\Domain\Incident\IncidentSeverity;
@@ -30,6 +31,7 @@ final class IncidentGrouper
         private readonly AuditLogger $audit,
         #[Target('incident')] private readonly WorkflowInterface $workflow,
         private readonly LoggerInterface $logger,
+        private readonly Notifier $notifier,
     ) {
     }
 
@@ -147,6 +149,14 @@ final class IncidentGrouper
             $incident->changeSeverity($severity);
         }
         $incident->recordOccurrences(\count($linked), $linked[0]->getOccurredAt(), $last->getOccurredAt(), $last->getId());
+        if (!$incident->isSeeded()) {
+            if ($reopened) {
+                $this->notifier->incidentReopened($incident);
+            }
+            if (IncidentSeverity::Critical === $incident->getSeverity()) {
+                $this->notifier->criticalIncident($incident); // once per incident (deduplicated)
+            }
+        }
         $this->em->flush();
 
         return ['linked' => \count($linked), 'created' => $created, 'reopened' => $reopened];

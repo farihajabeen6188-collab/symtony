@@ -15,6 +15,8 @@ use App\Domain\Investigation\Investigation;
 use App\Domain\TestLab\RegressionTest;
 use App\Domain\TestLab\TestExecution;
 use App\Domain\Workspace\User;
+use App\Domain\Workspace\WorkspaceMembership;
+use App\Domain\Workspace\WorkspaceRole;
 use App\Infrastructure\AI\AiSettings;
 use App\Infrastructure\AI\EvidenceSession;
 use App\Infrastructure\Security\DemoAccountProvisioner;
@@ -53,6 +55,8 @@ final class TestLabTest extends KernelTestCase
 
         $this->user = static::getContainer()->get(DemoAccountProvisioner::class)->provision()['user'];
         $app = (new EventFactory($this->em))->application(null, 'shop');
+        $this->em->persist(new WorkspaceMembership($this->user, $app->getWorkspace(), WorkspaceRole::Member));
+        $this->em->flush();
         $incident = (new StaleCacheScenario($this->em, $app))->create(static::getContainer()->get(IncidentGrouper::class));
         $this->inv = static::getContainer()->get(StartInvestigation::class)($incident, null, 'system');
         static::getContainer()->get(InvestigationRunner::class)->run($this->inv);
@@ -163,6 +167,8 @@ final class TestLabTest extends KernelTestCase
 
         $verdict = $this->lab()->verdict($test);
         self::assertSame($expected, $verdict['status']);
+        $notified = (int) $this->em->getConnection()->fetchOne("SELECT count(*) FROM notification WHERE kind = 'test.verified'");
+        self::assertSame(TestLab::VERIFIED === $expected ? 1 : 0, $notified, 'Only a verified reproduction is announced');
         self::assertNotNull($verdict['buggy']?->getOutput(), 'The real output is stored');
     }
 

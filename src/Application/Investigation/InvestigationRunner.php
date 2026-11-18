@@ -7,6 +7,7 @@ namespace App\Application\Investigation;
 use App\Application\Investigation\Analyzer\Analyzer;
 use App\Application\Investigation\Analyzer\StaleCacheAnalyzer;
 use App\Application\Knowledge\KnowledgeRetriever;
+use App\Application\Notification\Notifier;
 use App\Application\Knowledge\SimilarIncident;
 use App\Application\Timeline\Timeline;
 use App\Application\Timeline\TimelineBuilder;
@@ -45,6 +46,7 @@ final class InvestigationRunner
         private readonly AuditLogger $audit,
         #[Target('incident')] private readonly WorkflowInterface $workflow,
         private readonly LoggerInterface $logger,
+        private readonly Notifier $notifier,
     ) {
     }
 
@@ -195,12 +197,14 @@ final class InvestigationRunner
                 }
                 $this->audit->write($investigation->getWorkspace(), 'system', 'investigator', 'investigation.completed', $investigation,
                     ['reference' => $incident->getReference(), 'investigation' => $investigation->getShortId(), 'engine' => $investigation->getEngine()]);
+                $this->notifier->investigationFinished($investigation);
 
                 return $hasHypothesis ? 'Report ready with a verified root-cause hypothesis.' : 'Report ready; no hypothesis could be verified against the evidence.';
             });
         } catch (StageFailed $e) {
             $investigation->fail($e->getMessage());
             $this->audit->write($investigation->getWorkspace(), 'system', 'investigator', 'investigation.failed', $investigation, ['reference' => $incident->getReference(), 'error' => $e->getMessage()]);
+            $this->notifier->investigationFinished($investigation);
             $this->em->flush();
         }
     }

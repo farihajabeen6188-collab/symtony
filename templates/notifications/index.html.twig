@@ -1,0 +1,34 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+{% set token = csrf_token('notifications') %}
+<twig:PageHeader title="Notifications" description="Created by background work as it happens. The bell count refreshes when you navigate.">
+    <twig:block name="actions">
+        <form method="post" action="{{ path('app_notifications_read_all') }}">
+            <input type="hidden" name="_token" value="{{ token }}">
+            <button class="btn btn-secondary">{{ ux_icon('lucide:check-check') }}Mark all as read</button>
+        </form>
+    </twig:block>
+</twig:PageHeader>
+
+<div class="panel overflow-hidden">
+    <div class="tabs px-2" role="tablist" aria-label="Filter">
+        <a class="tab" href="{{ path('app_notifications') }}" {% if not unread_only %}aria-current="page"{% endif %}>All</a>
+        <a class="tab" href="{{ path('app_notifications', {show: 'unread'}) }}" {% if unread_only %}aria-current="page"{% endif %}>Unread</a>
+    </div>
+    {% if result.items is empty %}
+        <twig:EmptyState title="{{ unread_only ? 'All caught up' : 'No notifications yet' }}" illustration="no-results">
+            Critical incidents, reopened incidents, finished investigations, verified regression tests and applications that stop sending events appear here.
+        </twig:EmptyState>
+    {% else %}
+        <div class="grid gap-0.5 p-1">
+            {% for n in result.items %}{{ include('notifications/_item.html.twig') }}{% endfor %}
+        </div>
+        {% if result.next %}
+            <div class="border-t border-line p-3 text-center"><a class="btn btn-ghost btn-sm" href="{{ path('app_notifications', {before: result.next, show: unread_only ? 'unread' : null}) }}">Older</a></div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -120,6 +120,17 @@
             </button>
 
             {% if app.user %}
+            {% set unread = unread_notifications() %}
+            <div class="relative" data-controller="dropdown">
+                <button type="button" class="btn btn-ghost btn-icon relative" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false"
+                        aria-label="Notifications{{ unread ? ', ' ~ unread ~ ' unread' : '' }}">
+                    {{ ux_icon('lucide:bell') }}
+                    {% if unread %}<span class="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-2xs font-semibold text-bg-deep" data-testid="unread-count">{{ unread > 99 ? '99+' : unread }}</span>{% endif %}
+                </button>
+                <div class="popover right-0 mt-1 w-80" role="menu" data-dropdown-target="menu" hidden>
+                    <turbo-frame id="notifications-menu" src="{{ path('app_notifications_menu') }}" loading="lazy" target="_top"><p class="p-3 text-sm text-fg-3">Loading…</p></turbo-frame>
+                </div>
+            </div>
             <div class="relative" data-controller="dropdown">
                 <button type="button" class="grid h-8 w-8 place-items-center rounded-full bg-surface-3 text-xs font-semibold text-fg ring-1 ring-line-strong" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">
                     {{ app.user.initials }}

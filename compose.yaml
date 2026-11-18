@@ -28,8 +28,8 @@ services:
 
   worker:
     <<: *app
-    # Groups events into incidents and runs investigations. Restarts hourly (or after code changes: docker compose restart worker).
-    command: ["php", "bin/console", "messenger:consume", "async", "investigations", "--time-limit=3600", "--memory-limit=256M", "-v"]
+    # Groups events into incidents, runs investigations and scheduled checks. Restarts hourly (or after code changes: docker compose restart worker).
+    command: ["php", "bin/console", "messenger:consume", "async", "investigations", "scheduler_default", "--time-limit=3600", "--memory-limit=256M", "-v"]
     restart: unless-stopped
 
   db:

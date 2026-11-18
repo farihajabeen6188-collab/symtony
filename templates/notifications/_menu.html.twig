@@ -1,0 +1,11 @@
+<turbo-frame id="notifications-menu" target="_top">
+    {% set token = csrf_token('notifications') %}
+    <div class="flex items-center justify-between px-3 py-2"><p class="text-sm font-medium text-fg">Notifications</p><a href="{{ path('app_notifications') }}" class="text-xs text-accent hover:underline">View all</a></div>
+    {% if items is empty %}
+        <p class="px-3 pb-3 text-sm text-fg-3">Nothing yet. Critical incidents, reopened incidents, finished investigations, verified tests and silent applications show up here.</p>
+    {% else %}
+        <div class="grid max-h-96 gap-0.5 overflow-y-auto px-1 pb-1">
+            {% for n in items %}{{ include('notifications/_item.html.twig') }}{% endfor %}
+        </div>
+    {% endif %}
+</turbo-frame>
