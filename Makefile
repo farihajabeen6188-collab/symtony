@@ -21,6 +21,7 @@ up: ## Start the stack (http://localhost:8080), migrate, create the demo account
 	$(CON) symtony:setup
 	$(CON) tailwind:build
 	$(CON) cache:warmup
+	$(DC) up -d worker runner
 
 down: ## Stop the stack
 	$(DC) down

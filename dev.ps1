@@ -7,7 +7,7 @@ function App([string]$cmd) { docker compose exec -T app sh -c $cmd; if ($LASTEXI
 function Shop([string]$cmd) { docker compose exec -T demo-shop sh -c $cmd; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
 
 switch ($Target) {
-    'up'        { docker compose up -d --wait app db; App 'composer install --no-interaction'; App 'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration'; App 'php bin/console symtony:setup'; App 'php bin/console tailwind:build'; App 'php bin/console cache:warmup' }
+    'up'        { docker compose up -d --wait app db; App 'composer install --no-interaction'; App 'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration'; App 'php bin/console symtony:setup'; App 'php bin/console tailwind:build'; App 'php bin/console cache:warmup'; docker compose up -d worker runner }
     'demo'      {
         & $PSCommandPath up; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         docker compose up -d demo-shop

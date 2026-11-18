@@ -30,7 +30,7 @@ final class Redactor
         ['/\b(Bearer|Basic)\s+[A-Za-z0-9\-._~+\/]+=*/i', '$1 '.self::MASK],
         ['/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/', self::MASK],
         ['/\bsym_[a-z]{4}_[0-9A-Za-z]{32}\b/', self::MASK],
-        ['/\bsym_mcp_[0-9A-Za-z]{32}\b/', self::MASK],
+        ['/\bsmcp_[0-9A-Za-z]{40}\b/', self::MASK],
         ['/\bhf_[A-Za-z0-9]{20,}\b/', self::MASK],
         ['/\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}\b/', self::MASK],
         ['/\bgh[pousr]_[A-Za-z0-9]{30,}\b/', self::MASK],

@@ -59,6 +59,7 @@ final class RedactorTest extends TestCase
         yield 'bearer' => ['auth failed: Bearer eyJabc.def.ghi', 'auth failed: Bearer [redacted]'];
         yield 'jwt' => ['jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N', 'jwt [redacted]'];
         yield 'symtony token' => ['used sym_prod_0123456789abcdefghijABCDEFGHIJKL ok', 'used [redacted] ok'];
+        yield 'mcp token' => ['header smcp_0123456789abcdefghijABCDEFGHIJ0123456789 sent', 'header [redacted] sent'];
         yield 'hugging face' => ['key hf_abcdefghijklmnopqrstuvwxyz12', 'key [redacted]'];
         yield 'aws' => ['AKIAIOSFODNN7EXAMPLE leaked', '[redacted] leaked'];
         yield 'dsn password' => ['postgresql://app:s3cr3t@db:5432/shop', 'postgresql://app:[redacted]@db:5432/shop'];
