@@ -121,8 +121,8 @@ Tick a box only after running the check. Each phase ends with a commit.
 ### Phase 10 — Landing, docs, QA gate, demo → `prompts/phase-10-ship.md`
 - [x] Landing page from real UI components (no fake logos/testimonials/stats)
 - [x] README (5-minute start), ARCHITECTURE, SECURITY, CONTRIBUTING, `.env.example`
-- [ ] Fresh-clone test: `git clone` → `make demo` → full spine works
-- [ ] Full quality gate passed (see phase file); all high-priority defects fixed
+- [x] Fresh-clone test: `git clone` → `./dev.ps1 up` + `demo` (≈6 min) → full spine works without an AI key (with a key: not run, no key available)
+- [ ] Full quality gate passed (see phase file); all high-priority defects fixed — all found defects fixed; not done: run with an AI key, Claude Code check, full keyboard-only and light-theme review (see log)
 - [x] `DEMO.md`: 90-second script + backup plan if the network fails
 
 ---
@@ -244,6 +244,24 @@ status, workspace name / retention / redaction keys (owners only), MCP link, aud
 purge keeps incident and evidence events (dry run on the dev DB: demo 0, perf 923).
 **Deferred:** embeddings in pgvector (KnowledgeDocument + Store) — needs an embedding provider to verify; the
 keyword path is what runs. **Not verified live:** assistant answers from a real model (no key).
+
+**2026-11-18 — Phase 10 (landing, docs, QA gate, demo).** Public landing at `/` with the real timeline
+component on exported demo data (labelled) and the MCP tool list from the live registry. README (5-minute
+start, Windows twin commands, AI key, MCP, ingestion, troubleshooting), ARCHITECTURE, SECURITY, CONTRIBUTING,
+docs/ingestion-api.md, docs/mcp.md, DEMO.md (90-second script + backup plan).
+Quality gate, what was run: crawler test (every internal link and lazy frame as the demo user on real data:
+no dead links, no 5xx); layout at 375 / 1024 px on every sidebar page and the landing page (no horizontal
+overflow after fixes); console clean (favicon.ico 404 fixed by a redirect); CSRF on every state-changing
+route; secret scan of tracked files (none); `./dev.ps1 check` green: 148 + 10 tests, 983 + 42 assertions,
+9 min. Fresh clone from GitHub as a separate Compose project: `up` 244 s, demo-ready 355 s, then scenario →
+SYM-4 → investigation (stale-cache hypothesis) → template test → review → **verified reproduction** (red exit 1,
+green exit 0), no AI key.
+Defects found and fixed in this phase: `up` never started the worker and runner; the runner could not write
+to the root-owned job volume on a fresh clone (Test Lab "offline"); the Redactor did not match real MCP tokens
+(`smcp_`); single-column grids overflowed on small screens on several pages.
+**Not done:** run with an AI key (none available), Claude Code over MCP (CLI not installed), a complete
+keyboard-only and light-theme review, the `security-review` skill (nothing pending on the branch; a manual
+pass was done instead).
 
 ## Blockers
 
