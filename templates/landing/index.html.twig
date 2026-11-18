@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Every error has a story{% endblock %}
+{% block meta_description %}SYMTONY reconstructs what happened when a Symfony application fails, investigates it with evidence-cited AI, and proves its regression tests reproduce the bug.{% endblock %}
+
+{% block body %}
+<div class="min-h-dvh bg-bg">
+    <header class="sticky top-0 z-30 border-b border-line bg-bg">
+        <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label="Main">
+            <a href="{{ path('app_home') }}" class="text-fg"><twig:Logo variant="full" class="h-6" /></a>
+            <div class="ml-auto hidden items-center gap-5 text-sm text-fg-2 md:flex">
+                <a href="#how" class="hover:text-fg">How it works</a>
+                <a href="#trust" class="hover:text-fg">Trust model</a>
+                <a href="#mcp" class="hover:text-fg">MCP</a>
+                <a href="https://github.com/farihajabeen6188-collab/symtony#readme" class="hover:text-fg" rel="noopener">Docs</a>
+            </div>
+            {% if app.user %}
+                <a href="{{ path('app_overview') }}" class="btn btn-primary btn-sm ml-auto md:ml-0">Open SYMTONY</a>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="btn btn-secondary btn-sm ml-auto md:ml-0">Sign in</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {# Hero: the product's own timeline, on real demo data #}
+        <section class="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20" aria-labelledby="hero-h">
+            <div class="max-w-3xl">
+                <p class="mb-4 inline-flex items-center gap-2 text-sm text-fg-2"><twig:Logo variant="mark" class="h-5 text-fg" motion="scan" label="" />Application forensics for Symfony</p>
+                <h1 id="hero-h" class="text-4xl font-semibold leading-tight tracking-tight text-fg sm:text-6xl">Every error has a story.</h1>
+                <p class="mt-5 max-w-2xl text-lg text-fg-2">SYMTONY turns scattered application signals into evidence-backed explanations: it groups failures, reconstructs what happened, investigates with cited evidence, and proves that a regression test reproduces the bug.</p>
+                <div class="mt-8 flex flex-wrap gap-3">
+                    <a href="{{ app.user ? path('app_overview') : path('app_login') }}" class="btn btn-primary">{{ ux_icon('lucide:play') }}Run the demo</a>
+                    <a href="https://github.com/farihajabeen6188-collab/symtony#readme" class="btn btn-secondary" rel="noopener">{{ ux_icon('lucide:book-open') }}Read the docs</a>
+                </div>
+            </div>
+
+            {% if timeline %}
+                <figure class="panel mt-12 overflow-hidden">
+                    <figcaption class="panel-header flex-wrap gap-2">
+                        <span class="text-sm font-medium text-fg">A failed checkout, reconstructed</span>
+                        <span class="badge badge-neutral">Demo data</span>
+                        <span class="ml-auto text-xs text-fg-3">{{ timeline.source }}</span>
+                    </figcaption>
+                    <div class="p-4">{{ include('landing/_timeline.html.twig', {data: timeline}) }}</div>
+                    <p class="border-t border-line px-4 py-3 text-sm text-fg-2">
+                        A stale cached stock value let checkout authorize a payment; the stock write then hit a database constraint and rolled back.
+                        The warehouse sync that changed the stock ran in another trace, so its link is drawn dashed and labelled <em>inferred</em>.
+                    </p>
+                </figure>
+            {% endif %}
+        </section>
+
+        {# How it works: a real sequence #}
+        <section id="how" class="border-t border-line bg-bg-deep" aria-labelledby="how-h">
+            <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+                <h2 id="how-h" class="t-h1">How it works</h2>
+                <ol class="mt-8 grid gap-4 md:grid-cols-5">
+                    {% for step in [
+                        ['Instrument', 'A Symfony bundle traces requests, Doctrine queries, HTTP calls, cache, Messenger and logs, with W3C trace context. Delivery never breaks your app.'],
+                        ['Group', 'Failures are fingerprinted by exception, normalized message and in-app frames, so one bug is one incident, even under concurrent workers.'],
+                        ['Reconstruct', 'A timeline per occurrence: links proven by trace and span ids are solid; links from timing alone are dashed and labelled.'],
+                        ['Investigate', 'Deterministic analyzers and a Symfony AI agent cite evidence ids. A validator rejects any claim whose evidence does not exist.'],
+                        ['Prove', 'A proposed test runs in an isolated container: red on the buggy build, green with the fix. Only then is it a verified reproduction.'],
+                    ] %}
+                        <li class="panel panel-body">
+                            <p class="mono text-xs text-accent">{{ loop.index }}</p>
+                            <h3 class="t-h3 mt-1">{{ step[0] }}</h3>
+                            <p class="mt-2 text-sm text-fg-2">{{ step[1] }}</p>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </section>
+
+        {# Trust model, drawn with the product's own components #}
+        <section id="trust" class="border-t border-line" aria-labelledby="trust-h">
+            <div class="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+                <div>
+                    <h2 id="trust-h" class="t-h1">Evidence first, AI second</h2>
+                    <p class="mt-4 text-fg-2">Observed facts, inferences and hypotheses are separate types in the code and look different on screen. Every finding records whether it came from a heuristic analyzer or a model, and which evidence it cites.</p>
+                    <ul class="mt-6 grid gap-3 text-sm text-fg-2">
+                        <li class="flex gap-2">{{ ux_icon('lucide:shield-check', {class: 'mt-0.5 text-ok'}) }}Claims citing evidence that does not exist are rejected and shown as rejected.</li>
+                        <li class="flex gap-2">{{ ux_icon('lucide:flask-conical', {class: 'mt-0.5 text-ok'}) }}A test is a verified reproduction only after it fails on the buggy build and passes with the fix, with the real output stored.</li>
+                        <li class="flex gap-2">{{ ux_icon('lucide:eye-off', {class: 'mt-0.5 text-ok'}) }}Without an AI provider, investigations still run on the analyzers and say that no model was used.</li>
+                    </ul>
+                </div>
+                <div class="grid content-start gap-3" aria-label="Example findings">
+                    <article class="panel panel-body">
+                        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-blue">Fact</span><span class="badge badge-neutral">Heuristic</span><span class="badge badge-ok ml-auto">Verified</span></div>
+                        <p class="mt-2 text-sm text-fg">The write “UPDATE product SET stock = stock - ? WHERE sku = ?” violated the constraint stock_non_negative.</p>
+                        <p class="mt-2 flex gap-1.5"><span class="badge badge-neutral mono">EV-31</span><span class="badge badge-neutral mono">EV-33</span></p>
+                    </article>
+                    <article class="panel panel-body border-dashed">
+                        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-outline-dashed">Hypothesis</span><span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}Model</span><span class="badge badge-err ml-auto">Rejected</span></div>
+                        <p class="mt-2 text-sm text-fg-2 line-through">The payment API timed out.</p>
+                        <p class="mt-2 text-xs text-fg-3">Cites EV-99, which is not in this investigation's evidence.</p>
+                    </article>
+                    <p class="text-xs text-fg-3">Examples written in the product's format; the demo's real report is one click away after signing in.</p>
+                </div>
+            </div>
+        </section>
+
+        {# Symfony AI + MCP #}
+        <section id="mcp" class="border-t border-line bg-bg-deep" aria-labelledby="mcp-h">
+            <div class="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2">
+                <div>
+                    <h2 id="mcp-h" class="t-h1">Symfony AI inside, MCP outside</h2>
+                    <p class="mt-4 text-fg-2">Investigations, the assistant and test generation use <code>symfony/ai-bundle</code> agents on Hugging Face Inference Providers, with read-only tools over the investigation's evidence. The same data is exposed to Claude Code and other clients through <code>symfony/mcp-bundle</code>: workspace-scoped, token-protected, rate-limited and audited.</p>
+                    <twig:CodeBlock class="mt-6" lang="bash" title="Claude Code" code="claude mcp add --transport http symtony {{ mcp_url }} --header &quot;Authorization: Bearer &lt;token&gt;&quot;" />
+                </div>
+                <div class="panel overflow-hidden">
+                    <div class="panel-header"><span class="text-sm font-medium text-fg">Tools</span><span class="text-xs text-fg-3">from the running server</span></div>
+                    <ul class="divide-y divide-line">
+                        {% for t in tools %}
+                            <li class="flex items-center gap-3 px-4 py-2"><code class="mono text-xs text-fg">{{ t.name }}</code>{% if t.write %}<span class="badge badge-warn ml-auto">write</span>{% else %}<span class="badge badge-neutral ml-auto">read</span>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        {# Privacy and security #}
+        <section class="border-t border-line" aria-labelledby="sec-h">
+            <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+                <h2 id="sec-h" class="t-h1">Privacy and safety by construction</h2>
+                <div class="mt-8 grid gap-4 md:grid-cols-3">
+                    <div class="panel panel-body"><h3 class="t-h3">Redacted at the door</h3><p class="mt-2 text-sm text-fg-2">Passwords, tokens, cookies, card numbers and your own keys are scrubbed at ingestion and again before anything reaches a model or an MCP client.</p></div>
+                    <div class="panel panel-body"><h3 class="t-h3">No shell for the model</h3><p class="mt-2 text-sm text-fg-2">The model only calls registered read-only tools scoped to one investigation. AI-written code never runs in the application process.</p></div>
+                    <div class="panel panel-body"><h3 class="t-h3">An isolated runner</h3><p class="mt-2 text-sm text-fg-2">Tests run with no network, a read-only filesystem, a non-root user and CPU, memory and time limits, after static checks and a human review.</p></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-line">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 text-sm text-fg-3 sm:px-6">
+            <twig:Logo variant="full" class="h-5 text-fg-2" motion="none" />
+            <span>Every error has a story.</span>
+            <a href="https://github.com/farihajabeen6188-collab/symtony" class="ml-auto hover:text-fg" rel="noopener">Source on GitHub</a>
+        </div>
+    </footer>
+</div>
+{% endblock %}

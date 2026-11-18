@@ -46,14 +46,17 @@ final class SecurityTest extends WebTestCase
         self::assertSelectorExists('[role="alert"]');
     }
 
-    public function testRootRedirectsByAuthState(): void
+    public function testLandingPageIsPublicAndAdaptsToAuthState(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
-        self::assertResponseRedirects('/login');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Every error has a story.');
+        self::assertSelectorExists('a[href="/login"]');
+        self::assertSelectorTextContains('#mcp', 'start_investigation', 'Tool list comes from the MCP registry');
 
         $client->loginUser($this->demoUser());
         $client->request('GET', '/');
-        self::assertResponseRedirects('/app');
+        self::assertSelectorExists('a[href="/app"]');
     }
 }

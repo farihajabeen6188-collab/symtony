@@ -6,5 +6,7 @@
 :80 {
 	root * /app/public
 	encode zstd br gzip
+	# Browsers ask for /favicon.ico on their own; the icon is an SVG.
+	redir /favicon.ico /favicon.svg 301
 	php_server
 }

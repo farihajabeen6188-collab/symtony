@@ -1,0 +1,41 @@
+{#
+  The real timeline component (timeline_controller.js) fed with exported demo data. Read-only: no details drawer.
+  Input: data (Timeline::toArray(), redacted).
+#}
+<div class="grid gap-3" data-controller="timeline" data-timeline-data-value="{{ data|json_encode }}" data-timeline-panel-url-value="">
+    <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex overflow-hidden rounded-md border border-line-strong">
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="timeline#zoomIn" aria-label="Zoom in">{{ ux_icon('lucide:zoom-in') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-x border-line-strong" data-action="timeline#zoomOut" aria-label="Zoom out">{{ ux_icon('lucide:zoom-out') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-r border-line-strong" data-action="timeline#reset">Request</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="timeline#showAll">Show all</button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="timeline#jumpToFirstFailure">{{ ux_icon('lucide:crosshair', {class: 'text-err'}) }}First failure</button>
+        <label class="inline-flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" checked data-timeline-target="showContext" data-action="timeline#render"> Inferred context</label>
+        <span class="ml-auto text-xs text-fg-3" data-timeline-target="readout">{{ data.items|length }} events</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-fg-3" aria-label="Legend">
+        <span class="inline-flex items-center gap-1.5"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--fg-2)" stroke-width="1.5"/></svg>Proven link (span / trace id)</span>
+        <span class="inline-flex items-center gap-1.5"><svg width="22" height="6" aria-hidden="true"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="3 3"/></svg>Inferred from timing only</span>
+        <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-4 rounded-sm bg-err-soft ring-1 ring-err"></span>Failed span</span>
+    </div>
+    <div class="well relative hidden overflow-hidden md:block" data-timeline-target="canvas" tabindex="0" role="application"
+         aria-label="Demo timeline. Left and right arrows move between events." data-action="keydown->timeline#key">
+        <div class="p-6"><twig:Skeleton rows="6" /></div>
+    </div>
+    <div class="hidden h-10 md:block" data-timeline-target="minimap" aria-hidden="true"></div>
+    <div class="pointer-events-none fixed z-50 hidden max-w-sm rounded-md bg-surface px-3 py-2 text-xs shadow-pop" data-timeline-target="tooltip" role="tooltip"></div>
+
+    {# Small screens: the failing request in order (proven items only) #}
+    <ol class="well divide-y divide-line md:hidden" aria-label="Demo timeline events in order">
+        {% for i in data.items|filter(i => i.proven)|slice(0, 14) %}
+            <li class="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2 px-3 py-2 {{ i.id == data.first_failure ? 'bg-err-soft' : '' }}">
+                <span class="mono text-2xs text-fg-3">+{{ i.offset_ms|number_format(1) }}ms</span>
+                <span class="min-w-0">
+                    <span class="block text-2xs text-fg-3">{{ i.lane }}{% if i.id == data.first_failure %} · <span class="text-err">first failure</span>{% endif %}</span>
+                    <span class="block truncate text-sm {{ i.error ? 'text-err' : 'text-fg' }}">{{ i.name }}</span>
+                </span>
+            </li>
+        {% endfor %}
+    </ol>
+</div>

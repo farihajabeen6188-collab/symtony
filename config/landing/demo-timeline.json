@@ -1,0 +1,1952 @@
+{
+    "trace_id": "99763a328ce9b244859be3368fe1eda9",
+    "start": "2026-11-17T23:52:11.945935Z",
+    "duration_ms": 16585.729077514647,
+    "lanes": [
+        {
+            "key": "warehouse-sync/warehouse",
+            "service": "warehouse-sync",
+            "component": "warehouse",
+            "label": "warehouse"
+        },
+        {
+            "key": "warehouse-sync/database",
+            "service": "warehouse-sync",
+            "component": "database",
+            "label": "database"
+        },
+        {
+            "key": "payment-api/payment-api",
+            "service": "payment-api",
+            "component": "payment-api",
+            "label": "payment-api"
+        },
+        {
+            "key": "shop/deploy",
+            "service": "shop",
+            "component": "deploy",
+            "label": "deploy"
+        },
+        {
+            "key": "shop/http",
+            "service": "shop",
+            "component": "http",
+            "label": "http"
+        },
+        {
+            "key": "shop/controller",
+            "service": "shop",
+            "component": "controller",
+            "label": "controller"
+        },
+        {
+            "key": "shop/auth",
+            "service": "shop",
+            "component": "auth",
+            "label": "auth"
+        },
+        {
+            "key": "shop/checkout",
+            "service": "shop",
+            "component": "checkout",
+            "label": "checkout"
+        },
+        {
+            "key": "shop/database",
+            "service": "shop",
+            "component": "database",
+            "label": "database"
+        },
+        {
+            "key": "shop/inventory",
+            "service": "shop",
+            "component": "inventory",
+            "label": "inventory"
+        },
+        {
+            "key": "shop/cache",
+            "service": "shop",
+            "component": "cache",
+            "label": "cache"
+        },
+        {
+            "key": "shop/payment",
+            "service": "shop",
+            "component": "payment",
+            "label": "payment"
+        },
+        {
+            "key": "shop/external",
+            "service": "shop",
+            "component": "external",
+            "label": "external"
+        },
+        {
+            "key": "payment-api/http",
+            "service": "payment-api",
+            "component": "http",
+            "label": "http"
+        },
+        {
+            "key": "payment-api/controller",
+            "service": "payment-api",
+            "component": "controller",
+            "label": "controller"
+        },
+        {
+            "key": "shop/exception",
+            "service": "shop",
+            "component": "exception",
+            "label": "exception"
+        }
+    ],
+    "items": [
+        {
+            "id": "01a1ebec-e3e7-7f51-8288-477b1f1a2529",
+            "lane": "warehouse-sync/warehouse",
+            "type": "queue",
+            "name": "WarehouseSync::run",
+            "message": "WarehouseSync::run",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 0,
+            "duration_ms": 11.097,
+            "span_id": "7d66be5fb798a91c",
+            "parent_span_id": null,
+            "request_id": "req_4896524dfde7c651",
+            "trace_id": "5113517052b4774921e08d5d46647fd8",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-e3e7-7e39-8288-477b1e78356b",
+            "lane": "warehouse-sync/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 0.598,
+            "duration_ms": 10.342,
+            "span_id": "e62c92108001d9d8",
+            "parent_span_id": "7d66be5fb798a91c",
+            "request_id": "req_4896524dfde7c651",
+            "trace_id": "5113517052b4774921e08d5d46647fd8",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = ? WHERE sku = ?",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-e3e7-7f05-8288-477b1f0ed7f5",
+            "lane": "warehouse-sync/warehouse",
+            "type": "log",
+            "name": "stock adjusted",
+            "message": "Stock for SKU-1042 updated from 3 to 1",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 11.06,
+            "duration_ms": null,
+            "span_id": "14e9d2d5bb16f0d5",
+            "parent_span_id": "7d66be5fb798a91c",
+            "request_id": "req_4896524dfde7c651",
+            "trace_id": "5113517052b4774921e08d5d46647fd8",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-ecf1-79d9-94ad-aaa13d7679e2",
+            "lane": "payment-api/payment-api",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_d040defb55d7",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 2685.514,
+            "duration_ms": null,
+            "span_id": "67351972216c3b01",
+            "parent_span_id": "d07734917b110fd2",
+            "request_id": "req_07033eea1d2a4a72",
+            "trace_id": "8565138588b66a76f0d989095d69bb1a",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-ecf1-795d-85b7-07a0ec2541f8",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 2688.798,
+            "duration_ms": 0.25,
+            "span_id": "b5ed434a1ad4b9ed",
+            "parent_span_id": "26561131eac4c8f6",
+            "request_id": "req_07033eea1d2a4a72",
+            "trace_id": "8565138588b66a76f0d989095d69bb1a",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-ecf1-7ae1-85b7-07a0ec3ac9ec",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 2689.224,
+            "duration_ms": 0.081,
+            "span_id": "7d2c24568559bc40",
+            "parent_span_id": "d906b13afb4d6154",
+            "request_id": "req_07033eea1d2a4a72",
+            "trace_id": "8565138588b66a76f0d989095d69bb1a",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7c65-af85-365331d76830",
+            "lane": "shop/http",
+            "type": "http_request",
+            "name": "POST /checkout",
+            "message": "POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 3658.784,
+            "duration_ms": 959.986,
+            "span_id": "a19abf7e611c001f",
+            "parent_span_id": null,
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7b55-af85-365330ea4ed8",
+            "lane": "shop/controller",
+            "type": "controller",
+            "name": "App\\Controller\\CheckoutController::__invoke",
+            "message": "App\\Controller\\CheckoutController::__invoke",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 3683.678,
+            "duration_ms": 328.027,
+            "span_id": "13d1b379fb93d6c1",
+            "parent_span_id": "a19abf7e611c001f",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7a49-af85-36533076199e",
+            "lane": "shop/checkout",
+            "type": "service_call",
+            "name": "CheckoutService::checkout",
+            "message": "CheckoutService::checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 3684.118,
+            "duration_ms": 327.178,
+            "span_id": "5e7b43f854bb300d",
+            "parent_span_id": "13d1b379fb93d6c1",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f3ca-72fe-97d5-00aa959e6efc",
+            "lane": "payment-api/payment-api",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_6d55a5189928",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 4007.446,
+            "duration_ms": null,
+            "span_id": "4cc65a839f352bff",
+            "parent_span_id": "14a1b40480cd092f",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7671-af85-36532e51b20f",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 4009.638,
+            "duration_ms": 0.292,
+            "span_id": "c43783f595e89e01",
+            "parent_span_id": "5e7b43f854bb300d",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7935-af85-36532ff13f55",
+            "lane": "shop/inventory",
+            "type": "service_call",
+            "name": "InventoryService::reserve",
+            "message": "InventoryService::reserve",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 4009.989,
+            "duration_ms": 0.976,
+            "span_id": "4873be1b49f8dfb5",
+            "parent_span_id": "5e7b43f854bb300d",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-786d-af85-36532f38fc6d",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 4010.092,
+            "duration_ms": 0.527,
+            "span_id": "4beffdeb34cb7eb0",
+            "parent_span_id": "4873be1b49f8dfb5",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "db error": "SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7aed-af85-365330c86366",
+            "lane": "shop/exception",
+            "type": "exception",
+            "name": "DriverException",
+            "message": "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+            "exception": "Doctrine\\DBAL\\Exception\\DriverException",
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 4011.471,
+            "duration_ms": null,
+            "span_id": "5b9b54f9445ce106",
+            "parent_span_id": "13d1b379fb93d6c1",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-f60e-7bcd-af85-365331cb09bc",
+            "lane": "shop/http",
+            "type": "http_response",
+            "name": "HTTP 500",
+            "message": "500 POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 4609.918,
+            "duration_ms": null,
+            "span_id": "555babdb3cb50591",
+            "parent_span_id": "a19abf7e611c001f",
+            "request_id": "req_8e76b036488f74c0",
+            "trace_id": "c5d9905b423de71e3205ce04523a7b69",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 10.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7e1b-9bd9-c046eab0083d",
+            "lane": "shop/http",
+            "type": "http_request",
+            "name": "POST /checkout",
+            "message": "POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5566.862,
+            "duration_ms": 1017.952,
+            "span_id": "df9e6bb8cf50a71f",
+            "parent_span_id": null,
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7cdb-9bd9-c046e9c920b8",
+            "lane": "shop/controller",
+            "type": "controller",
+            "name": "App\\Controller\\CheckoutController::__invoke",
+            "message": "App\\Controller\\CheckoutController::__invoke",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5596.209,
+            "duration_ms": 351.298,
+            "span_id": "96f5cc566fbf2f95",
+            "parent_span_id": "df9e6bb8cf50a71f",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7b6f-9bd9-c046e8c932c4",
+            "lane": "shop/checkout",
+            "type": "service_call",
+            "name": "CheckoutService::checkout",
+            "message": "CheckoutService::checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5596.487,
+            "duration_ms": 350.916,
+            "span_id": "9fb8f95d7acce1c5",
+            "parent_span_id": "96f5cc566fbf2f95",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fca9-73a9-90d3-dc1bd8b20c34",
+            "lane": "payment-api/payment-api",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_08e238d1d024",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 5943.111,
+            "duration_ms": null,
+            "span_id": "de284b61e0ba0982",
+            "parent_span_id": "2e449adce4223ba6",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.5 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-77e7-9bd9-c046e74ead2b",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 5945.469,
+            "duration_ms": 0.851,
+            "span_id": "6f680f77fd341c37",
+            "parent_span_id": "9fb8f95d7acce1c5",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7973-9bd9-c046e812d574",
+            "lane": "shop/inventory",
+            "type": "service_call",
+            "name": "InventoryService::reserve",
+            "message": "InventoryService::reserve",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5946.524,
+            "duration_ms": 0.649,
+            "span_id": "6584efcc6a80d478",
+            "parent_span_id": "9fb8f95d7acce1c5",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-78c7-9bd9-c046e7dc6bd6",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5946.732,
+            "duration_ms": 0.269,
+            "span_id": "50da812740394b00",
+            "parent_span_id": "6584efcc6a80d478",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "db error": "SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7c63-9bd9-c046e9826bd4",
+            "lane": "shop/exception",
+            "type": "exception",
+            "name": "DriverException",
+            "message": "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+            "exception": "Doctrine\\DBAL\\Exception\\DriverException",
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 5947.456,
+            "duration_ms": null,
+            "span_id": "850418d892ad1564",
+            "parent_span_id": "96f5cc566fbf2f95",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fe5e-7d5b-9bd9-c046ea860d1c",
+            "lane": "shop/http",
+            "type": "http_response",
+            "name": "HTTP 500",
+            "message": "500 POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 6577.34,
+            "duration_ms": null,
+            "span_id": "0b840c37bb11d0e8",
+            "parent_span_id": "df9e6bb8cf50a71f",
+            "request_id": "req_eae96feb4a29074e",
+            "trace_id": "3bafbb332e8fc38ff55a95c455630375",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 8.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebec-fff0-70d5-97bb-2a044c186ced",
+            "lane": "shop/deploy",
+            "type": "deploy",
+            "name": "Deploy 1.4.0",
+            "message": "Release 1.4.0 deployed (a41c9e2)",
+            "exception": null,
+            "service": "shop",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 7329.814,
+            "duration_ms": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "request_id": "req_45558464c63e3ac4",
+            "trace_id": "283230fde15548304bdf1ab43eed3239",
+            "membership": "context",
+            "proven": false,
+            "reason": "Preceded by deploy 1.4.0 -8065 ms before the request (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-0a00-79ed-b316-f059f0c31345",
+            "lane": "warehouse-sync/warehouse",
+            "type": "queue",
+            "name": "WarehouseSync::run",
+            "message": "WarehouseSync::run",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 9574.325,
+            "duration_ms": 12.517,
+            "span_id": "9da4cf62447fabf9",
+            "parent_span_id": null,
+            "request_id": "req_f9e6fbd4ed438aed",
+            "trace_id": "f04ee4d04c0d3115c1f9948720585f58",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-0a00-77dd-b316-f059f04e23c6",
+            "lane": "warehouse-sync/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 9575.145,
+            "duration_ms": 11.571,
+            "span_id": "c7fb272c9e140b76",
+            "parent_span_id": "9da4cf62447fabf9",
+            "request_id": "req_f9e6fbd4ed438aed",
+            "trace_id": "f04ee4d04c0d3115c1f9948720585f58",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = ? WHERE sku = ?",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-0a00-7949-b316-f059f0b775ae",
+            "lane": "warehouse-sync/warehouse",
+            "type": "log",
+            "name": "stock adjusted",
+            "message": "Stock for SKU-1042 updated from 3 to 1",
+            "exception": null,
+            "service": "warehouse-sync",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 9586.818,
+            "duration_ms": null,
+            "span_id": "9e2369f572615b24",
+            "parent_span_id": "9da4cf62447fabf9",
+            "request_id": "req_f9e6fbd4ed438aed",
+            "trace_id": "f04ee4d04c0d3115c1f9948720585f58",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-135c-7737-9a4d-3dc68f4d09cc",
+            "lane": "payment-api/payment-api",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_59ea319c3ac3",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 12414.545,
+            "duration_ms": null,
+            "span_id": "f45c0bd839b0e6a1",
+            "parent_span_id": "cbc0a6ad482d215a",
+            "request_id": "req_7d8cc170f12b9c22",
+            "trace_id": "29cd15e49e34d55169b5dcefe10f0a57",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1358-77f5-9145-bb1b3e298246",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 12416.807,
+            "duration_ms": 0.215,
+            "span_id": "bf45ca13b8b13ec7",
+            "parent_span_id": "bfa85436765dc3fe",
+            "request_id": "req_7d8cc170f12b9c22",
+            "trace_id": "29cd15e49e34d55169b5dcefe10f0a57",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1358-7901-9145-bb1b3f0189ca",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 12417.195,
+            "duration_ms": 0.927,
+            "span_id": "600cb5b26d827a82",
+            "parent_span_id": "5adc592241ef20de",
+            "request_id": "req_7d8cc170f12b9c22",
+            "trace_id": "29cd15e49e34d55169b5dcefe10f0a57",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-7b98-92ee-c6d1775b3a5b",
+            "lane": "shop/http",
+            "type": "http_request",
+            "name": "POST /checkout",
+            "message": "POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13392.345,
+            "duration_ms": 980.731,
+            "span_id": "518cd728b2c00e24",
+            "parent_span_id": null,
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-79dc-92ee-c6d1760abca6",
+            "lane": "shop/controller",
+            "type": "controller",
+            "name": "App\\Controller\\CheckoutController::__invoke",
+            "message": "App\\Controller\\CheckoutController::__invoke",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13409.749,
+            "duration_ms": 299.298,
+            "span_id": "8d82c49312cc9998",
+            "parent_span_id": "518cd728b2c00e24",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-77c4-92ee-c6d174ef1412",
+            "lane": "shop/checkout",
+            "type": "service_call",
+            "name": "CheckoutService::checkout",
+            "message": "CheckoutService::checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13410.113,
+            "duration_ms": 298.738,
+            "span_id": "afe1af2badb524c2",
+            "parent_span_id": "8d82c49312cc9998",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1a2c-7f5a-a875-73cabe018114",
+            "lane": "payment-api/payment-api",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_18f54b7e1e25",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 13703.386,
+            "duration_ms": null,
+            "span_id": "e633512d899aa966",
+            "parent_span_id": "e1bac61f8d7113d7",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-7388-92ee-c6d172df8a40",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 13706.823,
+            "duration_ms": 0.346,
+            "span_id": "8619b0398d7bfc97",
+            "parent_span_id": "afe1af2badb524c2",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-7644-92ee-c6d173e50d71",
+            "lane": "shop/inventory",
+            "type": "service_call",
+            "name": "InventoryService::reserve",
+            "message": "InventoryService::reserve",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13707.29,
+            "duration_ms": 1.109,
+            "span_id": "9b798dadf42ce2a9",
+            "parent_span_id": "afe1af2badb524c2",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-746c-92ee-c6d173382e4c",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13707.518,
+            "duration_ms": 0.503,
+            "span_id": "20f34203a872eb9b",
+            "parent_span_id": "9b798dadf42ce2a9",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "db error": "SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-794c-92ee-c6d175b61c7b",
+            "lane": "shop/exception",
+            "type": "exception",
+            "name": "DriverException",
+            "message": "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+            "exception": "Doctrine\\DBAL\\Exception\\DriverException",
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 13708.946,
+            "duration_ms": null,
+            "span_id": "ee4b51aff61b092d",
+            "parent_span_id": "8d82c49312cc9998",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-1cc5-7a64-92ee-c6d176d07938",
+            "lane": "shop/http",
+            "type": "http_response",
+            "name": "HTTP 500",
+            "message": "500 POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 14365.32,
+            "duration_ms": null,
+            "span_id": "5c3ceaf2cf45ac05",
+            "parent_span_id": "518cd728b2c00e24",
+            "request_id": "req_f2ace36547858f1f",
+            "trace_id": "1fcc5f953f92e33d704b684c6a88a568",
+            "membership": "context",
+            "proven": false,
+            "reason": "Same application, 1.0 s before the request, no shared trace or request id (inferred from timing)",
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "lane": "shop/http",
+            "type": "http_request",
+            "name": "POST /checkout",
+            "message": "POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15394.72,
+            "duration_ms": 1191.009,
+            "span_id": "42d045f0351e49b7",
+            "parent_span_id": null,
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-74c0-85fc-5c1c8f5f3577",
+            "lane": "shop/controller",
+            "type": "controller",
+            "name": "App\\Controller\\CheckoutController::__invoke",
+            "message": "App\\Controller\\CheckoutController::__invoke",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15455.541,
+            "duration_ms": 376.652,
+            "span_id": "4f84631a936018cf",
+            "parent_span_id": "42d045f0351e49b7",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7b16-86ef-86ef98137838",
+            "lane": "shop/auth",
+            "type": "service_call",
+            "name": "Authenticate customer",
+            "message": "Authenticate customer",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15455.91,
+            "duration_ms": 0.019,
+            "span_id": "a437697e9e01167d",
+            "parent_span_id": "4f84631a936018cf",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "lane": "shop/checkout",
+            "type": "service_call",
+            "name": "CheckoutService::checkout",
+            "message": "CheckoutService::checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15456.054,
+            "duration_ms": 370.486,
+            "span_id": "208df1d9af98f7b5",
+            "parent_span_id": "4f84631a936018cf",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7cde-86ef-86ef9821a623",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "SELECT product",
+            "message": "SELECT product",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15473.654,
+            "duration_ms": 0.197,
+            "span_id": "6aa0b7494ac1fa4f",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "statement": "SELECT sku, name, price_cents, stock FROM product WHERE sku = ?",
+                "rows": 0,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7e22-86ef-86ef992baca1",
+            "lane": "shop/inventory",
+            "type": "service_call",
+            "name": "InventoryService::availableStock",
+            "message": "InventoryService::availableStock",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15474.282,
+            "duration_ms": 11.432,
+            "span_id": "aeaac621435c45a5",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7db6-86ef-86ef9907e038",
+            "lane": "shop/cache",
+            "type": "cache",
+            "name": "cache hit stock_SKU-1042",
+            "message": "cache hit stock_SKU-1042",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15474.293,
+            "duration_ms": 11.334,
+            "span_id": "1d938d5d4cb135b4",
+            "parent_span_id": "aeaac621435c45a5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "cache": "hit",
+                "cache age": "6.515 s",
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7f1e-86ef-86ef9a48fab9",
+            "lane": "shop/payment",
+            "type": "service_call",
+            "name": "PaymentGateway::authorize",
+            "message": "PaymentGateway::authorize",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15486.077,
+            "duration_ms": 332.414,
+            "span_id": "15909e772a32fe26",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7eb2-86ef-86ef99ff1159",
+            "lane": "shop/external",
+            "type": "external_http",
+            "name": "POST localhost/payment-api/authorize",
+            "message": "POST localhost/payment-api/authorize",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15486.117,
+            "duration_ms": 332.238,
+            "span_id": "3efab83a7d8d98e9",
+            "parent_span_id": "15909e772a32fe26",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 200,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-231f-7991-9a82-973a7e92f5db",
+            "lane": "payment-api/http",
+            "type": "http_request",
+            "name": "POST /payment-api/authorize",
+            "message": "POST /payment-api/authorize",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15723.408,
+            "duration_ms": 91.82,
+            "span_id": "b6ce1a60388de884",
+            "parent_span_id": "3efab83a7d8d98e9",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 200,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-231f-752d-9a82-973a7dcf4826",
+            "lane": "payment-api/controller",
+            "type": "controller",
+            "name": "App\\Controller\\PaymentApiController::authorize",
+            "message": "App\\Controller\\PaymentApiController::authorize",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15731.611,
+            "duration_ms": 82.984,
+            "span_id": "fae7c55e7f9142c5",
+            "parent_span_id": "b6ce1a60388de884",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-231f-72e1-9a82-973a7dcc0379",
+            "lane": "payment-api/controller",
+            "type": "log",
+            "name": "payment authorized",
+            "message": "Authorized 129.00 EUR, hold auth_0802f6578739",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "notice",
+            "error": false,
+            "offset_ms": 15814.125,
+            "duration_ms": null,
+            "span_id": "209e489c480a5a54",
+            "parent_span_id": "fae7c55e7f9142c5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-231f-775d-9a82-973a7e61201f",
+            "lane": "payment-api/http",
+            "type": "http_response",
+            "name": "HTTP 200",
+            "message": "200 POST /payment-api/authorize",
+            "exception": null,
+            "service": "payment-api",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15814.673,
+            "duration_ms": null,
+            "span_id": "c6dda7636ae58b9a",
+            "parent_span_id": "b6ce1a60388de884",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 200,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253d-7f8a-86ef-86ef9af7e1b2",
+            "lane": "shop/checkout",
+            "type": "transaction",
+            "name": "BEGIN",
+            "message": "BEGIN",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15818.65,
+            "duration_ms": null,
+            "span_id": "ec016997fd9d0265",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-7084-85fc-5c1c8c0f035e",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "INSERT orders",
+            "message": "INSERT orders",
+            "exception": null,
+            "service": "shop",
+            "severity": "info",
+            "error": false,
+            "offset_ms": 15818.796,
+            "duration_ms": 0.305,
+            "span_id": "415fd7248176f3e4",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "statement": "INSERT INTO orders (id, sku, quantity, customer, total_cents, payment_authorization, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "rows": 1,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-7208-85fc-5c1c8d84fd2d",
+            "lane": "shop/inventory",
+            "type": "service_call",
+            "name": "InventoryService::reserve",
+            "message": "InventoryService::reserve",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15819.188,
+            "duration_ms": 6.204,
+            "span_id": "65355f46b1447d3f",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-7160-85fc-5c1c8cb7579c",
+            "lane": "shop/database",
+            "type": "db_query",
+            "name": "UPDATE product",
+            "message": "UPDATE product",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15819.351,
+            "duration_ms": 5.724,
+            "span_id": "adc30bc47a5f3e31",
+            "parent_span_id": "65355f46b1447d3f",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "statement": "UPDATE product SET stock = stock - ? WHERE sku = ?",
+                "db error": "SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-72e8-85fc-5c1c8dc680c6",
+            "lane": "shop/checkout",
+            "type": "transaction",
+            "name": "ROLLBACK",
+            "message": "ROLLBACK",
+            "exception": null,
+            "service": "shop",
+            "severity": "warning",
+            "error": false,
+            "offset_ms": 15826.484,
+            "duration_ms": null,
+            "span_id": "2a75a022bc19f089",
+            "parent_span_id": "208df1d9af98f7b5",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-7458-85fc-5c1c8edb2c9d",
+            "lane": "shop/exception",
+            "type": "exception",
+            "name": "DriverException",
+            "message": "An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 19 CHECK constraint failed: stock_non_negative",
+            "exception": "Doctrine\\DBAL\\Exception\\DriverException",
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 15827.307,
+            "duration_ms": null,
+            "span_id": "e67738800abf652c",
+            "parent_span_id": "4f84631a936018cf",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        },
+        {
+            "id": "01a1ebed-253e-753c-85fc-5c1c8f6b6598",
+            "lane": "shop/http",
+            "type": "http_response",
+            "name": "HTTP 500",
+            "message": "500 POST /checkout",
+            "exception": null,
+            "service": "shop",
+            "severity": "error",
+            "error": true,
+            "offset_ms": 16581.705,
+            "duration_ms": null,
+            "span_id": "3df9a8c85a0de5cb",
+            "parent_span_id": "42d045f0351e49b7",
+            "request_id": "req_c5b9271287d71b41",
+            "trace_id": "99763a328ce9b244859be3368fe1eda9",
+            "membership": "trace",
+            "proven": true,
+            "reason": null,
+            "context": {
+                "status": 500,
+                "release": "1.4.0"
+            }
+        }
+    ],
+    "links": [
+        {
+            "from": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "to": "01a1ebed-253e-74c0-85fc-5c1c8f5f3577",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 42d045f0351e49b7"
+        },
+        {
+            "from": "01a1ebed-253e-74c0-85fc-5c1c8f5f3577",
+            "to": "01a1ebed-253d-7b16-86ef-86ef98137838",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 4f84631a936018cf"
+        },
+        {
+            "from": "01a1ebed-253e-74c0-85fc-5c1c8f5f3577",
+            "to": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 4f84631a936018cf"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253d-7cde-86ef-86ef9821a623",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253d-7e22-86ef-86ef992baca1",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253d-7e22-86ef-86ef992baca1",
+            "to": "01a1ebed-253d-7db6-86ef-86ef9907e038",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span aeaac621435c45a5"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253d-7f1e-86ef-86ef9a48fab9",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253d-7f1e-86ef-86ef9a48fab9",
+            "to": "01a1ebed-253d-7eb2-86ef-86ef99ff1159",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 15909e772a32fe26"
+        },
+        {
+            "from": "01a1ebed-253d-7eb2-86ef-86ef99ff1159",
+            "to": "01a1ebed-231f-7991-9a82-973a7e92f5db",
+            "kind": "cross_service",
+            "proven": true,
+            "reason": "shop called payment-api (parent span 3efab83a7d8d98e9)"
+        },
+        {
+            "from": "01a1ebed-231f-7991-9a82-973a7e92f5db",
+            "to": "01a1ebed-231f-752d-9a82-973a7dcf4826",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span b6ce1a60388de884"
+        },
+        {
+            "from": "01a1ebed-231f-752d-9a82-973a7dcf4826",
+            "to": "01a1ebed-231f-72e1-9a82-973a7dcc0379",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span fae7c55e7f9142c5"
+        },
+        {
+            "from": "01a1ebed-231f-7991-9a82-973a7e92f5db",
+            "to": "01a1ebed-231f-775d-9a82-973a7e61201f",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span b6ce1a60388de884"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253d-7f8a-86ef-86ef9af7e1b2",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253e-7084-85fc-5c1c8c0f035e",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253e-7208-85fc-5c1c8d84fd2d",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253e-7208-85fc-5c1c8d84fd2d",
+            "to": "01a1ebed-253e-7160-85fc-5c1c8cb7579c",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 65355f46b1447d3f"
+        },
+        {
+            "from": "01a1ebed-253e-73b0-85fc-5c1c8ebce559",
+            "to": "01a1ebed-253e-72e8-85fc-5c1c8dc680c6",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 208df1d9af98f7b5"
+        },
+        {
+            "from": "01a1ebed-253e-74c0-85fc-5c1c8f5f3577",
+            "to": "01a1ebed-253e-7458-85fc-5c1c8edb2c9d",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 4f84631a936018cf"
+        },
+        {
+            "from": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "to": "01a1ebed-253e-753c-85fc-5c1c8f6b6598",
+            "kind": "parent",
+            "proven": true,
+            "reason": "Child of span 42d045f0351e49b7"
+        },
+        {
+            "from": "01a1ebec-e3e7-7f51-8288-477b1f1a2529",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-e3e7-7e39-8288-477b1e78356b",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-e3e7-7f05-8288-477b1f0ed7f5",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 15.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-ecf1-79d9-94ad-aaa13d7679e2",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-ecf1-795d-85b7-07a0ec2541f8",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-ecf1-7ae1-85b7-07a0ec3ac9ec",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 12.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7c65-af85-365331d76830",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7b55-af85-365330ea4ed8",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7a49-af85-36533076199e",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f3ca-72fe-97d5-00aa959e6efc",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7671-af85-36532e51b20f",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7935-af85-36532ff13f55",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-786d-af85-36532f38fc6d",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7aed-af85-365330c86366",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 11.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-f60e-7bcd-af85-365331cb09bc",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 10.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7e1b-9bd9-c046eab0083d",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7cdb-9bd9-c046e9c920b8",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7b6f-9bd9-c046e8c932c4",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fca9-73a9-90d3-dc1bd8b20c34",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.5 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-77e7-9bd9-c046e74ead2b",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7973-9bd9-c046e812d574",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-78c7-9bd9-c046e7dc6bd6",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7c63-9bd9-c046e9826bd4",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 9.4 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fe5e-7d5b-9bd9-c046ea860d1c",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 8.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebec-fff0-70d5-97bb-2a044c186ced",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Preceded by deploy 1.4.0 -8065 ms before the request (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-0a00-79ed-b316-f059f0c31345",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-0a00-77dd-b316-f059f04e23c6",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-0a00-7949-b316-f059f0b775ae",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 5.8 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-135c-7737-9a4d-3dc68f4d09cc",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1358-77f5-9145-bb1b3e298246",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1358-7901-9145-bb1b3f0189ca",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 3.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-7b98-92ee-c6d1775b3a5b",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-79dc-92ee-c6d1760abca6",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-77c4-92ee-c6d174ef1412",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 2.0 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1a2c-7f5a-a875-73cabe018114",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-7388-92ee-c6d172df8a40",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-7644-92ee-c6d173e50d71",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-746c-92ee-c6d173382e4c",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-794c-92ee-c6d175b61c7b",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.7 s before the request, no shared trace or request id (inferred from timing)"
+        },
+        {
+            "from": "01a1ebed-1cc5-7a64-92ee-c6d176d07938",
+            "to": "01a1ebed-253e-75d0-85fc-5c1c905308b8",
+            "kind": "inferred",
+            "proven": false,
+            "reason": "Same application, 1.0 s before the request, no shared trace or request id (inferred from timing)"
+        }
+    ],
+    "first_failure": "01a1ebed-253e-7160-85fc-5c1c8cb7579c",
+    "truncated": false,
+    "total": 20,
+    "exported_at": "2026-11-18T05:12:19+00:00",
+    "source": "SYM-5 from a demo-shop run (release 1.4.0)"
+}
