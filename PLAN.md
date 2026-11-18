@@ -119,11 +119,11 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Settings: profile, AI provider status (never the key), redaction keys, retention + scheduled purge, MCP tokens, audit log
 
 ### Phase 10 — Landing, docs, QA gate, demo → `prompts/phase-10-ship.md`
-- [ ] Landing page from real UI components (no fake logos/testimonials/stats)
-- [ ] README (5-minute start), ARCHITECTURE, SECURITY, CONTRIBUTING, `.env.example`
+- [x] Landing page from real UI components (no fake logos/testimonials/stats)
+- [x] README (5-minute start), ARCHITECTURE, SECURITY, CONTRIBUTING, `.env.example`
 - [ ] Fresh-clone test: `git clone` → `make demo` → full spine works
 - [ ] Full quality gate passed (see phase file); all high-priority defects fixed
-- [ ] `DEMO.md`: 90-second script + backup plan if the network fails
+- [x] `DEMO.md`: 90-second script + backup plan if the network fails
 
 ---
 

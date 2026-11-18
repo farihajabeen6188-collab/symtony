@@ -178,6 +178,18 @@ controller needs a PSR-17 factory).
   STDIO `claude mcp add --env K=V --transport stdio <name> -- <command…>`.
 - Long-running processes: services holding per-request state implement `ResetInterface` (e.g. `WorkspaceContext`).
 
+**Background work and data (Phases 9–10)**
+- Worker consumes `async`, `investigations` and `scheduler_default` (`src/Schedule.php`: silent-application
+  check every 5 min, retention purge daily). `make up` / `./dev.ps1 up` start the worker and the runner.
+- Notifications are created per workspace member by `Notifier` (deduplicated by key); the bell refreshes on
+  navigation, not in real time.
+- Landing hero data: `php bin/console symtony:landing:export-timeline` writes `config/landing/demo-timeline.json`
+  from the demo SYM-5 run (redacted). Re-run after changing the demo.
+- Tests that start `bin/console` subprocesses must run in debug mode: a `--no-debug` test container is never
+  rebuilt and silently runs old code.
+- Knowledge retrieval is keyword (Postgres full-text, `ts_rank`). Embeddings in pgvector are deferred until an
+  embedding provider can be verified.
+
 **AI spike result:** NOT YET TESTED — no `HUGGINGFACE_API_KEY` configured. Run `make spike-ai`
 (`./dev.ps1 spike-ai`) after adding the key to `.env.local`. Default model candidate: `Qwen/Qwen3.5-35B-A3B`.
 

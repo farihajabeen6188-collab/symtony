@@ -62,7 +62,10 @@ final class CrawlerTest extends WebTestCase
                 continue;
             }
             foreach ($crawler->filter('a[href], turbo-frame[src]') as $a) {
-                $href = (string) ($a->getAttribute('href') ?: $a->getAttribute('src'));
+                if (!$a instanceof \DOMElement) {
+                    continue;
+                }
+                $href = $a->getAttribute('href') ?: $a->getAttribute('src');
                 $path = (string) parse_url($href, \PHP_URL_PATH);
                 // Many links differ only by query (filters, selected event): sample a few per path.
                 $variants[$path] = ($variants[$path] ?? 0) + 1;
@@ -72,8 +75,8 @@ final class CrawlerTest extends WebTestCase
                 if (!str_starts_with($href, '/') || str_starts_with($href, '//')) {
                     continue;
                 }
-                $href = (string) strtok($href, '#');
-                if ('' === $href || str_contains($href, '/logout') || str_starts_with($href, '/_') || str_contains($href, 'before=')) {
+                $href = explode('#', $href)[0];
+                if (str_contains($href, '/logout') || str_starts_with($href, '/_') || str_contains($href, 'before=')) {
                     continue;
                 }
                 if (!isset($seen[$href])) {
