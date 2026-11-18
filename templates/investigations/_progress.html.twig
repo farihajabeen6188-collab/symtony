@@ -1,0 +1,25 @@
+{# Live stage list. Re-fetched every 2 s while the investigation runs; stops when it is final. #}
+<turbo-frame id="inv-progress" data-controller="poll" data-poll-url-value="{{ path('app_investigation_progress', {id: inv.id}) }}" data-poll-final-value="{{ inv.status.final ? 'true' : 'false' }}">
+    <ol class="grid gap-1" aria-live="polite">
+        {% for s in steps %}
+            <li class="grid grid-cols-[1.25rem_1fr_auto] items-start gap-3 rounded-md px-2 py-2 {{ s.status == 'running' ? 'bg-warn-soft' : '' }}">
+                <span class="mt-0.5">
+                    {% if s.status == 'done' %}{{ ux_icon('lucide:circle-check', {class: 'h-4 w-4 text-ok'}) }}
+                    {% elseif s.status == 'running' %}<twig:Loader class="h-4 w-5 text-fg-2" label="Running" />
+                    {% elseif s.status == 'failed' %}{{ ux_icon('lucide:circle-x', {class: 'h-4 w-4 text-err'}) }}
+                    {% elseif s.status == 'skipped' %}{{ ux_icon('lucide:circle-minus', {class: 'h-4 w-4 text-fg-3'}) }}
+                    {% else %}{{ ux_icon('lucide:circle', {class: 'h-4 w-4 text-fg-3'}) }}{% endif %}
+                </span>
+                <span class="min-w-0">
+                    <span class="block text-sm {{ s.status == 'pending' ? 'text-fg-3' : 'text-fg' }}">{{ s.stage.label }}</span>
+                    {% if s.error %}<span class="block text-xs text-err">{{ s.error }}</span>
+                    {% elseif s.summary %}<span class="block text-xs text-fg-2">{{ s.summary }}</span>{% endif %}
+                </span>
+                <span class="t-meta">{{ s.durationMs is not null ? (s.durationMs|duration) : (s.status == 'running' ? 'running…' : '') }}</span>
+            </li>
+        {% endfor %}
+    </ol>
+    {% if inv.status.value == 'failed' %}
+        <twig:ErrorState title="The investigation failed" detail="{{ inv.error }}" class="mt-3">Earlier stages are kept above. Fix the cause and run it again.</twig:ErrorState>
+    {% endif %}
+</turbo-frame>

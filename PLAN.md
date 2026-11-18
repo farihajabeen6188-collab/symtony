@@ -86,14 +86,14 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Unit tests for correlation rules, including "time proximity is never marked proven"
 
 ### Phase 6 — Investigation engine → `prompts/phase-6-investigation.md`
-- [ ] Evidence package builder (redacted, size-bounded, every item has an ID)
-- [ ] Heuristic analyzers: deploy correlation, constraint violation + rollback, external call before failed write, stale cache read, repeated failure burst
-- [ ] Symfony AI agent with read-only tools; structured output → typed DTOs
-- [ ] `GroundingValidator` rejects uncited/invalid claims; UI shows "N of M claims verified"
-- [ ] Stages run in Messenger and update the UI as they really complete; failures shown
-- [ ] Works fully with no API key (heuristic engine, labeled as such)
-- [ ] Investigation workspace page + Markdown export
-- [ ] Tests with fake platform: parsing, grounding, stage failure handling
+- [x] Evidence package builder (redacted, size-bounded, every item has an ID)
+- [x] Heuristic analyzers: deploy correlation, constraint violation + rollback, external call before failed write, stale cache read, repeated failure burst
+- [x] Symfony AI agent with read-only tools; JSON output → typed drafts (tested with Symfony AI MockAgent; NOT yet verified against a live model — no key)
+- [x] `GroundingValidator` rejects uncited/invalid claims; UI shows "N of M claims verified"
+- [x] Stages run in Messenger and update the UI as they really complete; failures shown
+- [x] Works fully with no API key (heuristic engine, labeled as such)
+- [x] Investigation workspace page + Markdown export
+- [x] Tests with fake platform: parsing, grounding, stage failure handling, redaction of what the model receives
 
 ### Phase 7 — Regression Test Lab (red → green) → `prompts/phase-7-test-lab.md`
 - [ ] Test proposal generated from findings (code + metadata + cited evidence)
@@ -189,6 +189,18 @@ kernel.terminate → `ignore_user_abort(true)` + shutdown flush; (2) fingerprint
 classification and PHP 8.4 closure line numbers → instrumentation frames ignored, closure names normalized,
 `symtony:incidents:refingerprint` merges duplicates (SYM-6 → SYM-5); (3) stale `public/assets` from a prod
 measurement shadowed live CSS. 93 + 10 tests green.
+
+**2026-11-18 — Phase 6 (investigation engine).** Investigation, steps, evidence items (EV-n), findings (fact /
+inference / hypothesis, source, grounding). Pipeline on the `investigations` queue, each stage committed when it
+really completes. Five analyzers (constraint+rollback, side effect before failure → orphaned payment authorization,
+stale cache vs. later write, deploy correlation, occurrence pattern), keyword history retrieval (ts_rank), Symfony
+AI `investigator` agent with read-only evidence tools (skipped — not faked — without a key), GroundingValidator
+(existence, citation required, facts not from inferred context only, quoted durations must match), report composer
+from verified findings only, flagship page with live progress, Markdown export, Investigate button, Overview
+metrics. Real run on SYM-5: stale-cache hypothesis verified, impact names the orphaned authorization, incident →
+identified. Bugs found live: Postgres LISTEN/NOTIFY transport waited 60 s without its trigger → polling; inferred
+context swamped evidence (40/61) → capped at 12 + latest deploy. 100 + 10 tests green.
+**Not verified yet:** the live Hugging Face model path (needs HUGGINGFACE_API_KEY).
 
 ## Blockers
 

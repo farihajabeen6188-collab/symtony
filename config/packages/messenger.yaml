@@ -7,6 +7,8 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     queue_name: async
+                    # Poll (1 s) instead of LISTEN/NOTIFY: the notify trigger is not part of our migrations.
+                    use_notify: false
                 retry_strategy:
                     max_retries: 3
                     multiplier: 2
@@ -14,6 +16,7 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     queue_name: investigations
+                    use_notify: false
                 retry_strategy:
                     max_retries: 2
                     delay: 2000
@@ -23,6 +26,7 @@ framework:
 
         routing:
             'App\Infrastructure\Ingestion\Message\EventsIngested': async
+            'App\Application\Investigation\RunInvestigation': investigations
 
 when@test:
     framework:

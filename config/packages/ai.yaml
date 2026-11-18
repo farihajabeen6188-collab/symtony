@@ -8,7 +8,19 @@ ai:
 
     # https://symfony.com/doc/current/ai/bundles/ai-bundle.html
     agent:
-        # Phase 0 spike agent (removed with src/Spike once the investigator agent exists)
+        # Root-cause investigator. Reads only the current investigation's redacted evidence through tools.
+        investigator:
+            platform: 'ai.platform.huggingface'
+            model: '%env(SYMTONY_AI_MODEL)%'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/investigator.md'
+            tools:
+                services:
+                    - 'App\Infrastructure\AI\Tool\EvidenceTools'
+            max_tool_calls: 12
+            fault_tolerant_toolbox: true
+
+        # Phase 0 spike agent (verifies tool calling + structured output; removed once a key is verified)
         spike:
             platform: 'ai.platform.huggingface'
             model: '%env(SYMTONY_AI_MODEL)%'

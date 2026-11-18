@@ -1,0 +1,201 @@
+{% extends 'app/layout.html.twig' %}
+
+{% set incident = inv.incident %}
+{% block title %}{{ incident.reference }} investigation{% endblock %}
+{% block active_nav %}app_investigations{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_investigations') }}" class="text-fg-2 hover:text-fg">Investigations</a></li>
+    <li class="text-fg-3">/</li>
+    <li><a href="{{ path('app_incident_show', {number: incident.number}) }}" class="text-fg-2 hover:text-fg">{{ incident.reference }}</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">{{ inv.shortId }}</li>
+{% endblock %}
+
+{% block content %}
+{% set final = inv.status.final %}
+{% set ai_used = inv.engine starts with 'llm:' %}
+{% set hypotheses = findings|filter(f => f.kind == 'hypothesis') %}
+{% set top = hypotheses|filter(f => f.verified)|first %}
+{% set r = inv.report %}
+
+<twig:PageHeader title="{{ incident.title }}">
+    <twig:block name="eyebrow">
+        <span class="t-meta">{{ incident.reference }} · {{ inv.shortId }}</span>
+        <span class="badge badge-{{ inv.status.badge }}">{{ inv.status.label }}</span>
+        <span class="badge badge-{{ incident.severity.badge }}">{{ incident.severity.label }}</span>
+        {% if ai_used %}<span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}{{ inv.engine|slice(4) }}</span>{% else %}<span class="badge badge-neutral" title="No language model was used">{{ ux_icon('lucide:cpu') }}Heuristic engine</span>{% endif %}
+        <span class="t-meta">{{ incident.application.name }} · started {{ inv.createdAt|ago }}{% if inv.durationSeconds %} · took {{ inv.durationSeconds }} s{% endif %}</span>
+    </twig:block>
+    <twig:block name="actions">
+        {% if final %}
+            <a href="{{ path('app_investigation_markdown', {id: inv.id}) }}" class="btn btn-secondary">{{ ux_icon('lucide:file-down') }}Export Markdown</a>
+            <form method="post" action="{{ path('app_incident_investigate', {number: incident.number}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('incident-action') }}">
+                <button class="btn btn-ghost">{{ ux_icon('lucide:rotate-cw') }}Run again</button>
+            </form>
+        {% endif %}
+        <a href="{{ path('app_incident_show', {number: incident.number}) }}" class="btn btn-ghost">{{ ux_icon('lucide:git-commit-horizontal') }}Timeline</a>
+    </twig:block>
+</twig:PageHeader>
+
+{% if not final %}
+    <section class="panel mx-auto max-w-2xl" aria-labelledby="run-h">
+        <div class="panel-header">
+            <h2 id="run-h" class="t-h2 inline-flex items-center gap-3"><twig:Logo variant="mark" motion="scan" class="h-6 w-7" label="Investigating" />Investigating {{ incident.reference }}</h2>
+            <span class="text-xs text-fg-3">Each stage appears when it really completes</span>
+        </div>
+        <div class="panel-body">{{ include('investigations/_progress.html.twig') }}</div>
+    </section>
+{% else %}
+<div class="grid gap-5 xl:grid-cols-[18rem_minmax(0,1fr)_18rem]">
+
+    {# ---------- Left: evidence ---------- #}
+    <aside class="order-3 xl:order-1" aria-labelledby="ev-h">
+        <section class="panel xl:sticky xl:top-20">
+            <div class="panel-header"><h2 id="ev-h" class="t-h3">Evidence</h2><span class="text-xs text-fg-3">{{ evidence|length }} items</span></div>
+            <ol class="max-h-[70vh] divide-y divide-line overflow-y-auto text-xs">
+                {% for ref, e in evidence %}
+                    <li id="ev-{{ ref }}" class="scroll-mt-24 px-3 py-2 target:bg-accent-soft">
+                        <div class="flex items-center gap-1.5">
+                            <span class="mono font-medium text-fg">{{ ref }}</span>
+                            {% if e.kind == 'context' %}<span class="badge badge-outline-dashed">inferred</span>{% elseif e.kind == 'history' %}<span class="badge badge-neutral">history</span>{% elseif e.kind == 'incident' %}<span class="badge badge-neutral">incident</span>{% endif %}
+                            {% if e.data.first_failure ?? false %}<span class="badge badge-err">first failure</span>{% elseif e.data.error ?? false %}<span class="dot text-err"></span>{% endif %}
+                        </div>
+                        <p class="mt-0.5 text-fg-2">{{ e.label }}</p>
+                        {% if e.eventId %}<a class="text-2xs text-accent hover:underline" href="{{ path('app_events', {event: e.eventId, trace_id: inv.traceId}) }}">Open event</a>{% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
+    </aside>
+
+    {# ---------- Center: the explanation ---------- #}
+    <div class="order-1 grid min-w-0 content-start gap-5 xl:order-2">
+        <section class="panel panel-body" aria-labelledby="sum-h">
+            <div class="mb-2 flex items-center gap-2">
+                <h2 id="sum-h" class="t-h2">Summary</h2>
+                {% if ai_used and top and top.fromModel %}<span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}Written by the model</span>{% else %}<span class="badge badge-neutral">Composed from verified findings</span>{% endif %}
+            </div>
+            <p class="text-md text-fg">{{ inv.summary }}</p>
+        </section>
+
+        <section aria-labelledby="hyp-h">
+            <h2 id="hyp-h" class="t-h2 mb-3">Root-cause hypotheses</h2>
+            {% if hypotheses is empty %}
+                <p class="panel panel-body text-sm text-fg-2">No hypothesis could be formed. The evidence shows what failed but not why; see the limitations below.</p>
+            {% else %}
+                <div class="grid gap-3">{% for f in hypotheses %}{{ include('investigations/_finding.html.twig') }}{% endfor %}</div>
+            {% endif %}
+        </section>
+
+        {% set facts = findings|filter(f => f.kind == 'fact') %}
+        {% if facts is not empty %}
+            <section aria-labelledby="facts-h">
+                <h2 id="facts-h" class="t-h2 mb-3">What happened</h2>
+                <div class="grid gap-3">{% for f in facts %}{{ include('investigations/_finding.html.twig') }}{% endfor %}</div>
+            </section>
+        {% endif %}
+
+        {% set inferences = findings|filter(f => f.kind == 'inference') %}
+        {% if inferences is not empty %}
+            <section aria-labelledby="inf-h">
+                <h2 id="inf-h" class="t-h2 mb-3">Inferences</h2>
+                <div class="grid gap-3">{% for f in inferences %}{{ include('investigations/_finding.html.twig') }}{% endfor %}</div>
+            </section>
+        {% endif %}
+
+        {% if r.recommended_fix is defined %}
+            <section class="panel panel-body" aria-labelledby="fix-h">
+                <div class="mb-2 flex flex-wrap items-center gap-2"><h2 id="fix-h" class="t-h2">Recommended fix</h2><span class="badge badge-neutral">{{ r.fix_source ?? '' }}</span><span class="text-xs text-fg-3">Proposal — review before changing code</span></div>
+                <p class="text-sm text-fg">{{ r.recommended_fix }}</p>
+            </section>
+        {% endif %}
+
+        {% if r.reproduction is defined %}
+            <section class="panel panel-body" aria-labelledby="repro-h">
+                <h2 id="repro-h" class="t-h2 mb-2">Regression test strategy</h2>
+                <p class="text-sm text-fg">{{ r.reproduction }}</p>
+            </section>
+        {% endif %}
+
+        {% if r.limitations is defined %}
+            <section class="rounded-lg border border-dashed border-line-strong p-4" aria-labelledby="lim-h">
+                <h2 id="lim-h" class="t-h3 mb-2">What this investigation could not see</h2>
+                <ul class="list-disc space-y-1 pl-5 text-sm text-fg-2">{% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+            </section>
+        {% endif %}
+    </div>
+
+    {# ---------- Right: assessment ---------- #}
+    <aside class="order-2 grid content-start gap-4 xl:order-3" aria-label="Assessment">
+        <section class="panel panel-body">
+            <p class="t-label">Grounding</p>
+            <p class="mt-1 flex items-baseline gap-1"><span class="num text-2xl font-semibold {{ grounding.verified == grounding.total ? 'text-ok' : 'text-warn' }}">{{ grounding.verified }}</span><span class="text-fg-3">of {{ grounding.total }}</span></p>
+            <p class="text-xs text-fg-3">claims verified against evidence. Rejected claims are shown but never used in the report.</p>
+        </section>
+        <section class="panel panel-body">
+            <p class="t-label">Leading hypothesis</p>
+            {% if top %}
+                <p class="mt-1 text-sm text-fg">Confidence: <span class="font-medium">{{ top.confidence }}</span></p>
+                <p class="mt-1 text-xs text-fg-3">An assessment of how well the evidence supports it — not a guarantee.</p>
+            {% else %}
+                <p class="mt-1 text-sm text-fg-2">None verified.</p>
+            {% endif %}
+        </section>
+        {% if r.impact is defined %}
+            <section class="panel panel-body">
+                <p class="t-label mb-2">Impact</p>
+                <ul class="grid gap-2 text-sm text-fg">
+                    {% for i in r.impact %}<li>{{ i.statement }} <span class="whitespace-nowrap">{% for ref in i.citations %}<a href="#ev-{{ ref }}" class="mono text-2xs text-accent">{{ ref }}</a> {% endfor %}</span></li>{% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+        <section class="panel panel-body">
+            <p class="t-label mb-2">Services involved</p>
+            <div class="flex flex-wrap gap-1">
+                {% for s in evidence|filter(e => e.data.service is defined)|map(e => e.data.service)|reduce((c, s) => s in c ? c : c|merge([s]), []) %}<span class="badge badge-neutral">{{ s }}</span>{% endfor %}
+            </div>
+        </section>
+        {% if r.next_steps is defined %}
+            <section class="panel panel-body">
+                <p class="t-label mb-2">Next steps</p>
+                <ol class="list-decimal space-y-1 pl-4 text-sm text-fg">{% for s in r.next_steps %}<li>{{ s }}</li>{% endfor %}</ol>
+            </section>
+        {% endif %}
+    </aside>
+</div>
+
+{# ---------- Bottom: how it was produced ---------- #}
+<section class="panel mt-6" data-controller="tabs" aria-label="Investigation details">
+    <div class="px-4">
+        <div class="tabs" role="tablist">
+            <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select">Stages</button>
+            <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select">Execution details</button>
+            <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select">Run history <span class="count">{{ history|length }}</span></button>
+        </div>
+    </div>
+    <div role="tabpanel" data-tabs-target="panel" class="panel-body">{{ include('investigations/_progress.html.twig') }}</div>
+    <div role="tabpanel" data-tabs-target="panel" class="panel-body" hidden>
+        <dl class="grid max-w-2xl grid-cols-[10rem_1fr] gap-y-2 text-sm">
+            <dt class="text-fg-3">Engine</dt><dd class="mono text-xs text-fg">{{ inv.engine }}</dd>
+            <dt class="text-fg-3">Prompt version</dt><dd class="mono text-xs text-fg">{{ inv.promptVersion ?: '—' }}</dd>
+            {% for k, v in inv.usage %}<dt class="text-fg-3">{{ k|replace({'_': ' '})|capitalize }}</dt><dd class="num text-fg">{{ v ?? '—' }}</dd>{% endfor %}
+            {% if inv.usage is empty %}<dt class="text-fg-3">Model usage</dt><dd class="text-fg-2">No model call was made.</dd>{% endif %}
+            <dt class="text-fg-3">Evidence sent</dt><dd class="text-fg-2">{{ evidence|length }} redacted items; secrets and personal data are removed before anything leaves SYMTONY.</dd>
+            <dt class="text-fg-3">Triggered by</dt><dd class="text-fg-2">{{ inv.requestedBy ? inv.requestedBy.name : inv.trigger }}</dd>
+        </dl>
+    </div>
+    <div role="tabpanel" data-tabs-target="panel" hidden>
+        <ul class="divide-y divide-line">
+            {% for h in history %}
+                <li><a href="{{ path('app_investigation_show', {id: h.id}) }}" class="flex flex-wrap items-center gap-3 px-4 py-2.5 hover:bg-surface-2 {{ h.id == inv.id ? 'bg-surface-2' : '' }}">
+                    <span class="t-meta">{{ h.shortId }}</span><span class="badge badge-{{ h.status.badge }}">{{ h.status.label }}</span>
+                    <span class="text-sm text-fg-2">{{ h.engine starts with 'llm:' ? h.engine|slice(4) : 'Heuristic engine' }}</span>
+                    <span class="t-meta ml-auto">{{ h.createdAt|ago }}</span></a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

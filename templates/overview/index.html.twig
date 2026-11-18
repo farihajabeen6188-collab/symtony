@@ -49,10 +49,8 @@
         <twig:MetricCard label="Open incidents" value="{{ metrics.open_incidents }}" tone="{{ metrics.open_incidents > 0 ? 'fg' : 'ok' }}" hint="Across all applications" href="{{ path('app_incidents') }}" />
         <twig:MetricCard label="Critical incidents" value="{{ metrics.critical_open }}" tone="{{ metrics.critical_open > 0 ? 'err' : 'ok' }}" hint="Open and critical" href="{{ path('app_incidents', {severity: 'critical'}) }}" />
         <twig:MetricCard label="Events" value="{{ metrics.events|compact }}" hint="{{ metrics.errors|compact }} errors" />
-        {% block investigation_metrics %}
-            <twig:MetricCard label="Investigations" empty_hint="None run yet" />
-            <twig:MetricCard label="Median investigation" empty_hint="None run yet" />
-        {% endblock %}
+        <twig:MetricCard label="Investigations" value="{{ inv_metrics.completed > 0 ? inv_metrics.completed : null }}" hint="Completed · {{ range.label|lower }}" empty_hint="None completed in {{ range.label|lower }}" href="{{ path('app_investigations') }}" />
+        <twig:MetricCard label="Median investigation" value="{{ inv_metrics.median_seconds }}" unit="s" hint="Start to report" empty_hint="None completed yet" />
     </div>
 
     <div class="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -125,11 +123,21 @@
         </section>
     </div>
 
-    {% block active_investigations %}
     <section class="panel mt-4" aria-labelledby="inv-h">
-        <div class="panel-header"><h2 id="inv-h" class="t-h2">Active investigations</h2></div>
-        <p class="p-4 text-sm text-fg-3">No investigations are running. Open an incident to start one.</p>
+        <div class="panel-header"><h2 id="inv-h" class="t-h2">Active investigations</h2><a href="{{ path('app_investigations') }}" class="text-sm text-accent hover:underline">All investigations</a></div>
+        {% if active_investigations is empty %}
+            <p class="p-4 text-sm text-fg-3">No investigations are running. Open an incident to start one.</p>
+        {% else %}
+            <ul class="divide-y divide-line">
+                {% for v in active_investigations %}
+                    <li><a href="{{ path('app_investigation_show', {id: v.id}) }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2">
+                        <twig:Logo variant="mark" motion="scan" class="h-5 w-6 flex-none" label="Investigating" />
+                        <span class="min-w-0 flex-1 truncate text-sm text-fg">{{ v.incident.reference }} · {{ v.incident.title }}</span>
+                        <span class="badge badge-{{ v.status.badge }}">{{ v.status.label }}</span>
+                    </a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </section>
-    {% endblock %}
 {% endif %}
 {% endblock %}

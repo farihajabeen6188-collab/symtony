@@ -20,6 +20,15 @@
         {% if incident.seeded %}<span class="badge badge-outline-dashed" title="Created from seeded demo history">seeded</span>{% endif %}
     </twig:block>
     <twig:block name="actions">
+        {% if latest_investigation and not latest_investigation.status.final %}
+            <a href="{{ path('app_investigation_show', {id: latest_investigation.id}) }}" class="btn btn-secondary"><twig:Logo variant="mark" motion="scan" class="h-4 w-5" label="Investigating" />Investigation running…</a>
+        {% else %}
+            {% if latest_investigation %}<a href="{{ path('app_investigation_show', {id: latest_investigation.id}) }}" class="btn btn-ghost">{{ ux_icon('lucide:file-search') }}Latest report</a>{% endif %}
+            <form method="post" action="{{ path('app_incident_investigate', {number: incident.number}) }}" data-controller="busy" data-action="submit->busy#start">
+                <input type="hidden" name="_token" value="{{ token }}">
+                <button class="btn btn-primary" data-busy-target="button">{{ ux_icon('lucide:scan-search') }}{{ latest_investigation ? 'Investigate again' : 'Investigate' }}</button>
+            </form>
+        {% endif %}
         <div class="relative" data-controller="dropdown">
             <button type="button" class="btn btn-secondary" data-action="dropdown#toggle" data-dropdown-target="button" aria-haspopup="menu" aria-expanded="false">Status{{ ux_icon('lucide:chevron-down', {class: 'text-fg-3'}) }}</button>
             <div class="popover right-0 mt-1 w-56" role="menu" data-dropdown-target="menu" hidden>
