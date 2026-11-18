@@ -63,6 +63,8 @@ final class IncidentPagesTest extends WebTestCase
         $measure = function (): int {
             // Count only this request's queries (reboot is disabled, so clear what seeding logged).
             static::getContainer()->get('doctrine.debug_data_holder')->reset();
+            $this->em->clear(); // both measurements start from an empty identity map, like a real request
+
             $this->client->enableProfiler();
             $this->client->request('GET', '/app/incidents?status=all');
 

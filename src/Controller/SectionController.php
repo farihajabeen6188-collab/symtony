@@ -16,11 +16,9 @@ final class SectionController extends AbstractController
 {
     private const SECTIONS = [
         'app_knowledge' => ['Knowledge Base', 'lucide:library', 'Resolved incidents and what fixed them.', 'Nothing resolved yet', 'Resolved incidents become searchable history that new investigations can learn from.'],
-        'app_mcp' => ['MCP Integrations', 'lucide:plug', 'Let AI clients such as Claude Code query incidents and evidence.', 'MCP server', 'The MCP server is running. Tool access tokens and client setup arrive here soon.'],
         'app_settings' => ['Settings', 'lucide:settings', 'Profile, workspace, AI provider and security.', 'Settings', 'Workspace settings arrive with the features they configure.'],
     ];
     #[Route('/app/knowledge', name: 'app_knowledge')]
-    #[Route('/app/mcp', name: 'app_mcp')]
     #[Route('/app/settings', name: 'app_settings')]
     public function show(string $_route): Response
     {

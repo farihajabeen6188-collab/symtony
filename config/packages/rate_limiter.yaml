@@ -18,3 +18,7 @@ when@test:
                 policy: token_bucket
                 limit: 3
                 rate: { interval: '1 hour', amount: 1 }
+            mcp:
+                policy: sliding_window
+                limit: 20
+                interval: '1 minute'

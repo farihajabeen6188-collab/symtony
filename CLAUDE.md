@@ -164,6 +164,19 @@ controller needs a PSR-17 factory).
 - Introspection: `php bin/console debug:mcp`.
 - Verified: MCP Inspector CLI over STDIO (`tools/list`, `tools/call ping`) and raw JSON-RPC over HTTP
   (`initialize` → `Mcp-Session-Id` → `notifications/initialized` 202 → `tools/list` → `tools/call`).
+- Errors: throw `Mcp\Exception\ToolCallException` (→ `isError: true` result with the message),
+  `ResourceReadException`, `PromptGetException`. Any other exception becomes a generic internal error.
+  Argument validation against the generated JSON schema happens before the handler (`-32602`).
+  `#[Schema(enum:, minimum:, maximum:)]` on parameters; `new ToolAnnotations(readOnlyHint: ...)` in `#[McpTool]`.
+- Registry is filled when the server is built: inject `mcp.server.default` before reading
+  `mcp.server.default.registry` (`getTools()`, `getResources()`, `getResourceTemplates()`, `getPrompts()`).
+- SYMTONY auth: `McpAuthSubscriber` (kernel.request on `/mcp`) requires `Authorization: Bearer smcp_…` → 401
+  otherwise; STDIO reads `SYMTONY_MCP_TOKEN`. Every handler runs through `McpGate::run()` (scope, rate limit
+  `limiter.mcp`, workspace, audit `mcp.call`, safe errors). MCP Inspector CLI with a token:
+  `npx @modelcontextprotocol/inspector --cli -e SYMTONY_MCP_TOKEN=… --method tools/list -- docker compose exec -T -e SYMTONY_MCP_TOKEN app php bin/console mcp:server`.
+- Claude Code syntax (docs, 2026-11): `claude mcp add --transport http <name> <url> --header "Authorization: Bearer …"`;
+  STDIO `claude mcp add --env K=V --transport stdio <name> -- <command…>`.
+- Long-running processes: services holding per-request state implement `ResetInterface` (e.g. `WorkspaceContext`).
 
 **AI spike result:** NOT YET TESTED — no `HUGGINGFACE_API_KEY` configured. Run `make spike-ai`
 (`./dev.ps1 spike-ai`) after adding the key to `.env.local`. Default model candidate: `Qwen/Qwen3.5-35B-A3B`.

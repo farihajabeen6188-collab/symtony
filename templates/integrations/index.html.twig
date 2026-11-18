@@ -1,0 +1,151 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}MCP Integrations{% endblock %}
+
+{% block content %}
+{% set token = csrf_token('mcp') %}
+<twig:PageHeader title="MCP Integrations" description="Let AI clients such as Claude Code read incidents, timelines and evidence-grounded reports through SYMTONY's MCP server. Every call is scoped to this workspace, rate-limited and audited." />
+
+<div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5">
+
+        {# Connect #}
+        <section id="connect" class="panel" data-controller="tabs" aria-labelledby="connect-h">
+            <div class="panel-header">
+                <h2 id="connect-h" class="t-h2">Connect a client</h2>
+                {% if new_token %}<span class="badge badge-warn">{{ ux_icon('lucide:key-round') }}Token shown once</span>{% endif %}
+            </div>
+            {% if new_token %}
+                <div class="border-b border-line bg-warn-soft p-4">
+                    <p class="mb-2 text-sm text-fg">Your new token. Copy it now; SYMTONY stores only its hash and cannot show it again. The configurations below already contain it.</p>
+                    <div class="flex items-center gap-2 rounded-md border border-line bg-bg-deep px-3 py-2">
+                        <code class="mono min-w-0 flex-1 truncate text-sm text-fg" data-testid="new-token">{{ new_token }}</code>
+                        <twig:CopyButton value="{{ new_token }}" label="Copy token" />
+                    </div>
+                </div>
+            {% elseif tokens is empty %}
+                <p class="border-b border-line px-4 py-3 text-sm text-fg-2">Create a token first (right). The configurations below use <code>&lt;token&gt;</code> as a placeholder until then.</p>
+            {% endif %}
+            <div class="tabs px-2" role="tablist">
+                {% for key, c in configs %}
+                    <button class="tab" role="tab" aria-selected="{{ loop.first ? 'true' : 'false' }}" data-tabs-target="tab" data-action="tabs#select">{{ c.label }}</button>
+                {% endfor %}
+            </div>
+            {% for key, c in configs %}
+                <div role="tabpanel" data-tabs-target="panel" class="panel-body" {% if not loop.first %}hidden{% endif %}>
+                    <twig:CodeBlock code="{{ c.code }}" lang="{{ c.lang }}" title="{{ c.label }}" />
+                    <p class="mt-2 text-xs text-fg-3">
+                        {% if key == 'claude-http' %}Streamable HTTP at {{ http_url }}. It accepts requests from this machine only (localhost).
+                        {% elseif key == 'claude-stdio' %}Runs the server inside the app container. Run it from the SYMTONY folder; the token is passed as SYMTONY_MCP_TOKEN.
+                        {% elseif key == 'desktop' %}Add to claude_desktop_config.json and replace path/to/symtony with this project's folder.
+                        {% else %}The response carries an Mcp-Session-Id header; send it with every following request.{% endif %}
+                    </p>
+                </div>
+            {% endfor %}
+        </section>
+
+        {# Capabilities, read from the server's registry #}
+        <section class="panel overflow-hidden" aria-labelledby="cap-h">
+            <div class="panel-header">
+                <h2 id="cap-h" class="t-h2">What clients can do</h2>
+                <span class="text-xs text-fg-3">{{ capabilities.tools|length }} tools · {{ capabilities.resources|length }} resources · {{ capabilities.prompts|length }} prompts</span>
+            </div>
+            <ul class="divide-y divide-line">
+                {% for t in capabilities.tools %}
+                    <li class="flex flex-wrap items-start gap-x-3 gap-y-1 px-4 py-2.5">
+                        <code class="mono text-sm text-fg">{{ t.name }}</code>
+                        {% if t.write %}<span class="badge badge-warn">write</span>{% else %}<span class="badge badge-neutral">read</span>{% endif %}
+                        <p class="w-full text-xs text-fg-2">{{ t.description }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="grid gap-0 border-t border-line md:grid-cols-2">
+                <div class="p-4 md:border-r md:border-line">
+                    <p class="t-label mb-2">Resources</p>
+                    <ul class="grid gap-2">{% for r in capabilities.resources %}<li><code class="mono text-xs text-fg">{{ r.uri }}</code><p class="text-xs text-fg-3">{{ r.description }}</p></li>{% endfor %}</ul>
+                </div>
+                <div class="border-t border-line p-4 md:border-t-0">
+                    <p class="t-label mb-2">Prompts</p>
+                    <ul class="grid gap-2">{% for p in capabilities.prompts %}<li><code class="mono text-xs text-fg">{{ p.name }}({{ p.arguments|join(', ') }})</code><p class="text-xs text-fg-3">{{ p.description }}</p></li>{% endfor %}</ul>
+                </div>
+            </div>
+        </section>
+
+        {# Recent calls from the audit log #}
+        <section class="panel overflow-hidden" aria-labelledby="calls-h">
+            <div class="panel-header"><h2 id="calls-h" class="t-h2">Recent calls</h2><span class="text-xs text-fg-3">Last {{ calls|length }} from the audit log</span></div>
+            {% if calls is empty %}
+                <twig:EmptyState title="No MCP calls yet" illustration="no-results">Calls from connected clients appear here with their token, arguments and duration.</twig:EmptyState>
+            {% else %}
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead><tr><th>When</th><th>Call</th><th class="hidden sm:table-cell">Token</th><th>Result</th><th class="hidden md:table-cell">Duration</th></tr></thead>
+                        <tbody>
+                            {% for c in calls %}
+                                {% set m = c.metadata %}
+                                <tr>
+                                    <td class="t-meta whitespace-nowrap" title="{{ c.createdAt|date('Y-m-d H:i:s') }} UTC">{{ c.createdAt|ago }}</td>
+                                    <td class="w-full max-w-0">
+                                        <code class="mono block truncate text-xs text-fg">{{ m.name ?? '?' }}</code>
+                                        <span class="t-meta block truncate">{{ m.kind ?? '' }}{% if m.args is defined and m.args is not empty %} · {% for k, v in m.args %}{{ k }}={{ v }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</span>
+                                    </td>
+                                    <td class="hidden text-fg-2 sm:table-cell">{{ c.actor }}<span class="t-meta block">{{ m.transport ?? '' }}</span></td>
+                                    <td>{% if m.ok ?? false %}<span class="badge badge-ok">ok</span>{% else %}<span class="badge badge-err" title="{{ m.error ?? '' }}">error</span>{% endif %}</td>
+                                    <td class="t-meta hidden md:table-cell">{{ m.duration_ms ?? '' }} ms</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="order-first grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4 xl:order-none">
+        <section class="panel panel-body" aria-labelledby="ep-h">
+            <h2 id="ep-h" class="t-h3 mb-3">Endpoints</h2>
+            <p class="t-label mb-1">Streamable HTTP</p>
+            <div class="mb-3 flex items-center gap-2"><code class="mono min-w-0 flex-1 truncate text-xs text-fg">{{ http_url }}</code><twig:CopyButton value="{{ http_url }}" label="Copy URL" icon_only /></div>
+            <p class="t-label mb-1">STDIO</p>
+            <div class="flex items-center gap-2"><code class="mono min-w-0 flex-1 truncate text-xs text-fg">{{ stdio_command }}</code><twig:CopyButton value="{{ stdio_command }}" label="Copy command" icon_only /></div>
+            <p class="mt-3 text-2xs text-fg-3">Both need a token. The model gets read-only, workspace-scoped tools: no shell, no files, no SQL.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="tok-h">
+            <div class="panel-header"><h2 id="tok-h" class="t-h3">Access tokens</h2><span class="text-xs text-fg-3">{{ tokens|filter(t => not t.revoked)|length }} active</span></div>
+            <form method="post" action="{{ path('app_mcp_token_create') }}" class="grid gap-3 border-b border-line p-4">
+                <input type="hidden" name="_token" value="{{ token }}">
+                <div class="grid gap-1">
+                    <label for="mcp-label" class="t-label">Name</label>
+                    <input id="mcp-label" name="label" class="input" required maxlength="80" placeholder="Claude Code on my laptop">
+                </div>
+                <label class="flex items-start gap-2 text-sm text-fg"><input type="checkbox" class="checkbox mt-0.5" name="write" value="1"> <span>Allow starting investigations <span class="block text-xs text-fg-3">Adds the write scope (start_investigation). Read access is always included.</span></span></label>
+                <div><button class="btn btn-primary">{{ ux_icon('lucide:key-round') }}Create token</button></div>
+            </form>
+            {% if tokens is empty %}
+                <p class="p-4 text-sm text-fg-3">No tokens yet.</p>
+            {% else %}
+                <ul class="divide-y divide-line">
+                    {% for t in tokens %}
+                        <li class="flex items-start gap-3 px-4 py-3 {{ t.revoked ? 'opacity-60' : '' }}">
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-medium text-fg">{{ t.label }}</p>
+                                <p class="t-meta">{{ t.prefix }}… · {% for s in t.scopes %}{{ s }}{% if not loop.last %} + {% endif %}{% endfor %}</p>
+                                <p class="t-meta">{% if t.revoked %}Revoked {{ t.revokedAt|ago }}{% elseif t.lastUsedAt %}Used {{ t.lastUsedAt|ago }}{% else %}Never used{% endif %}</p>
+                            </div>
+                            {% if not t.revoked %}
+                                <form method="post" action="{{ path('app_mcp_token_revoke', {id: t.id}) }}" data-controller="confirm" data-confirm-title-value="Revoke {{ t.label }}?" data-confirm-message-value="Clients using this token are refused immediately. This cannot be undone." data-confirm-label-value="Revoke token">
+                                    <input type="hidden" name="_token" value="{{ token }}">
+                                    <button class="btn btn-ghost btn-sm text-err">{{ ux_icon('lucide:ban') }}Revoke</button>
+                                </form>
+                            {% else %}
+                                <span class="badge badge-neutral">revoked</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    </aside>
+</div>
+{% endblock %}

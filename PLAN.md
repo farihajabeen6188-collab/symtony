@@ -103,12 +103,12 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Download test; execution history
 
 ### Phase 8 — MCP server → `prompts/phase-8-mcp.md`
-- [ ] Tools: list_applications, get_application_health, list_incidents, get_incident, search_events, get_event_details, get_incident_timeline, start_investigation, get_investigation_report, list_related_incidents, get_regression_test
-- [ ] Resources + prompts as listed in the phase file
-- [ ] STDIO (`bin/console` command) and Streamable HTTP with bearer token per workspace
-- [ ] Workspace scoping, rate limit, audit log for every call; `start_investigation` requires a write-scoped token
-- [ ] Verified from MCP Inspector **and** `claude mcp add`; integration tests call tools through the SDK
-- [ ] In-app "MCP Integrations" page shows live tool list and copyable client configs
+- [x] Tools: list_applications, get_application_health, list_incidents, get_incident, search_events, get_event_details, get_incident_timeline, start_investigation, get_investigation_report, list_related_incidents, get_regression_test
+- [x] Resources + prompts as listed in the phase file
+- [x] STDIO (`bin/console` command) and Streamable HTTP with bearer token per workspace
+- [x] Workspace scoping, rate limit, audit log for every call; `start_investigation` requires a write-scoped token
+- [ ] Verified from MCP Inspector **and** `claude mcp add`; integration tests call tools through the SDK — Inspector + tests done; Claude Code not run (CLI not installed here, see Blockers)
+- [x] In-app "MCP Integrations" page shows live tool list and copyable client configs
 
 ### Phase 9 — Knowledge, assistant, palette, notifications (P1) → `prompts/phase-9-p1.md`
 - [ ] Knowledge documents + embeddings in pgvector via Symfony AI Store; keyword fallback; real scores only
@@ -215,9 +215,27 @@ Verified reproduction. Bugs found live: `preg_match_all` returns a count (templa
 `PHP_BINARY` is empty under FrankenPHP (lint shell-out → in-process parse); single-column CSS grids grew with
 long code lines (→ `minmax(0,1fr)`). 128 + 10 tests green.
 
+**2026-11-18 — Phase 8 (MCP server).** 12 tools (11 from the work order + ping), 1 resource + 4 resource
+templates, 5 prompts, all on `symfony/mcp-bundle` attributes. `McpToken` (workspace, label, read/write scopes,
+SHA-256 hash, last used, revoked), bearer auth on `/mcp` (401 + WWW-Authenticate otherwise), `SYMTONY_MCP_TOKEN`
+for STDIO, `McpGate` around every handler (scope, per-token sliding-window limit 120/min, workspace scoping,
+audit row `mcp.call` with args summary / size / duration / transport, safe error messages), Redactor applied
+again to everything leaving through MCP; tool descriptions tell the model event text is untrusted data.
+MCP Integrations page: endpoints, token create (shown once, configs prefilled) / revoke, live capabilities
+from the server registry, recent calls. `symtony:mcp:token` console command. Verified: raw JSON-RPC over HTTP
+for every tool/resource/prompt, STDIO with and without a token, MCP Inspector CLI (12 tools listed,
+`get_investigation_report SYM-5` returns the stale-cache summary). Bug found: `WorkspaceContext` cached the
+membership for the service's lifetime — in a long-running process it could carry one user's workspace into
+another user's request → now per request (`ResetInterface`) and per user, with a test. 
+**Not verified:** Claude Code end to end ("Why did checkout fail in the demo shop?") — the `claude` CLI is not
+installed on this machine. Run `claude mcp add` with the command shown on the MCP Integrations page.
+
 ## Blockers
 
 <!-- Anything that stopped progress, with what was tried. -->
 
 - **AI spike (Phase 0):** needs `HUGGINGFACE_API_KEY` in `.env.local`. Then run `./dev.ps1 spike-ai`.
-- ~~**First commit:**~~ resolved 2026-11-18: repo-local identity set (name "Symtony"). No remote configured yet.
+- ~~**First commit:**~~ resolved 2026-11-18: repo-local identity set (name "Symtony"); remote github.com/farihajabeen6188-collab/symtony.
+- **Claude Code MCP check (Phase 8):** the `claude` CLI is not installed on this machine. After installing it:
+  create a token on /app/mcp, run the `claude mcp add …` command shown there, and ask
+  "Why did checkout fail in the demo shop?".

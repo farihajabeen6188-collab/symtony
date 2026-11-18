@@ -29,6 +29,42 @@ final class ApplicationQueries
         return $this->em->getRepository(Application::class)->findBy(['workspace' => $workspace], ['createdAt' => 'ASC']);
     }
 
+    /** By id or slug, inside the workspace. */
+    public function find(Workspace $workspace, string $idOrSlug): Application
+    {
+        if (Uuid::isValid($idOrSlug)) {
+            return $this->get($workspace, $idOrSlug);
+        }
+        $app = $this->em->getRepository(Application::class)->findOneBy(['slug' => $idOrSlug, 'workspace' => $workspace]);
+        if (!$app instanceof Application) {
+            throw new NotFoundHttpException(\sprintf('No application "%s" in this workspace. Use list_applications to see the available ones.', $idOrSlug));
+        }
+
+        return $app;
+    }
+
+    /**
+     * Events, errors and error rate per service of one application since a point in time.
+     *
+     * @return list<array{service: string, events: int, errors: int, error_rate_percent: float, last_event: string}>
+     */
+    public function serviceHealth(Application $app, \DateTimeImmutable $since): array
+    {
+        $rows = $this->em->getConnection()->fetchAllAssociative(
+            "SELECT service, count(*) AS events, count(*) FILTER (WHERE severity IN ('error','critical')) AS errors, max(occurred_at) AS last_event
+             FROM event WHERE application_id = :app AND occurred_at >= :since GROUP BY service ORDER BY errors DESC, events DESC LIMIT 50",
+            ['app' => $app->getId()->toRfc4122(), 'since' => $since->format('Y-m-d H:i:sP')],
+        );
+
+        return array_map(static fn (array $r): array => [
+            'service' => (string) $r['service'],
+            'events' => (int) $r['events'],
+            'errors' => (int) $r['errors'],
+            'error_rate_percent' => (int) $r['events'] > 0 ? round((int) $r['errors'] / (int) $r['events'] * 100, 2) : 0.0,
+            'last_event' => (new \DateTimeImmutable((string) $r['last_event']))->format(\DATE_ATOM),
+        ], $rows);
+    }
+
     public function get(Workspace $workspace, string $id): Application
     {
         $app = Uuid::isValid($id) ? $this->em->getRepository(Application::class)->findOneBy(['id' => Uuid::fromString($id), 'workspace' => $workspace]) : null;
