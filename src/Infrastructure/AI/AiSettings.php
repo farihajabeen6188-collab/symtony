@@ -25,6 +25,22 @@ final class AiSettings
         return $this->enabled && '' !== trim($this->apiKey) && '' !== trim($this->model);
     }
 
+    /** Whether a key is set. The key itself is never exposed. */
+    public function hasKey(): bool
+    {
+        return '' !== trim($this->apiKey);
+    }
+
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
+    }
+
+    public function provider(): ?string
+    {
+        return null !== $this->provider && '' !== $this->provider ? $this->provider : null;
+    }
+
     public function platform(): string
     {
         return 'huggingface';

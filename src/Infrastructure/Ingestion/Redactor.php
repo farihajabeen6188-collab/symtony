@@ -68,6 +68,12 @@ final class Redactor
         return ['value' => $out, 'count' => $count];
     }
 
+    /** @return list<string> the built-in sensitive key suffixes (shown in settings) */
+    public static function builtInKeys(): array
+    {
+        return self::SENSITIVE_KEY_SUFFIXES;
+    }
+
     /** @param list<string> $extraKeys normalized keys */
     public function isSensitiveKey(string $key, array $extraKeys = []): bool
     {

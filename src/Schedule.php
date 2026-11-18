@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Application\Notification\CheckSilentApplicationsMessage;
+use App\Application\Retention\PurgeExpiredEvents;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
@@ -27,6 +28,7 @@ class Schedule implements ScheduleProviderInterface
         return (new SymfonySchedule())
             ->stateful($this->cache)
             ->processOnlyLastMissedRun(true)
-            ->add(RecurringMessage::every('5 minutes', new CheckSilentApplicationsMessage()));
+            ->add(RecurringMessage::every('5 minutes', new CheckSilentApplicationsMessage()))
+            ->add(RecurringMessage::every('1 day', new PurgeExpiredEvents()));
     }
 }

@@ -111,11 +111,12 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] In-app "MCP Integrations" page shows live tool list and copyable client configs
 
 ### Phase 9 — Knowledge, assistant, palette, notifications (P1) → `prompts/phase-9-p1.md`
-- [ ] Knowledge documents + embeddings in pgvector via Symfony AI Store; keyword fallback; real scores only
-- [ ] Seeded prior incident is found during the demo investigation
-- [ ] Context-aware assistant panel using the same tools, tool activity visible, answers link to evidence
-- [ ] ⌘K palette: navigation + contextual actions, full keyboard support
-- [ ] Notifications (DB-backed, read/unread, deep links) — no "real-time" claims unless implemented
+- [ ] Knowledge documents + embeddings in pgvector via Symfony AI Store; keyword fallback; real scores only — keyword path (ts_rank, labelled) and Knowledge Base page done; embeddings deferred (no embedding provider to verify)
+- [x] Seeded prior incident is found during the demo investigation
+- [x] Context-aware assistant panel using the same tools, tool activity visible, answers link to evidence
+- [x] ⌘K palette: navigation + contextual actions, full keyboard support
+- [x] Notifications (DB-backed, read/unread, deep links) — no "real-time" claims unless implemented
+- [x] Settings: profile, AI provider status (never the key), redaction keys, retention + scheduled purge, MCP tokens, audit log
 
 ### Phase 10 — Landing, docs, QA gate, demo → `prompts/phase-10-ship.md`
 - [ ] Landing page from real UI components (no fake logos/testimonials/stats)
@@ -229,6 +230,20 @@ membership for the service's lifetime — in a long-running process it could car
 another user's request → now per request (`ResetInterface`) and per user, with a test. 
 **Not verified:** Claude Code end to end ("Why did checkout fail in the demo shop?") — the `claude` CLI is not
 installed on this machine. Run `claude mcp add` with the command shown on the MCP Integrations page.
+
+**2026-11-18 — Phase 9 (knowledge, assistant, palette, notifications, settings).** Knowledge Base page over
+resolved incidents + resolution notes (keyword search, ts_rank labelled relative; SYM-1 PricingService history is
+cited as EV-n `history` in the SYM-5 investigation). Assistant panel on incident + investigation pages: answers
+from the latest completed investigation's evidence via the same read-only tools, stores each turn with the tools
+really called and only existing EV refs, shows failures; without a key it says so (verified in the browser).
+Palette: workspace-scoped server search (incidents, apps, investigations, event ids, trace ids), contextual
+actions as real POST forms, recents in localStorage, `?` lists real shortcuts. Notifications: per member,
+deduplicated, from grouping / investigations / test results / a scheduled silent-app check (worker consumes
+`scheduler_default`); bell + dropdown + page, refreshed on navigation (not real-time). Settings: profile, AI
+status, workspace name / retention / redaction keys (owners only), MCP link, audit log viewer; daily retention
+purge keeps incident and evidence events (dry run on the dev DB: demo 0, perf 923).
+**Deferred:** embeddings in pgvector (KnowledgeDocument + Store) — needs an embedding provider to verify; the
+keyword path is what runs. **Not verified live:** assistant answers from a real model (no key).
 
 ## Blockers
 

@@ -1,0 +1,114 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+{% set token = csrf_token('settings') %}
+{% set ws = membership.workspace %}
+<twig:PageHeader title="Settings" description="Your profile, this workspace, the AI provider and the audit trail." />
+
+<div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
+    <section id="profile" class="panel" aria-labelledby="profile-h">
+        <div class="panel-header"><h2 id="profile-h" class="t-h2">Profile</h2></div>
+        <form method="post" action="{{ path('app_settings_profile') }}" class="grid gap-4 p-4">
+            <input type="hidden" name="_token" value="{{ token }}">
+            <div class="grid gap-1">
+                <label for="s-name" class="t-label">Name</label>
+                <input id="s-name" name="name" class="input" value="{{ app.user.name }}" required maxlength="120">
+            </div>
+            <div class="grid gap-1">
+                <span class="t-label">Sign-in email</span>
+                <p class="mono text-sm text-fg">{{ app.user.email }}</p>
+                <p class="text-xs text-fg-3">The demo account's email comes from SYMTONY_DEMO_EMAIL and is not edited here.</p>
+            </div>
+            <div class="grid gap-1">
+                <label for="s-theme" class="t-label">Theme</label>
+                <select id="s-theme" name="theme" class="select">
+                    {% for t in ['dark', 'light', 'system'] %}<option value="{{ t }}" {% if app.user.theme.value == t %}selected{% endif %}>{{ t|capitalize }}</option>{% endfor %}
+                </select>
+            </div>
+            <div><button class="btn btn-primary">Save profile</button></div>
+        </form>
+    </section>
+
+    <section id="ai" class="panel" aria-labelledby="ai-h">
+        <div class="panel-header">
+            <h2 id="ai-h" class="t-h2">AI provider</h2>
+            {% if ai.configured %}<span class="badge badge-ok">Configured</span>{% else %}<span class="badge badge-warn">Not configured</span>{% endif %}
+        </div>
+        <dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 p-4 text-sm">
+            <dt class="text-fg-3">Platform</dt><dd class="text-fg">Hugging Face Inference Providers</dd>
+            <dt class="text-fg-3">Model</dt><dd class="mono truncate text-fg">{{ ai.model ?: '—' }}</dd>
+            <dt class="text-fg-3">Inference provider</dt><dd class="text-fg">{{ ai.provider ?? 'Routed by Hugging Face' }}</dd>
+            <dt class="text-fg-3">API key</dt><dd class="text-fg">{{ ai.hasKey ? 'Set (hidden)' : 'Not set' }}</dd>
+            <dt class="text-fg-3">Model calls</dt><dd class="text-fg">{{ ai.enabled ? 'Enabled' : 'Disabled (SYMTONY_AI_ENABLED=0)' }}</dd>
+        </dl>
+        <div class="border-t border-line p-4 text-sm text-fg-2">
+            {% if not ai.configured %}<p class="mb-2 text-fg">{{ ai.whyNotConfigured }}</p>{% endif %}
+            <p>Keys live in <code>.env.local</code>, never in the database, and are never shown. Without a key, investigations use the deterministic analyzers only and say so; the assistant and model-written tests stay off.</p>
+        </div>
+    </section>
+
+    <section id="workspace" class="panel xl:col-span-2" aria-labelledby="ws-h">
+        <div class="panel-header"><h2 id="ws-h" class="t-h2">Workspace</h2><span class="text-xs text-fg-3">You are {{ membership.role.value }}</span></div>
+        <form method="post" action="{{ path('app_settings_workspace') }}" class="grid gap-4 p-4 md:grid-cols-2">
+            <input type="hidden" name="_token" value="{{ token }}">
+            <div class="grid content-start gap-4">
+                <div class="grid gap-1">
+                    <label for="w-name" class="t-label">Workspace name</label>
+                    <input id="w-name" name="name" class="input" value="{{ ws.name }}" required maxlength="120" {% if not owner %}disabled{% endif %}>
+                </div>
+                <div class="grid gap-1">
+                    <label for="w-ret" class="t-label">Keep events for (days)</label>
+                    <input id="w-ret" name="retention_days" type="number" min="1" max="365" class="input w-32" value="{{ ws.retentionDays }}" required {% if not owner %}disabled{% endif %}>
+                    <p class="text-xs text-fg-3">A daily job deletes older events. Events that belong to an incident or are cited as investigation evidence are always kept. Run it now with <code>php bin/console symtony:retention:purge --dry-run</code>.</p>
+                </div>
+            </div>
+            <div class="grid content-start gap-1">
+                <label for="w-keys" class="t-label">Extra fields to redact at ingestion</label>
+                <textarea id="w-keys" name="redact_keys" rows="5" class="textarea mono" placeholder="customer_note&#10;tax_id" {% if not owner %}disabled{% endif %}>{{ ws.redactKeys|join("\n") }}</textarea>
+                <p class="text-xs text-fg-3">One key per line, matched like the built-in ones (case and separators ignored, also as a suffix). Applies to new events. Always redacted: {{ built_in_keys|join(', ') }}, plus card numbers, bearer tokens and similar values.</p>
+            </div>
+            <div class="md:col-span-2">
+                {% if owner %}<button class="btn btn-primary">Save workspace</button>{% else %}<p class="text-sm text-fg-3">Only owners can change workspace settings.</p>{% endif %}
+            </div>
+        </form>
+    </section>
+
+    <section id="mcp" class="panel panel-body xl:col-span-2" aria-labelledby="mcp-h">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 id="mcp-h" class="t-h2">MCP tokens</h2>
+                <p class="text-sm text-fg-2">{{ tokens }} active token{{ tokens == 1 ? '' : 's' }} let AI clients read this workspace.</p>
+            </div>
+            <a href="{{ path('app_mcp') }}" class="btn btn-secondary">{{ ux_icon('lucide:plug') }}Manage tokens</a>
+        </div>
+    </section>
+
+    <section id="audit" class="panel overflow-hidden xl:col-span-2" aria-labelledby="audit-h">
+        <div class="panel-header"><h2 id="audit-h" class="t-h2">Audit log</h2><span class="text-xs text-fg-3">Append-only</span></div>
+        {% if audit is null %}
+            <p class="p-4 text-sm text-fg-3">Only owners can read the audit log.</p>
+        {% elseif audit.items is empty %}
+            <p class="p-4 text-sm text-fg-3">No entries.</p>
+        {% else %}
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead><tr><th>When</th><th>Action</th><th class="hidden sm:table-cell">Actor</th><th class="hidden md:table-cell">Subject</th></tr></thead>
+                    <tbody>
+                        {% for l in audit.items %}
+                            <tr>
+                                <td class="t-meta whitespace-nowrap" title="{{ l.createdAt|date('Y-m-d H:i:s') }} UTC">{{ l.createdAt|ago }}</td>
+                                <td class="w-full max-w-0"><code class="mono block truncate text-xs text-fg">{{ l.action }}</code>{% if l.metadata.reference is defined %}<span class="t-meta">{{ l.metadata.reference }}</span>{% elseif l.metadata.name is defined %}<span class="t-meta">{{ l.metadata.name }}</span>{% endif %}</td>
+                                <td class="hidden truncate text-fg-2 sm:table-cell">{{ l.actor }}<span class="t-meta block">{{ l.actorType }}</span></td>
+                                <td class="t-meta hidden md:table-cell">{{ l.subjectType ?? '' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if audit.next %}<div class="border-t border-line p-3 text-center"><a class="btn btn-ghost btn-sm" href="{{ path('app_settings', {before: audit.next}) }}#audit">Older</a></div>{% endif %}
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
