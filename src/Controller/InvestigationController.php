@@ -8,9 +8,10 @@ use App\Application\Investigation\MarkdownReport;
 use App\Application\Investigation\StartInvestigation;
 use App\Application\Query\IncidentQueries;
 use App\Application\Query\InvestigationQueries;
-use App\Application\Timeline\TimelineBuilder;
+use App\Domain\TestLab\RegressionTest;
 use App\Infrastructure\AI\AiSettings;
 use App\Infrastructure\Security\WorkspaceContext;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -45,7 +46,7 @@ final class InvestigationController extends AbstractController
     }
 
     #[Route('/app/investigations/{id}', name: 'app_investigation_show', requirements: ['id' => '[0-9a-f-]{36}'], methods: ['GET'])]
-    public function show(string $id, TimelineBuilder $timelines): Response
+    public function show(string $id, EntityManagerInterface $em): Response
     {
         $inv = $this->investigations->get($this->context->workspace(), $id);
         $evidence = $this->investigations->evidence($inv);
@@ -57,7 +58,7 @@ final class InvestigationController extends AbstractController
             'evidence' => $evidence,
             'grounding' => $this->investigations->grounding($inv),
             'history' => $this->investigations->forIncident($inv->getIncident()),
-
+            'tests' => $em->getRepository(RegressionTest::class)->findBy(['investigation' => $inv], ['createdAt' => 'DESC']),
         ]);
     }
 

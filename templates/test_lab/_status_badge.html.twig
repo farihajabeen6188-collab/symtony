@@ -1,0 +1,10 @@
+{% set map = {
+    'verified_reproduction': ['badge-ok', 'lucide:shield-check', 'Verified reproduction'],
+    'does_not_reproduce': ['badge-warn', 'lucide:circle-help', 'Does not reproduce'],
+    'fix_not_confirmed': ['badge-warn', 'lucide:circle-alert', 'Fix not confirmed'],
+    'runner_error': ['badge-err', 'lucide:server-crash', 'Runner error'],
+    'running': ['badge-accent', 'lucide:loader', 'Running'],
+    'unverified_proposal': ['badge-outline-dashed', 'lucide:file-code', 'Unverified proposal'],
+} %}
+{% set s = map[status] ?? map['unverified_proposal'] %}
+<span class="badge {{ s[0] }}">{{ ux_icon(s[1]) }}{{ s[2] }}</span>

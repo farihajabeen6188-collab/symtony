@@ -96,11 +96,11 @@ Tick a box only after running the check. Each phase ends with a commit.
 - [x] Tests with fake platform: parsing, grounding, stage failure handling, redaction of what the model receives
 
 ### Phase 7 — Regression Test Lab (red → green) → `prompts/phase-7-test-lab.md`
-- [ ] Test proposal generated from findings (code + metadata + cited evidence)
-- [ ] Isolated runner container (`network_mode: none`, read-only source, CPU/mem/time limits) via a job directory
-- [ ] Run against buggy demo-shop ⇒ **red**; against reference fix ⇒ **green**; real output stored
-- [ ] UI states: Unverified proposal / Verified reproduction / Does not reproduce / Runner error
-- [ ] Download test; execution history
+- [x] Test proposal generated from findings (code + metadata + cited evidence)
+- [x] Isolated runner container (`network_mode: none`, read-only source, CPU/mem/time limits) via a job directory
+- [x] Run against buggy demo-shop ⇒ **red**; against reference fix ⇒ **green**; real output stored
+- [x] UI states: Unverified proposal / Verified reproduction / Does not reproduce / Runner error
+- [x] Download test; execution history
 
 ### Phase 8 — MCP server → `prompts/phase-8-mcp.md`
 - [ ] Tools: list_applications, get_application_health, list_incidents, get_incident, search_events, get_event_details, get_incident_timeline, start_investigation, get_investigation_report, list_related_incidents, get_regression_test
@@ -201,6 +201,19 @@ metrics. Real run on SYM-5: stale-cache hypothesis verified, impact names the or
 identified. Bugs found live: Postgres LISTEN/NOTIFY transport waited 60 s without its trigger → polling; inferred
 context swamped evidence (40/61) → capped at 12 + latest deploy. 100 + 10 tests green.
 **Not verified yet:** the live Hugging Face model path (needs HUGGINGFACE_API_KEY).
+
+**2026-11-18 — Phase 7 (regression Test Lab).** RegressionTest + TestExecution entities, template writer (stale
+cache: values only from evidence + allow-listed shop files; labelled `template:stale_cache`, never as a model),
+`test_writer` agent (same evidence tools + `source_file` restricted to the allow-list; skipped without a key),
+StaticChecker (namespace/class/base class/test method, forbidden calls incl. fully-qualified and backticks,
+parse via TOKEN_PARSE — never executed), mandatory human review, isolated runner (`network_mode: none`, read-only,
+non-root, CPU/mem/timeout; job dir protocol + heartbeat; copies the shop, `cp -aL` vendor, applies the reference
+patch for the fixed variant, PHPUnit with JUnit). Verdict derived only from the latest batch's real runs:
+Verified reproduction / Does not reproduce / Fix not confirmed / Runner error / Running / Unverified proposal.
+Real run in the browser on SYM-5: buggy **red** (exit 1, 1 assertion failure), fixed **green** (exit 0) →
+Verified reproduction. Bugs found live: `preg_match_all` returns a count (template silently skipped);
+`PHP_BINARY` is empty under FrankenPHP (lint shell-out → in-process parse); single-column CSS grids grew with
+long code lines (→ `minmax(0,1fr)`). 128 + 10 tests green.
 
 ## Blockers
 

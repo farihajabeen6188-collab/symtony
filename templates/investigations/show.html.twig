@@ -116,6 +116,15 @@
             <section class="panel panel-body" aria-labelledby="repro-h">
                 <h2 id="repro-h" class="t-h2 mb-2">Regression test strategy</h2>
                 <p class="text-sm text-fg">{{ r.reproduction }}</p>
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    {% for t in tests %}
+                        <a href="{{ path('app_test_show', {id: t.id}) }}" class="btn btn-secondary btn-sm">{{ ux_icon('lucide:flask-conical') }}{{ t.className }}</a>
+                    {% endfor %}
+                    <form method="post" action="{{ path('app_test_propose', {id: inv.id}) }}" data-controller="busy" data-action="submit->busy#start">
+                        <input type="hidden" name="_token" value="{{ csrf_token('test-lab') }}">
+                        <button class="btn btn-primary btn-sm" data-busy-target="button">{{ ux_icon('lucide:file-plus-2') }}Generate regression test</button>
+                    </form>
+                </div>
             </section>
         {% endif %}
 

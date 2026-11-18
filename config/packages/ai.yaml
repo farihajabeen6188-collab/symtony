@@ -20,6 +20,18 @@ ai:
             max_tool_calls: 12
             fault_tolerant_toolbox: true
 
+        # Regression test writer. Reads evidence and an allow-list of source files; output is only a proposal.
+        test_writer:
+            platform: 'ai.platform.huggingface'
+            model: '%env(SYMTONY_AI_MODEL)%'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/test_writer.md'
+            tools:
+                services:
+                    - 'App\Infrastructure\AI\Tool\EvidenceTools'
+                    - 'App\Infrastructure\AI\Tool\SourceFileTool'
+            max_tool_calls: 12
+
         # Phase 0 spike agent (verifies tool calling + structured output; removed once a key is verified)
         spike:
             platform: 'ai.platform.huggingface'

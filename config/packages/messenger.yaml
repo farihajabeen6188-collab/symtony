@@ -27,6 +27,7 @@ framework:
         routing:
             'App\Infrastructure\Ingestion\Message\EventsIngested': async
             'App\Application\Investigation\RunInvestigation': investigations
+            'App\Application\TestLab\CollectTestResults': async
 
 when@test:
     framework:

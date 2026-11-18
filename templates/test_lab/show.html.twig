@@ -1,0 +1,109 @@
+{% extends 'app/layout.html.twig' %}
+
+{% block title %}{{ test.title }}{% endblock %}
+{% block active_nav %}app_test_lab{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{{ path('app_test_lab') }}" class="text-fg-2 hover:text-fg">Test Lab</a></li>
+    <li class="text-fg-3">/</li>
+    <li class="truncate text-fg">{{ test.className }}</li>
+{% endblock %}
+
+{% block content %}
+{% set token = csrf_token('test-lab') %}
+{% set ev_by_ref = {} %}{% for e in evidence %}{% set ev_by_ref = ev_by_ref|merge({(e.ref): e}) %}{% endfor %}
+<twig:PageHeader title="{{ test.title }}" description="{{ test.purpose }}">
+    <twig:block name="eyebrow">
+        <a class="t-meta hover:text-accent" href="{{ path('app_incident_show', {number: test.incident.number}) }}">{{ test.incident.reference }}</a>
+        {% if test.fromModel %}<span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}Written by {{ test.source|slice(4) }}</span>{% else %}<span class="badge badge-neutral">{{ ux_icon('lucide:cpu') }}Template ({{ test.source|split(':')|last|replace({'_': ' '}) }}) · no model</span>{% endif %}
+        {% if test.passedStaticChecks %}<span class="badge badge-ok">Static checks passed</span>{% else %}<span class="badge badge-err">Static checks failed</span>{% endif %}
+        {% if test.reviewed %}<span class="badge badge-ok">Reviewed by {{ test.reviewedBy ? test.reviewedBy.name : 'a user' }}</span>{% else %}<span class="badge badge-warn">Not reviewed</span>{% endif %}
+    </twig:block>
+    <twig:block name="actions">
+        <a href="{{ path('app_test_download', {id: test.id}) }}" class="btn btn-secondary">{{ ux_icon('lucide:download') }}Download {{ test.fileName }}</a>
+        {% if test.investigation %}<a href="{{ path('app_investigation_show', {id: test.investigation.id}) }}" class="btn btn-ghost">Investigation</a>{% endif %}
+    </twig:block>
+</twig:PageHeader>
+
+<div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-5">
+        <section class="panel panel-body" aria-labelledby="proof-h">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 id="proof-h" class="t-h2">Proof</h2>
+                <span class="inline-flex items-center gap-2 text-xs text-fg-3"><span class="dot {{ runner_online ? 'dot-live text-ok' : 'text-err' }}"></span>Isolated runner {{ runner_online ? 'online' : 'offline' }} · no network · read-only · non-root</span>
+            </div>
+            {{ include('test_lab/_verdict.html.twig') }}
+
+            <div class="mt-5 border-t border-line pt-4">
+                {% if not test.passedStaticChecks %}
+                    <p class="text-sm text-err">This proposal cannot be run:</p>
+                    <ul class="mt-1 list-disc pl-5 text-sm text-err">{% for i in test.staticIssues %}<li>{{ i }}</li>{% endfor %}</ul>
+                {% elseif not test.reviewed %}
+                    <form method="post" action="{{ path('app_test_review', {id: test.id}) }}" class="grid gap-3">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <label class="flex items-start gap-2 text-sm text-fg"><input type="checkbox" class="checkbox mt-0.5" name="confirm" value="1" required> I read this code and it only does what the test description says. (Required before it can run.)</label>
+                        <div><button class="btn btn-secondary">{{ ux_icon('lucide:user-check') }}Mark as reviewed</button></div>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ path('app_test_prove', {id: test.id}) }}" class="flex flex-wrap items-center gap-3" data-controller="busy" data-action="submit->busy#start">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button class="btn btn-primary" data-busy-target="button" {% if not runner_online or verdict.status == 'running' %}disabled{% endif %}>{{ ux_icon('lucide:flask-conical') }}Prove it: run on buggy and fixed builds</button>
+                        <span class="text-xs text-fg-3">The fixed build applies the human-written reference patch. The runner's command is fixed; the test cannot change it.</span>
+                    </form>
+                {% endif %}
+            </div>
+        </section>
+
+        <section aria-label="Test code">
+            <twig:CodeBlock code="{{ test.code }}" lang="php" title="{{ test.fileName }}" line_numbers />
+        </section>
+
+        <section class="panel overflow-hidden" aria-labelledby="hist-h">
+            <div class="panel-header"><h2 id="hist-h" class="t-h3">Execution history</h2><span class="text-xs text-fg-3">{{ history|length }} runs</span></div>
+            {% if history is empty %}
+                <p class="p-4 text-sm text-fg-3">Never run.</p>
+            {% else %}
+                <ul class="divide-y divide-line">
+                    {% for run in history %}
+                        <li>
+                            <details class="group">
+                                <summary class="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-2.5 hover:bg-surface-2">
+                                    <span class="badge {{ run.status == 'passed' ? 'badge-ok' : (run.status == 'failed' ? 'badge-err' : 'badge-neutral') }}">{{ run.status }}</span>
+                                    <span class="text-sm text-fg">{{ run.variant == 'buggy' ? 'Buggy build' : 'With fix' }}</span>
+                                    <span class="t-meta">{{ run.createdAt|date('Y-m-d H:i:s') }} UTC{% if run.durationMs %} · {{ run.durationMs|duration }}{% endif %}{% if run.exitCode is not null %} · exit {{ run.exitCode }}{% endif %}</span>
+                                    <span class="ml-auto text-xs text-fg-3">{{ run.startedBy ? run.startedBy.name : '' }}</span>
+                                </summary>
+                                {% if run.output %}<pre class="mx-4 mb-3 max-h-80 overflow-auto rounded-md bg-bg-deep p-3 font-mono text-2xs text-fg-2">{{ run.output }}</pre>{% endif %}
+                            </details>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="grid content-start gap-4">
+        <section class="panel panel-body text-sm">
+            <p class="t-label mb-1">Scenario</p><p class="text-fg">{{ test.scenario }}</p>
+            <p class="t-label mb-1 mt-3">Expected</p><p class="text-fg">{{ test.expected }}</p>
+            {% if test.preconditions %}<p class="t-label mb-1 mt-3">Preconditions</p><ul class="list-disc space-y-1 pl-4 text-fg">{% for p in test.preconditions %}<li>{{ p }}</li>{% endfor %}</ul>{% endif %}
+        </section>
+        <section class="panel panel-body">
+            <p class="t-label mb-2">Evidence</p>
+            <ul class="grid gap-2 text-xs">
+                {% for ref in test.citations %}
+                    {% set e = ev_by_ref[ref] ?? null %}
+                    <li><span class="mono text-fg">{{ ref }}</span>{% if e %} <span class="text-fg-2">{{ e.label }}</span>{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </section>
+        <section class="panel panel-body">
+            <p class="t-label mb-2">Source files shared to write it</p>
+            {% if test.sharedFiles is empty %}<p class="text-sm text-fg-2">None.</p>{% else %}
+                <ul class="grid gap-1">{% for f in test.sharedFiles %}<li class="mono text-xs text-fg-2">{{ f }}</li>{% endfor %}</ul>
+            {% endif %}
+            <p class="mt-2 text-2xs text-fg-3">Only files on the configured allow-list can ever be shared.</p>
+        </section>
+    </aside>
+</div>
+{% endblock %}

@@ -12,6 +12,8 @@ x-app: &app
     # vendor/ lives in a volume too: autoloading thousands of files over a Windows bind mount costs ~10 s/request.
     # Run `composer` inside the container (make composer c=...). See README for IDE autocompletion.
     - app_vendor:/app/vendor
+    # Test Lab jobs shared with the isolated runner
+    - runner_jobs:/jobs
   environment:
     DATABASE_URL: "postgresql://symtony:symtony@db:5432/symtony?serverVersion=16&charset=utf8"
   depends_on:
@@ -63,7 +65,30 @@ services:
       - "${SYMTONY_SHOP_PORT:-8081}:80"
     depends_on:
       - app
-  # runner:    added in Phase 7 (network_mode: none)
+  # Isolated PHPUnit runner for the Test Lab: no network, read-only root FS, limited CPU/memory, non-root.
+  # Communicates with SYMTONY only through the runner_jobs volume. See runner/run.sh.
+  runner:
+    image: symtony-app:dev
+    entrypoint: ["sh", "/runner/run.sh"]
+    network_mode: none
+    read_only: true
+    user: "65534:65534"
+    tmpfs:
+      - /tmp:size=768m,mode=1777
+    volumes:
+      - ./runner:/runner:ro
+      - ./demo-shop:/src:ro
+      - shop_vendor:/src-vendor:ro
+      - ./packages:/packages:ro
+      - runner_jobs:/jobs
+    environment:
+      HOME: /tmp
+      COMPOSER_HOME: /tmp/composer
+    cpus: 1.0
+    mem_limit: 768m
+    pids_limit: 128
+    healthcheck:
+      disable: true
 
 volumes:
   db_data:
@@ -71,3 +96,4 @@ volumes:
   app_vendor:
   shop_var:
   shop_vendor:
+  runner_jobs:

@@ -51,7 +51,7 @@
         {% endif %}
     </div>
 {% else %}
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
         <section class="panel flex max-h-96 min-h-64 flex-col overflow-hidden xl:max-h-[calc(100dvh-15rem)] xl:min-h-96" aria-label="Events">
             <div class="flex items-center justify-between border-b border-line px-4 py-2 text-xs text-fg-3">
                 <span>Newest first{% if filters.trace_id or filters.request_id %} · exact ID match{% else %} · {{ range.label|lower }}{% endif %}</span>

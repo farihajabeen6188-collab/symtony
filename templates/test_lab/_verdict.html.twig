@@ -1,0 +1,37 @@
+{# Red → green proof from real runs. Polls while running. #}
+{% set running = verdict.status == 'running' %}
+<turbo-frame id="test-verdict" data-controller="poll" data-poll-url-value="{{ path('app_test_verdict', {id: test.id}) }}" data-poll-final-value="{{ running ? 'false' : 'true' }}">
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+        {{ include('test_lab/_status_badge.html.twig', {status: verdict.status}) }}
+        <span class="text-sm text-fg-2">
+            {% if verdict.status == 'verified_reproduction' %}Fails on the buggy build and passes with the fix: this test reproduces the incident.
+            {% elseif verdict.status == 'does_not_reproduce' %}It passes on the buggy build, so it does not capture the bug.
+            {% elseif verdict.status == 'fix_not_confirmed' %}It fails on both builds: the reference fix does not satisfy it.
+            {% elseif verdict.status == 'runner_error' %}A run could not complete; see the output below. This says nothing about the test itself.
+            {% elseif verdict.status == 'running' %}Running in the isolated runner…
+            {% else %}Not run yet. Status comes only from real runs.{% endif %}
+        </span>
+    </div>
+    {% if verdict.buggy or verdict.fixed %}
+        <div class="grid gap-3 md:grid-cols-2">
+            {% for variant, run in {'buggy': verdict.buggy, 'fixed': verdict.fixed} %}
+                {% set expected = variant == 'buggy' ? 'failed' : 'passed' %}
+                {% set tone = not run or not run.finished ? 'neutral' : (run.status == expected ? (run.status == 'failed' ? 'err' : 'ok') : 'warn') %}
+                <article class="rounded-lg border p-4 {{ tone == 'err' ? 'border-err/50 bg-err-soft' : (tone == 'ok' ? 'border-ok/50 bg-ok-soft' : 'border-line') }}">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-fg">{{ variant == 'buggy' ? 'Buggy build (as deployed)' : 'With the reference fix' }}</span>
+                        <span class="ml-auto text-xs text-fg-3">expected: {{ expected == 'failed' ? 'red' : 'green' }}</span>
+                    </div>
+                    {% if not run %}
+                        <p class="mt-2 text-sm text-fg-3">No run.</p>
+                    {% elseif not run.finished %}
+                        <p class="mt-2 inline-flex items-center gap-2 text-sm text-fg-2"><twig:Loader class="h-4 w-5" label="Running" />{{ run.status == 'running' ? 'Running…' : 'Queued for the runner…' }}</p>
+                    {% else %}
+                        <p class="mt-2 text-2xl font-semibold {{ run.status == 'failed' ? 'text-err' : (run.status == 'passed' ? 'text-ok' : 'text-warn') }}">{{ run.status == 'failed' ? 'Red' : (run.status == 'passed' ? 'Green' : run.status|capitalize) }}</p>
+                        <p class="t-meta">exit {{ run.exitCode }} · {{ run.durationMs|duration }}{% if run.assertions is not null %} · {{ run.assertions }} assertions, {{ run.failures }} failures, {{ run.errors }} errors{% endif %}</p>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+</turbo-frame>

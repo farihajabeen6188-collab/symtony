@@ -1,0 +1,24 @@
+parameters:
+    # Where the app drops jobs for the isolated runner (a shared volume). Tests use their own folder.
+    symtony.jobs_dir: '/jobs'
+
+    # Test Lab: the project the isolated runner tests, and the ONLY source files that may be shared
+    # with the test generator (the UI lists which ones were used for each proposal).
+    symtony.test_lab:
+        project_dir: '%kernel.project_dir%/demo-shop'
+        test_namespace: 'App\Tests\Symtony'
+        base_class: 'App\Tests\ShopTestCase'
+        reference_patch: 'fixes/stale-stock-cache.patch'
+        source_paths:
+            - 'src/Inventory/InventoryService.php'
+            - 'src/Checkout/CheckoutService.php'
+            - 'src/Catalog/ProductRepository.php'
+            - 'tests/ShopTestCase.php'
+            - 'tests/Support/MockPaymentApi.php'
+            - 'src/Security/CustomerAuthenticator.php'
+        jobs_dir: '%symtony.jobs_dir%'
+        timeout_seconds: 60
+
+when@test:
+    parameters:
+        symtony.jobs_dir: '%kernel.project_dir%/var/test-jobs'
