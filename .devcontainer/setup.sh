@@ -38,9 +38,7 @@ C="docker compose exec -T app"
 $C composer install --no-interaction --no-progress
 $C php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 $C php bin/console symtony:setup
-$C php bin/console tailwind:build --minify
-$C php bin/console asset-map:compile
-$C php bin/console cache:clear
+bash .devcontainer/assets.sh
 docker compose up -d worker runner
 
 docker compose up -d demo-shop
