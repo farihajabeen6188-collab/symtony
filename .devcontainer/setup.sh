@@ -21,6 +21,17 @@ ENV
     echo "Wrote .env.local (prod, public URL ${PUBLIC_URL})"
 fi
 
+# The image sets APP_ENV=dev as a real environment variable, which wins over .env.local.
+# Override it for the public services so the codespace never runs in dev mode (no profiler, no debug).
+cat > compose.override.yaml <<'YAML'
+# Written by .devcontainer/setup.sh: production mode in the codespace. Not committed.
+services:
+  app:
+    environment: { APP_ENV: prod, APP_DEBUG: "0" }
+  worker:
+    environment: { APP_ENV: prod, APP_DEBUG: "0" }
+YAML
+
 bash .devcontainer/start.sh
 
 C="docker compose exec -T app"

@@ -22,3 +22,6 @@
 ###> demo ###
 /demo-shop/.env.local
 ###< demo ###
+
+# Per-machine compose overrides (the codespace setup writes one for production mode)
+/compose.override.yaml
