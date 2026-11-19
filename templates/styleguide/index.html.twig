@@ -202,6 +202,14 @@
     </section>
 
     {# ---------------- Brand ---------------- #}
+    <section class="panel" aria-labelledby="sg-replay">
+        <div class="panel-header"><h2 id="sg-replay" class="t-h2">Failure replay</h2><span class="badge badge-neutral">Demo data</span></div>
+        <div class="panel-body">
+            <p class="mb-3 text-sm text-fg-2">&lt;twig:FailureReplay replay="…" /&gt;: proven steps on a fuse that breaks at the first failure; after the ROLLBACK, undone writes are struck through and calls to other systems are marked "not undone". Space, ← → and Home/End when focused.</p>
+            {% if sample_replay %}<twig:FailureReplay replay="{{ sample_replay }}" />{% else %}<p class="text-sm text-fg-3">Run symtony:landing:export-timeline to get sample data.</p>{% endif %}
+        </div>
+    </section>
+
     <section class="panel" aria-labelledby="sg-brand">
         <div class="panel-header"><h2 id="sg-brand" class="t-h2">Brand</h2></div>
         <div class="panel-body flex flex-wrap items-center gap-10 text-fg">

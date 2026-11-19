@@ -87,9 +87,9 @@ Adapt only if Symfony conventions demand it. Do not create empty layers for appe
 
 - All colors, spacing, radii and type come from tokens in `assets/styles/tokens.css`.
   Never write a raw hex value or arbitrary px value in a template.
-- Palette: bg `#0D1424`, deep `#0B1020`, surface `#141E30`, surface-2 `#19263A`, cyan `#66D9FF`
-  (primary/interactive only), blue `#7CA9FF`, violet `#A78BFA` (AI-generated content only),
-  success `#36C99A`, warning `#F2B966`, error `#FF6B79`, text `#EDF3FC`, text-2 `#9BAAC0`.
+- Palette (charcoal, since 2026-11-20): bg `#161617`, deep `#111112`, surface `#1E1E20`, surface-2 `#262628`,
+  cyan `#66D9FF` (primary/interactive only), blue `#7CA9FF`, violet `#A78BFA` (AI-generated content only),
+  success `#36C99A`, warning `#F2B966`, error `#FF6B79`, text `#EDEDEF`, text-2 `#A9A9B1`.
 - **Color has meaning:** violet = AI, cyan = interactive, dashed = inferred. Don't use accents decoratively.
 - 4px spacing grid. Dark mode is the primary design; light mode is a separate token set, not an inversion.
 - Density and tone: Linear-level density, Sentry-like issue layout, Honeycomb/Jaeger-like span waterfall —

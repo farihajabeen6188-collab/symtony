@@ -22,18 +22,18 @@
 :root[data-theme='dark'] {
     color-scheme: dark;
 
-    --bg-deep: #0b1020;
-    --bg: #0d1424;
-    --surface: #141e30;
-    --surface-2: #19263a;
-    --surface-3: #203049;
-    --line: rgb(155 170 192 / 0.13);
-    --line-strong: rgb(155 170 192 / 0.24);
-    --field: #0b1020;
+    --bg-deep: #111112;
+    --bg: #161617;
+    --surface: #1e1e20;
+    --surface-2: #262628;
+    --surface-3: #2f2f32;
+    --line: rgb(235 235 240 / 0.09);
+    --line-strong: rgb(235 235 240 / 0.17);
+    --field: #111112;
 
-    --fg: #edf3fc;
-    --fg-2: #9baac0;
-    --fg-3: #6c7b93;
+    --fg: #ededef;
+    --fg-2: #a9a9b1;
+    --fg-3: #85858e;
 
     --accent: #66d9ff;
     --accent-fg: #03202c;
@@ -50,7 +50,7 @@
     --err-soft: rgb(255 107 121 / 0.13);
 
     --focus: #66d9ff;
-    --overlay: rgb(5 8 16 / 0.62);
+    --overlay: rgb(8 8 9 / 0.66);
     --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line-strong);
     --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.03) inset;
 }

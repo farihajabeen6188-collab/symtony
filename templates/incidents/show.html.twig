@@ -58,7 +58,8 @@
         <div class="panel" data-controller="tabs">
             <div class="px-4">
                 <div class="tabs" role="tablist">
-                    <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="timeline">{{ ux_icon('lucide:git-commit-horizontal') }}Timeline</button>
+                    <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select" data-hash="replay">{{ ux_icon('lucide:play') }}Replay</button>
+                    <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="timeline">{{ ux_icon('lucide:git-commit-horizontal') }}Timeline</button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="summary">Latest occurrence</button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="events">Events <span class="count">{{ incident.occurrences }}</span></button>
                     <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select" data-hash="notes">Notes <span class="count">{{ notes|length }}</span></button>
@@ -67,8 +68,18 @@
             </div>
 
 
-            {# Timeline #}
+            {# Replay #}
             <div role="tabpanel" data-tabs-target="panel" class="panel-body">
+                {% if replay %}
+                    <p class="mb-3 text-sm text-fg-2">The latest occurrence, step by step, as the trace recorded it. Press Replay, or use ← → to step.</p>
+                    <twig:FailureReplay replay="{{ replay }}" />
+                {% else %}
+                    <twig:EmptyState title="Nothing to replay" illustration="no-results" compact>The occurrences of this incident were sent without a trace or request id, so there is no request to replay.</twig:EmptyState>
+                {% endif %}
+            </div>
+
+            {# Timeline #}
+            <div role="tabpanel" data-tabs-target="panel" class="panel-body" hidden>
                 {% if timeline and not timeline.empty %}
                     {% set occ = timeline.items|filter(i => i.event.exceptionClass and i.isProven)|first %}
                     <p class="mb-3 text-sm text-fg-2">

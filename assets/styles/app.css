@@ -370,3 +370,65 @@
 
 /* Selected row in split-pane lists */
 .event-row[aria-current='true'] { box-shadow: inset 2px 0 0 var(--accent); }
+
+/* Failure replay (templates/components/FailureReplay.html.twig, replay_controller.js).
+ * States are set by the controller; without JS every step and consequence is simply visible. */
+@layer components {
+    /* Layout follows the replay's own width (it sits in a wide hero and in a narrow incident column). */
+    .replay { display: grid; gap: 0.75rem; outline: none; container-type: inline-size; }
+    .replay-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    @container (min-width: 52rem) {
+        .replay-body { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); }
+    }
+    .replay:focus-visible { box-shadow: 0 0 0 2px var(--focus); border-radius: var(--radius-md); }
+
+    .replay-fuse { position: relative; height: 1.75rem; cursor: pointer; }
+    .replay-fuse-track, .replay-fuse-lit, .replay-fuse-broken { position: absolute; top: 50%; height: 0.1875rem; margin-top: -0.09375rem; border-radius: 999px; }
+    .replay-fuse-track { left: 0; right: 0; background: var(--line-strong); }
+    .replay-fuse-lit { left: 0; width: 0; background: var(--accent); transition: width 160ms var(--ease-out); }
+    .replay-fuse-broken { width: 0; background: var(--err); transition: width 160ms var(--ease-out); }
+    .replay:not([data-js]) .replay-fuse-lit { width: 100%; }
+    .replay-dot { position: absolute; top: 50%; width: 0.625rem; height: 0.625rem; margin: -0.3125rem 0 0 -0.3125rem; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--line-strong); transition: background-color 160ms, transform 160ms; }
+    .replay-dot[data-state='past'], .replay:not([data-js]) .replay-dot { background: var(--accent); border-color: var(--accent); }
+    .replay-dot[data-error][data-state='past'], .replay-dot[data-error][data-state='current'], .replay:not([data-js]) .replay-dot[data-error] { background: var(--err); border-color: var(--err); }
+    .replay-dot[data-state='current'] { transform: scale(1.5); background: var(--fg); border-color: var(--fg); }
+    .replay-break { position: absolute; top: 50%; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; margin: -0.625rem 0 0 -0.625rem; border-radius: 999px; background: var(--err-soft); color: var(--err); border: 1px solid var(--err); pointer-events: none; }
+    .replay-break svg { width: 0.75rem; height: 0.75rem; }
+    .replay[data-js]:not([data-failed]) .replay-break { opacity: 0.35; }
+    .replay[data-flash] .replay-fuse { animation: replay-snap 180ms var(--ease-out); }
+
+    .replay-story, .replay-context { display: grid; gap: 1px; }
+    .replay-story { position: relative; max-height: 26rem; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); }
+    .replay-step { transition: opacity 160ms; }
+    .replay-step[data-state='future'] { opacity: 0.38; }
+    .replay-step-btn { display: grid; grid-template-columns: 4.5rem 6.5rem minmax(0, 1fr) auto auto; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.75rem; text-align: left; font-size: var(--text-sm); color: var(--fg); }
+    .replay-step-btn:hover { background: var(--surface); }
+    .replay-step[data-state='current'] .replay-step-btn { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--accent); }
+    .replay-step[data-error] .replay-name { color: var(--err); }
+    .replay-step[data-role='failure'][data-state='current'] .replay-step-btn { box-shadow: inset 2px 0 0 var(--err); background: var(--err-soft); }
+    .replay-type { font-size: var(--text-2xs); color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Consequences appear once the replay passes the ROLLBACK */
+    .replay[data-js]:not([data-after-rollback]) .replay-effect { visibility: hidden; }
+    .replay[data-js]:not([data-after-rollback]) .replay-aftermath { opacity: 0.35; }
+    .replay[data-after-rollback] .replay-step[data-effect='rolled_back'] .replay-name,
+    .replay:not([data-js]) .replay-step[data-effect='rolled_back'] .replay-name { text-decoration: line-through; color: var(--fg-3); }
+    .replay[data-after-rollback] .replay-dot[data-effect='survived'] { background: var(--warn); border-color: var(--warn); animation: replay-ember 1.6s ease-in-out infinite; }
+    .replay[data-after-rollback] .replay-dot[data-effect='rolled_back'] { background: var(--surface-3); border-color: var(--fg-3); }
+
+    .replay-ctx { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; border: 1px dashed var(--warn); border-radius: var(--radius-sm); background: var(--warn-soft); }
+    .replay-now { min-height: 9rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+    .replay-aftermath { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); transition: opacity 160ms; }
+
+    @container (max-width: 40rem) {
+        .replay-step-btn { grid-template-columns: 3.75rem minmax(0, 1fr) auto; }
+        .replay-type { display: none; }
+    }
+}
+@keyframes replay-snap { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-3px); } 60% { transform: translateX(3px); } }
+@keyframes replay-ember { 0%, 100% { box-shadow: 0 0 0 0 var(--warn-soft); } 50% { box-shadow: 0 0 0 6px var(--warn-soft); } }
+@media (prefers-reduced-motion: reduce) {
+    .replay[data-flash] .replay-fuse { animation: none; }
+    .replay[data-after-rollback] .replay-dot[data-effect='survived'] { animation: none; }
+    .replay-fuse-lit, .replay-fuse-broken, .replay-dot, .replay-step { transition: none; }
+}

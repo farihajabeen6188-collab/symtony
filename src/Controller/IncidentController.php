@@ -8,6 +8,7 @@ use App\Application\Incident\IncidentActions;
 use App\Application\Query\ApplicationQueries;
 use App\Application\Query\IncidentQueries;
 use App\Application\Query\InvestigationQueries;
+use App\Application\Timeline\FailureReplay;
 use App\Application\Timeline\TimelineBuilder;
 use App\Domain\Incident\IncidentSeverity;
 use App\Domain\Incident\IncidentStatus;
@@ -54,15 +55,17 @@ final class IncidentController extends AbstractController
     }
 
     #[Route('/{number<\d+>}', name: 'app_incident_show', methods: ['GET'])]
-    public function show(int $number, Request $request, IncidentActions $actions, UiPreferences $prefs, TimelineBuilder $timelines, InvestigationQueries $investigations): Response
+    public function show(int $number, Request $request, IncidentActions $actions, UiPreferences $prefs, TimelineBuilder $timelines, InvestigationQueries $investigations, FailureReplay $replay): Response
     {
         $incident = $this->incidents->byNumber($this->context->workspace(), $number);
         $before = null;
+        $timeline = $timelines->forIncident($incident, $request->query->getString('occurrence') ?: null);
 
         return $this->render('incidents/show.html.twig', [
             'incident' => $incident,
             'latest_investigation' => $investigations->forIncident($incident)[0] ?? null,
-            'timeline' => $timelines->forIncident($incident, $request->query->getString('occurrence') ?: null),
+            'timeline' => $timeline,
+            'replay' => null !== $timeline ? $replay->build($timeline->toArray()) : null,
             'latest' => $this->incidents->latestOccurrence($incident),
             'occurrences' => $this->incidents->occurrences($incident, $before),
             'notes' => $this->incidents->notes($incident),

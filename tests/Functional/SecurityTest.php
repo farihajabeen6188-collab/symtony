@@ -53,6 +53,7 @@ final class SecurityTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Every error has a story.');
         self::assertSelectorExists('a[href="/login"]');
+        self::assertSelectorExists('[data-controller="replay"][data-replay-autoplay-value="true"]', 'The hero replays the demo failure');
         self::assertSelectorTextContains('#mcp', 'start_investigation', 'Tool list comes from the MCP registry');
 
         $client->loginUser($this->demoUser());

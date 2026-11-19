@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Application\Timeline\FailureReplay;
+use App\Infrastructure\Demo\LandingTimelineExportCommand;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class StyleguideController extends AbstractController
 {
     #[Route('/styleguide', name: 'app_styleguide')]
-    public function __invoke(): Response
+    public function __invoke(FailureReplay $replay, #[Autowire('%kernel.project_dir%')] string $projectDir): Response
     {
+        $file = $projectDir.LandingTimelineExportCommand::FILE;
+        $demo = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
         // Static, clearly-labelled sample values: this page documents components, it is not product data.
         $series = [];
         $start = (new \DateTimeImmutable('2026-01-01 00:00:00'))->getTimestamp();
@@ -22,6 +27,7 @@ final class StyleguideController extends AbstractController
 
         return $this->render('styleguide/index.html.twig', [
             'sample_series' => $series,
+            'sample_replay' => \is_array($demo) ? $replay->build($demo) : null,
             'sample_php' => <<<'PHP'
                 public function testCheckoutRejectsStaleStock(): void
                 {

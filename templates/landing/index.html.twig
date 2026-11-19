@@ -36,13 +36,20 @@
             </div>
 
             {% if timeline %}
-                <figure class="panel mt-12 overflow-hidden">
+                <figure class="panel mt-12 overflow-hidden" data-controller="tabs">
                     <figcaption class="panel-header flex-wrap gap-2">
-                        <span class="text-sm font-medium text-fg">A failed checkout, reconstructed</span>
+                        <span class="text-sm font-medium text-fg">A failed checkout, replayed</span>
                         <span class="badge badge-neutral">Demo data</span>
                         <span class="ml-auto text-xs text-fg-3">{{ timeline.source }}</span>
                     </figcaption>
-                    <div class="p-4">{{ include('landing/_timeline.html.twig', {data: timeline}) }}</div>
+                    <div class="tabs px-2" role="tablist" aria-label="View">
+                        <button class="tab" role="tab" aria-selected="true" data-tabs-target="tab" data-action="tabs#select">{{ ux_icon('lucide:play') }}Replay</button>
+                        <button class="tab" role="tab" aria-selected="false" data-tabs-target="tab" data-action="tabs#select">{{ ux_icon('lucide:git-commit-horizontal') }}Timeline</button>
+                    </div>
+                    <div class="p-4" role="tabpanel" data-tabs-target="panel">
+                        {% if replay %}<twig:FailureReplay replay="{{ replay }}" autoplay />{% endif %}
+                    </div>
+                    <div class="p-4" role="tabpanel" data-tabs-target="panel" hidden>{{ include('landing/_timeline.html.twig', {data: timeline}) }}</div>
                     <p class="border-t border-line px-4 py-3 text-sm text-fg-2">
                         A stale cached stock value let checkout authorize a payment; the stock write then hit a database constraint and rolled back.
                         The warehouse sync that changed the stock ran in another trace, so its link is drawn dashed and labelled <em>inferred</em>.

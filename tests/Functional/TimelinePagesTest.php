@@ -32,6 +32,11 @@ final class TimelinePagesTest extends WebTestCase
         self::assertCount(2, $data['items']);
         self::assertSame($ex->getId()->toRfc4122(), $data['first_failure']);
 
+        // The replay tab: the same two proven steps, the exception marked as the first failure.
+        self::assertSelectorExists('[data-controller="replay"][data-replay-failure-value="1"]');
+        self::assertCount(2, $crawler->filter('.replay-step'));
+        self::assertSelectorTextContains('.replay-step[data-role="failure"]', 'first failure');
+
         $client->request('GET', '/app/traces/trace-1');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Request timeline');

@@ -1,0 +1,120 @@
+{#
+  Failure replay: the failing request, step by step, on a "fuse" that breaks at the first failure.
+  When the replay passes the ROLLBACK, what it undid is struck through and what it could not undo
+  (calls to other systems) is marked. Everything comes from trace fields (App\Application\Timeline\FailureReplay).
+  Without JavaScript every step, the failure and the consequences are simply shown.
+  props: replay (FailureReplay::build()), autoplay (play once when scrolled into view), id
+#}
+{% props replay, autoplay = false, id = 'replay' %}
+{% set steps = replay.steps %}
+{% set focus = replay.failure ?? (steps|length - 1) %}
+{% set fail = replay.failure is not null ? steps[replay.failure] : null %}
+<div {{ attributes.defaults({class: 'replay'}) }}
+     data-controller="replay"
+     data-replay-autoplay-value="{{ autoplay ? 'true' : 'false' }}"
+     data-replay-failure-value="{{ replay.failure ?? -1 }}"
+     data-replay-rollback-value="{{ replay.rollback ?? -1 }}"
+     data-action="keydown->replay#key"
+     tabindex="0"
+     aria-label="Replay of the failing request. Space plays or pauses, left and right arrows step.">
+
+    <template data-pause-icon>{{ ux_icon('lucide:pause') }}</template>
+    {# Controls #}
+    <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn btn-primary btn-sm" data-replay-target="play" data-action="replay#toggle">
+            <span data-replay-target="playIcon">{{ ux_icon('lucide:play') }}</span><span data-replay-target="playLabel">Replay</span>
+        </button>
+        <div class="inline-flex overflow-hidden rounded-md border border-line-strong">
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="replay#previous" aria-label="Previous step">{{ ux_icon('lucide:skip-back') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-l border-line-strong" data-action="replay#next" aria-label="Next step">{{ ux_icon('lucide:skip-forward') }}</button>
+        </div>
+        <div class="inline-flex overflow-hidden rounded-md border border-line-strong" role="group" aria-label="Speed">
+            {% for s in [0.5, 1, 2] %}
+                <button type="button" class="btn btn-ghost btn-sm rounded-none {{ not loop.first ? 'border-l border-line-strong' : '' }}" data-replay-target="speed" data-action="replay#setSpeed" data-replay-speed-param="{{ s }}" aria-pressed="{{ s == 1 ? 'true' : 'false' }}">{{ s }}×</button>
+            {% endfor %}
+        </div>
+        {% if replay.context is not empty %}
+            <label class="inline-flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" data-action="replay#toggleContext"> Before the request <span class="badge badge-outline-dashed">inferred</span></label>
+        {% endif %}
+        <span class="ml-auto font-mono text-xs text-fg-3" data-replay-target="counter" aria-live="polite">{{ steps|length }} steps · {{ replay.duration_ms|duration }}</span>
+    </div>
+
+    {# The fuse: one dot per step on the request's own time scale #}
+    <div class="replay-fuse" data-replay-target="fuse" data-action="click->replay#seek" aria-hidden="true">
+        <div class="replay-fuse-track"></div>
+        <div class="replay-fuse-lit" data-replay-target="lit"></div>
+        <div class="replay-fuse-broken" data-replay-target="broken"></div>
+        {% for s in steps %}
+            <span class="replay-dot" style="left: {{ s.position }}%" data-replay-target="dot" data-index="{{ s.index }}" {% if s.error %}data-error{% endif %} {% if s.effect %}data-effect="{{ s.effect }}"{% endif %}></span>
+        {% endfor %}
+        {% if fail %}<span class="replay-break" style="left: {{ fail.position }}%">{{ ux_icon('lucide:x') }}</span>{% endif %}
+    </div>
+    <div class="flex justify-between font-mono text-2xs text-fg-3" aria-hidden="true"><span>0 ms</span>{% if fail %}<span>first failure at +{{ fail.t_ms|number_format(1) }} ms</span>{% endif %}<span>{{ replay.duration_ms|duration }}</span></div>
+
+    <div class="replay-body">
+        <div class="min-w-0">
+            {% if replay.context is not empty %}
+                <ol class="replay-context mb-2" data-replay-target="context" hidden aria-label="Activity before the request, related by timing only">
+                    {% for c in replay.context %}
+                        <li class="replay-ctx" title="{{ c.reason }}">
+                            <span class="font-mono text-2xs text-fg-3">{{ (c.t_ms / 1000)|number_format(1) }} s</span>
+                            <span class="min-w-0 truncate text-sm text-fg-2">{{ c.name }}</span>
+                            <span class="text-2xs text-fg-3">{{ c.service }}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+            <ol class="replay-story" aria-label="Steps of the failing request">
+                {% for s in steps %}
+                    <li class="replay-step" data-replay-target="step" data-index="{{ s.index }}" {% if s.role %}data-role="{{ s.role }}"{% endif %} {% if s.effect %}data-effect="{{ s.effect }}"{% endif %} {% if s.error %}data-error{% endif %}>
+                        <button type="button" class="replay-step-btn" data-action="replay#jump" data-replay-index-param="{{ s.index }}">
+                            <span class="font-mono text-2xs text-fg-3">+{{ s.t_ms|number_format(1) }}</span>
+                            <span class="replay-type">{{ s.type_label }}</span>
+                            <span class="replay-name min-w-0 truncate">{{ s.name }}</span>
+                            {% if s.role == 'failure' %}<span class="badge badge-err">first failure</span>{% endif %}
+                            {% if s.effect == 'rolled_back' %}<span class="replay-effect badge badge-neutral">{{ ux_icon('lucide:undo-2') }}rolled back</span>{% endif %}
+                            {% if s.effect == 'survived' %}<span class="replay-effect badge badge-warn">{{ ux_icon('lucide:triangle-alert') }}not undone</span>{% endif %}
+                            <span class="hidden text-2xs text-fg-3 sm:inline">{{ s.service }}</span>
+                        </button>
+                        <div class="replay-detail" hidden>
+                            <p class="t-label">{{ s.type_label }} · {{ s.service }}{% if s.duration_ms is not null %} · {{ s.duration_ms|duration }}{% endif %} · +{{ s.t_ms|number_format(1) }} ms</p>
+                            <p class="mt-1 break-words text-md font-medium {{ s.error ? 'text-err' : 'text-fg' }}">{{ s.name }}</p>
+                            {% if s.details is not empty %}
+                                <dl class="mt-3 grid gap-2 text-sm">
+                                    {% for d in s.details %}<div><dt class="text-2xs text-fg-3">{{ d.label }}</dt><dd class="break-words font-mono text-xs {{ d.label == 'Error' ? 'text-err' : 'text-fg-2' }}">{{ d.value }}</dd></div>{% endfor %}
+                                </dl>
+                            {% endif %}
+                            {% if s.effect == 'rolled_back' %}<p class="mt-3 text-sm text-fg-2">Written inside the transaction that was rolled back, so it did not persist.</p>{% endif %}
+                            {% if s.effect == 'survived' %}<p class="mt-3 text-sm text-warn">A call to another system that finished before the rollback. A database rollback cannot undo it.</p>{% endif %}
+                            <p class="mt-3 text-2xs text-fg-3">Proven: same trace</p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="grid content-start gap-3">
+            <div class="replay-now" data-replay-target="now" aria-live="polite">
+                {# Server-rendered default: the first failure (or the last step) #}
+                {% set s = steps[focus] %}
+                <p class="t-label">{{ s.type_label }} · {{ s.service }} · +{{ s.t_ms|number_format(1) }} ms</p>
+                <p class="mt-1 break-words text-md font-medium {{ s.error ? 'text-err' : 'text-fg' }}">{{ s.name }}</p>
+                {% for d in s.details %}<p class="mt-2 break-words font-mono text-xs {{ d.label == 'Error' ? 'text-err' : 'text-fg-2' }}">{{ d.value }}</p>{% endfor %}
+            </div>
+            {% if replay.rollback is not null %}
+                <div class="replay-aftermath" data-replay-target="aftermath">
+                    <p class="t-label mb-2">What the failure left behind</p>
+                    {% if replay.undone is not empty %}
+                        <p class="text-xs text-fg-3">Undone by the rollback</p>
+                        <ul class="mb-2 grid gap-1">{% for i in replay.undone %}<li class="truncate text-sm text-fg-2 line-through">{{ steps[i].name }}</li>{% endfor %}</ul>
+                    {% endif %}
+                    {% if replay.survived is not empty %}
+                        <p class="text-xs text-warn">Not undone</p>
+                        <ul class="mb-2 grid gap-1">{% for i in replay.survived %}<li class="truncate text-sm text-fg">{{ steps[i].name }}{% if steps[i].status %} <span class="font-mono text-xs text-fg-3">→ {{ steps[i].status }}</span>{% endif %}</li>{% endfor %}</ul>
+                    {% endif %}
+                    {% if replay.outcome %}<p class="text-xs text-fg-3">Ended with <span class="font-mono text-err">{{ replay.outcome }}</span></p>{% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
