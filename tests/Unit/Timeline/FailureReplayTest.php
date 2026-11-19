@@ -37,6 +37,20 @@ final class FailureReplayTest extends TestCase
         $failure = array_column($r['steps'][$r['failure']]['details'], 'value', 'label');
         self::assertStringContainsString('stock_non_negative', $failure['Error']);
 
+        // Sequence view: who talks to whom, from the trace.
+        self::assertSame(['client', 'svc:shop', 'db:shop', 'cache:shop', 'svc:payment-api'], array_column($r['participants'], 'id'));
+        $byName = [];
+        foreach ($r['steps'] as $s) {
+            $byName[$s['name']] ??= $s;
+        }
+        self::assertSame(['client', 'svc:shop', 'request'], [$byName['POST /checkout']['from'], $byName['POST /checkout']['to'], $byName['POST /checkout']['kind']]);
+        self::assertSame(['svc:shop', 'svc:payment-api', 'call'], [$byName['POST localhost/payment-api/authorize']['from'], $byName['POST localhost/payment-api/authorize']['to'], $byName['POST localhost/payment-api/authorize']['kind']], 'The outgoing call lands on the traced service');
+        self::assertSame('arrive', $byName['POST /payment-api/authorize']['kind'], 'Its server side is not a second arrow');
+        self::assertSame(['svc:shop', 'db:shop', 'query'], [$byName['UPDATE product']['from'], $byName['UPDATE product']['to'], $byName['UPDATE product']['kind']]);
+        self::assertSame(['svc:shop', 'cache:shop', 'cache'], [$byName['cache hit stock_SKU-1042']['from'], $byName['cache hit stock_SKU-1042']['to'], $byName['cache hit stock_SKU-1042']['kind']]);
+        $last = $r['steps'][\count($r['steps']) - 1];
+        self::assertSame(['svc:shop', 'client', 'return'], [$last['from'], $last['to'], $last['kind']], 'The 500 goes back to the client');
+
         $context = array_column($r['context'], 'service');
         self::assertContains('warehouse-sync', $context, 'The stock change from another trace is offered as inferred context');
         self::assertNotContains('payment-api', $context, 'Earlier traffic of the request\'s own services is not context');

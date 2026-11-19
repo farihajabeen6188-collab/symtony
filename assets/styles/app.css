@@ -372,33 +372,102 @@
 .event-row[aria-current='true'] { box-shadow: inset 2px 0 0 var(--accent); }
 
 /* Failure replay (templates/components/FailureReplay.html.twig, replay_controller.js).
- * States are set by the controller; without JS every step and consequence is simply visible. */
+ * Motion: every transition is 200 ms or less; continuous effects only mark lasting state; all of it is
+ * switched off with prefers-reduced-motion. Without JS, the list view shows every step and consequence. */
 @layer components {
-    /* Layout follows the replay's own width (it sits in a wide hero and in a narrow incident column). */
+    /* Layout follows the replay's own width (wide hero, narrow incident column). */
     .replay { display: grid; gap: 0.75rem; outline: none; container-type: inline-size; }
+    .replay:focus-visible { box-shadow: 0 0 0 2px var(--focus); border-radius: var(--radius-md); }
     .replay-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
     @container (min-width: 52rem) {
-        .replay-body { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); }
+        .replay-body { grid-template-columns: minmax(0, 1fr) minmax(0, 19rem); }
     }
-    .replay:focus-visible { box-shadow: 0 0 0 2px var(--focus); border-radius: var(--radius-md); }
 
-    .replay-fuse { position: relative; height: 1.75rem; cursor: pointer; }
-    .replay-fuse-track, .replay-fuse-lit, .replay-fuse-broken { position: absolute; top: 50%; height: 0.1875rem; margin-top: -0.09375rem; border-radius: 999px; }
-    .replay-fuse-track { left: 0; right: 0; background: var(--line-strong); }
-    .replay-fuse-lit { left: 0; width: 0; background: var(--accent); transition: width 160ms var(--ease-out); }
-    .replay-fuse-broken { width: 0; background: var(--err); transition: width 160ms var(--ease-out); }
+    /* Transport bar */
+    .replay-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem; }
+    .replay-play { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; flex: none; border-radius: 999px; background: var(--accent); color: var(--accent-fg); transition: transform 120ms var(--ease-out), box-shadow 160ms; }
+    .replay-play:hover { transform: scale(1.06); }
+    .replay-play:active { transform: scale(0.96); }
+    .replay-play svg { width: 1.125rem; height: 1.125rem; }
+    .replay[data-playing] .replay-play { box-shadow: 0 0 0 4px var(--accent-soft); }
+
+    /* The fuse */
+    .replay-fuse { position: relative; height: 2rem; cursor: pointer; touch-action: none; }
+    .replay-fuse-track, .replay-fuse-lit, .replay-fuse-broken { position: absolute; top: 50%; height: 0.25rem; margin-top: -0.125rem; border-radius: 999px; }
+    .replay-fuse-track { left: 0; right: 0; background: var(--surface-3); }
+    .replay-fuse-lit { left: 0; width: 0; background: var(--accent); transition: width 180ms var(--ease-out); }
+    .replay-fuse-broken { width: 0; background: var(--err); transition: width 180ms var(--ease-out), left 180ms var(--ease-out); }
     .replay:not([data-js]) .replay-fuse-lit { width: 100%; }
-    .replay-dot { position: absolute; top: 50%; width: 0.625rem; height: 0.625rem; margin: -0.3125rem 0 0 -0.3125rem; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--line-strong); transition: background-color 160ms, transform 160ms; }
-    .replay-dot[data-state='past'], .replay:not([data-js]) .replay-dot { background: var(--accent); border-color: var(--accent); }
-    .replay-dot[data-error][data-state='past'], .replay-dot[data-error][data-state='current'], .replay:not([data-js]) .replay-dot[data-error] { background: var(--err); border-color: var(--err); }
-    .replay-dot[data-state='current'] { transform: scale(1.5); background: var(--fg); border-color: var(--fg); }
-    .replay-break { position: absolute; top: 50%; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; margin: -0.625rem 0 0 -0.625rem; border-radius: 999px; background: var(--err-soft); color: var(--err); border: 1px solid var(--err); pointer-events: none; }
+    .replay-fuse-head { position: absolute; top: 50%; left: 0; width: 1rem; height: 1rem; margin: -0.5rem 0 0 -0.5rem; border-radius: 999px; background: var(--fg); box-shadow: 0 0 0 4px var(--accent-soft); transition: left 180ms var(--ease-out), background-color 160ms; z-index: 2; pointer-events: none; }
+    .replay-fuse-head[data-failed] { background: var(--err); box-shadow: 0 0 0 4px var(--err-soft); }
+    .replay:not([data-js]) .replay-fuse-head { display: none; }
+    .replay-dot { position: absolute; top: 50%; width: 0.5rem; height: 0.5rem; margin: -0.25rem 0 0 -0.25rem; border-radius: 999px; background: var(--surface-3); box-shadow: 0 0 0 2px var(--bg-deep); transition: background-color 160ms, transform 160ms; }
+    .replay-dot[data-state='past'], .replay-dot[data-state='current'], .replay:not([data-js]) .replay-dot { background: var(--accent); }
+    .replay-dot[data-error][data-state='past'], .replay-dot[data-error][data-state='current'], .replay:not([data-js]) .replay-dot[data-error] { background: var(--err); }
+    .replay-dot[data-hover] { transform: scale(1.8); }
+    .replay-break { position: absolute; top: 50%; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; margin: -0.625rem 0 0 -0.625rem; border-radius: 999px; background: var(--bg-deep); color: var(--err); border: 1px solid var(--err); pointer-events: none; z-index: 1; transition: opacity 160ms; }
     .replay-break svg { width: 0.75rem; height: 0.75rem; }
-    .replay[data-js]:not([data-failed]) .replay-break { opacity: 0.35; }
-    .replay[data-flash] .replay-fuse { animation: replay-snap 180ms var(--ease-out); }
+    .replay[data-js]:not([data-failed]) .replay-break { opacity: 0.3; }
+    .replay-fuse-tip { position: absolute; bottom: 100%; transform: translateX(-50%); margin-bottom: 0.25rem; padding: 0.125rem 0.5rem; border-radius: var(--radius-sm); background: var(--surface-3); color: var(--fg); font-family: var(--font-mono); font-size: var(--text-2xs); white-space: nowrap; pointer-events: none; z-index: 3; }
+    .replay[data-flash] .replay-fuse, .replay[data-flash] .replay-stage { animation: replay-snap 180ms var(--ease-out); }
 
-    .replay-story, .replay-context { display: grid; gap: 1px; }
-    .replay-story { position: relative; max-height: 26rem; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); }
+    /* Views */
+    .replay[data-js][data-view='sequence'] .replay-story { display: none; }
+    .replay[data-js][data-view='list'] .replay-stage, .replay:not([data-js]) .replay-stage { display: none; }
+
+    /* Sequence diagram */
+    .replay-stage { max-height: 30rem; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); scrollbar-width: thin; }
+    .seq { display: block; }
+    .seq-headbar { position: sticky; top: 0; z-index: 2; background: var(--bg-deep); border-bottom: 1px solid var(--line); }
+    .seq-life { stroke: var(--line-strong); stroke-dasharray: 2 5; }
+    .seq-head rect { fill: var(--surface); stroke: var(--line-strong); transition: stroke 160ms, fill 160ms; }
+    .seq-head text { fill: var(--fg-2); font-size: 12px; font-weight: 500; transition: fill 160ms; }
+    .seq-head[data-kind='database'] rect, .seq-head[data-kind='cache'] rect { fill: var(--surface-2); }
+    .seq-head[data-active] rect { stroke: var(--accent); fill: var(--surface-2); }
+    .seq-head[data-active] text { fill: var(--fg); }
+    .seq-head[data-hit] rect { stroke: var(--err); fill: var(--err-soft); }
+    .seq-head[data-hit] text { fill: var(--err); }
+
+    .seq-step { cursor: pointer; transition: opacity 160ms var(--ease-out); }
+    .seq-step[data-state='future'] { opacity: 0; }
+    .seq-step[data-state='past'] .seq-label { fill: var(--fg-3); }
+    .seq-step[data-state='past'] .seq-arrow { stroke: var(--fg-3); }
+    .seq-hit { fill: transparent; transition: fill 120ms; }
+    .seq-step:hover .seq-hit { fill: var(--surface); }
+    .seq-step[data-state='current'] .seq-hit { fill: var(--surface); }
+    .seq-time { fill: var(--fg-3); font-family: var(--font-mono); font-size: 10px; }
+    .seq-step[data-state='current'] .seq-time { fill: var(--accent); }
+    .seq-label { fill: var(--fg-2); font-size: 11.5px; }
+    .seq-step[data-state='current'] .seq-label { fill: var(--fg); font-weight: 600; }
+    .seq-step[data-error] .seq-label { fill: var(--err); }
+    .seq-arrow { fill: none; stroke: var(--fg-2); stroke-width: 1.4; stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 180ms var(--ease-out); }
+    .seq-step[data-state='future'] .seq-arrow { stroke-dashoffset: 1; }
+    .seq-arrow[data-return] { stroke-dasharray: 4 4; stroke-dashoffset: 0; transition: none; }
+    .seq-step[data-state='current'] .seq-arrow { stroke: var(--accent); stroke-width: 2; }
+    .seq-step[data-error] .seq-arrow { stroke: var(--err); stroke-width: 2; }
+    .seq-x circle { fill: var(--bg-deep); stroke: var(--err); stroke-width: 1.5; }
+    .seq-x path { stroke: var(--err); stroke-width: 1.6; stroke-linecap: round; }
+    .seq-pill { fill: var(--surface); stroke: var(--line-strong); transition: fill 160ms, stroke 160ms; }
+    .seq-step[data-state='current'] .seq-pill { fill: var(--surface-2); stroke: var(--accent); }
+    .seq-step[data-kind='exception'] .seq-pill { fill: var(--err-soft); stroke: var(--err); }
+    .seq-step[data-kind='note'] .seq-label { font-style: italic; }
+    .seq-node { fill: var(--fg-3); }
+    .seq-step[data-state='current'] .seq-node { fill: var(--accent); }
+    .seq-step[data-error] .seq-node { fill: var(--err); }
+
+    /* Transaction band and consequences, once the replay passes the ROLLBACK */
+    .seq-txn { opacity: 0; transition: opacity 180ms var(--ease-out); pointer-events: none; }
+    .seq-txn rect { fill: var(--warn-soft); stroke: var(--warn); stroke-dasharray: 3 3; }
+    .seq-txn-label { fill: var(--warn); font-size: 10.5px; font-family: var(--font-mono); }
+    .replay[data-after-rollback] .seq-txn { opacity: 1; }
+    .replay[data-after-rollback] .seq-step[data-effect='rolled_back'] { opacity: 0.45; }
+    .replay[data-after-rollback] .seq-step[data-effect='rolled_back'] .seq-label { text-decoration: line-through; }
+    .replay[data-after-rollback] .seq-step[data-effect='survived'] .seq-arrow { stroke: var(--warn); stroke-width: 2.2; }
+    .replay[data-after-rollback] .seq-step[data-effect='survived'] .seq-label { fill: var(--warn); font-weight: 600; animation: replay-ember-text 1.6s ease-in-out infinite; }
+    .replay[data-after-rollback] .seq-step[data-effect='survived'] { opacity: 1; }
+
+    /* List view */
+    .replay-story { display: grid; gap: 1px; position: relative; max-height: 30rem; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); }
     .replay-step { transition: opacity 160ms; }
     .replay-step[data-state='future'] { opacity: 0.38; }
     .replay-step-btn { display: grid; grid-template-columns: 4.5rem 6.5rem minmax(0, 1fr) auto auto; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.75rem; text-align: left; font-size: var(--text-sm); color: var(--fg); }
@@ -407,28 +476,44 @@
     .replay-step[data-error] .replay-name { color: var(--err); }
     .replay-step[data-role='failure'][data-state='current'] .replay-step-btn { box-shadow: inset 2px 0 0 var(--err); background: var(--err-soft); }
     .replay-type { font-size: var(--text-2xs); color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* Consequences appear once the replay passes the ROLLBACK */
     .replay[data-js]:not([data-after-rollback]) .replay-effect { visibility: hidden; }
-    .replay[data-js]:not([data-after-rollback]) .replay-aftermath { opacity: 0.35; }
     .replay[data-after-rollback] .replay-step[data-effect='rolled_back'] .replay-name,
     .replay:not([data-js]) .replay-step[data-effect='rolled_back'] .replay-name { text-decoration: line-through; color: var(--fg-3); }
-    .replay[data-after-rollback] .replay-dot[data-effect='survived'] { background: var(--warn); border-color: var(--warn); animation: replay-ember 1.6s ease-in-out infinite; }
-    .replay[data-after-rollback] .replay-dot[data-effect='rolled_back'] { background: var(--surface-3); border-color: var(--fg-3); }
-
-    .replay-ctx { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; border: 1px dashed var(--warn); border-radius: var(--radius-sm); background: var(--warn-soft); }
-    .replay-now { min-height: 9rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
-    .replay-aftermath { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); transition: opacity 160ms; }
-
     @container (max-width: 40rem) {
         .replay-step-btn { grid-template-columns: 3.75rem minmax(0, 1fr) auto; }
         .replay-type { display: none; }
     }
+
+    /* Context, detail card, aftermath */
+    .replay-before summary { list-style: none; }
+    .replay-before summary::-webkit-details-marker { display: none; }
+    .replay-context { display: grid; gap: 0.25rem; }
+    .replay-ctx { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; border: 1px dashed var(--warn); border-radius: var(--radius-sm); background: var(--warn-soft); }
+    .replay-now { min-height: 9rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); box-shadow: inset 2px 0 0 var(--accent); transition: box-shadow 160ms; }
+    .replay-now[data-error] { box-shadow: inset 2px 0 0 var(--err); }
+    .replay[data-js] .replay-now > * { animation: replay-in 160ms var(--ease-out) both; }
+    .replay-aftermath { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg-deep); transition: opacity 180ms, transform 180ms var(--ease-out); }
+    .replay[data-js]:not([data-after-rollback]) .replay-aftermath { opacity: 0.3; transform: translateY(4px); }
 }
 @keyframes replay-snap { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-3px); } 60% { transform: translateX(3px); } }
-@keyframes replay-ember { 0%, 100% { box-shadow: 0 0 0 0 var(--warn-soft); } 50% { box-shadow: 0 0 0 6px var(--warn-soft); } }
+@keyframes replay-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@keyframes replay-ember-text { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) {
-    .replay[data-flash] .replay-fuse { animation: none; }
-    .replay[data-after-rollback] .replay-dot[data-effect='survived'] { animation: none; }
-    .replay-fuse-lit, .replay-fuse-broken, .replay-dot, .replay-step { transition: none; }
+    .replay[data-flash] .replay-fuse, .replay[data-flash] .replay-stage { animation: none; }
+    .replay[data-after-rollback] .seq-step[data-effect='survived'] .seq-label { animation: none; }
+    .replay[data-js] .replay-now > * { animation: none; }
+    .replay-play, .replay-fuse-lit, .replay-fuse-broken, .replay-fuse-head, .replay-dot, .replay-step, .seq-step, .seq-arrow, .seq-txn, .replay-aftermath { transition: none; }
+}
+
+/* Timeline motion and focus (timeline_controller.js). */
+.tl-item { transition: opacity 150ms var(--ease-out); }
+.tl-focusing .tl-item:not(.is-related) { opacity: 0.16; }
+.tl-enter .tl-item { transform-box: fill-box; transform-origin: left center; animation: tl-in 180ms var(--ease-out) both; animation-delay: var(--d, 0ms); }
+.tl-cursor line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
+.tl-cursor rect { fill: var(--surface-3); stroke: var(--line-strong); }
+.tl-cursor text { fill: var(--fg); font-family: var(--font-mono); }
+@keyframes tl-in { from { opacity: 0; transform: scaleX(0.4); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .tl-item { transition: none; }
+    .tl-enter .tl-item { animation: none; }
 }

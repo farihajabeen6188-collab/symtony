@@ -1,70 +1,92 @@
 {#
-  Failure replay: the failing request, step by step, on a "fuse" that breaks at the first failure.
-  When the replay passes the ROLLBACK, what it undid is struck through and what it could not undo
-  (calls to other systems) is marked. Everything comes from trace fields (App\Application\Timeline\FailureReplay).
-  Without JavaScript every step, the failure and the consequences are simply shown.
-  props: replay (FailureReplay::build()), autoplay (play once when scrolled into view), id
+  Failure replay: the failing request told as an animated sequence diagram (client, services, database,
+  cache), with a time "fuse" that breaks at the first failure. Past the ROLLBACK, the writes it undid are
+  struck through and the calls it could not undo stay lit. Everything comes from trace fields
+  (App\Application\Timeline\FailureReplay). The step list is the accessible view and the no-JS fallback.
+  props: replay (FailureReplay::build()), autoplay (play once when scrolled into view)
 #}
-{% props replay, autoplay = false, id = 'replay' %}
+{% props replay, autoplay = false %}
 {% set steps = replay.steps %}
 {% set focus = replay.failure ?? (steps|length - 1) %}
 {% set fail = replay.failure is not null ? steps[replay.failure] : null %}
+{% set sequence = {
+    participants: replay.participants,
+    steps: steps|map(s => {i: s.index, kind: s.kind, from: s.from, to: s.to, name: s.name, error: s.error, effect: s.effect, role: s.role, t: s.t_ms, type: s.type}),
+    failure: replay.failure,
+    rollback: replay.rollback,
+} %}
 <div {{ attributes.defaults({class: 'replay'}) }}
      data-controller="replay"
      data-replay-autoplay-value="{{ autoplay ? 'true' : 'false' }}"
      data-replay-failure-value="{{ replay.failure ?? -1 }}"
      data-replay-rollback-value="{{ replay.rollback ?? -1 }}"
+     data-replay-sequence-value="{{ sequence|json_encode }}"
      data-action="keydown->replay#key"
      tabindex="0"
      aria-label="Replay of the failing request. Space plays or pauses, left and right arrows step.">
 
     <template data-pause-icon>{{ ux_icon('lucide:pause') }}</template>
-    {# Controls #}
-    <div class="flex flex-wrap items-center gap-2">
-        <button type="button" class="btn btn-primary btn-sm" data-replay-target="play" data-action="replay#toggle">
-            <span data-replay-target="playIcon">{{ ux_icon('lucide:play') }}</span><span data-replay-target="playLabel">Replay</span>
+
+    {# Transport #}
+    <div class="replay-bar">
+        <button type="button" class="replay-play" data-replay-target="play" data-action="replay#toggle" aria-label="Play the replay">
+            <span data-replay-target="playIcon">{{ ux_icon('lucide:play') }}</span>
         </button>
         <div class="inline-flex overflow-hidden rounded-md border border-line-strong">
             <button type="button" class="btn btn-ghost btn-sm rounded-none" data-action="replay#previous" aria-label="Previous step">{{ ux_icon('lucide:skip-back') }}</button>
             <button type="button" class="btn btn-ghost btn-sm rounded-none border-l border-line-strong" data-action="replay#next" aria-label="Next step">{{ ux_icon('lucide:skip-forward') }}</button>
+        </div>
+        <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium text-fg" data-replay-target="title">{{ fail ? 'First failure: ' ~ fail.name : steps|last.name }}</p>
+            <p class="font-mono text-2xs text-fg-3" data-replay-target="counter" aria-live="polite">{{ steps|length }} steps · {{ replay.duration_ms|duration }}</p>
         </div>
         <div class="inline-flex overflow-hidden rounded-md border border-line-strong" role="group" aria-label="Speed">
             {% for s in [0.5, 1, 2] %}
                 <button type="button" class="btn btn-ghost btn-sm rounded-none {{ not loop.first ? 'border-l border-line-strong' : '' }}" data-replay-target="speed" data-action="replay#setSpeed" data-replay-speed-param="{{ s }}" aria-pressed="{{ s == 1 ? 'true' : 'false' }}">{{ s }}×</button>
             {% endfor %}
         </div>
-        {% if replay.context is not empty %}
-            <label class="inline-flex items-center gap-2 text-sm text-fg-2"><input type="checkbox" class="checkbox" data-action="replay#toggleContext"> Before the request <span class="badge badge-outline-dashed">inferred</span></label>
-        {% endif %}
-        <span class="ml-auto font-mono text-xs text-fg-3" data-replay-target="counter" aria-live="polite">{{ steps|length }} steps · {{ replay.duration_ms|duration }}</span>
+        <div class="inline-flex overflow-hidden rounded-md border border-line-strong" role="group" aria-label="View">
+            <button type="button" class="btn btn-ghost btn-sm rounded-none" data-replay-target="viewButton" data-action="replay#setView" data-replay-view-param="sequence" aria-pressed="true" title="Sequence">{{ ux_icon('lucide:workflow') }}<span class="sr-only">Sequence view</span></button>
+            <button type="button" class="btn btn-ghost btn-sm rounded-none border-l border-line-strong" data-replay-target="viewButton" data-action="replay#setView" data-replay-view-param="list" aria-pressed="false" title="List">{{ ux_icon('lucide:list') }}<span class="sr-only">List view</span></button>
+        </div>
     </div>
 
-    {# The fuse: one dot per step on the request's own time scale #}
-    <div class="replay-fuse" data-replay-target="fuse" data-action="click->replay#seek" aria-hidden="true">
+    {# The fuse: one dot per step on the request's own time scale; it breaks at the first failure #}
+    <div class="replay-fuse" data-replay-target="fuse" data-action="click->replay#seek pointermove->replay#hoverFuse pointerleave->replay#leaveFuse" aria-hidden="true">
         <div class="replay-fuse-track"></div>
         <div class="replay-fuse-lit" data-replay-target="lit"></div>
         <div class="replay-fuse-broken" data-replay-target="broken"></div>
+        <div class="replay-fuse-head" data-replay-target="head"></div>
         {% for s in steps %}
             <span class="replay-dot" style="left: {{ s.position }}%" data-replay-target="dot" data-index="{{ s.index }}" {% if s.error %}data-error{% endif %} {% if s.effect %}data-effect="{{ s.effect }}"{% endif %}></span>
         {% endfor %}
         {% if fail %}<span class="replay-break" style="left: {{ fail.position }}%">{{ ux_icon('lucide:x') }}</span>{% endif %}
+        <span class="replay-fuse-tip" data-replay-target="tip" hidden></span>
     </div>
     <div class="flex justify-between font-mono text-2xs text-fg-3" aria-hidden="true"><span>0 ms</span>{% if fail %}<span>first failure at +{{ fail.t_ms|number_format(1) }} ms</span>{% endif %}<span>{{ replay.duration_ms|duration }}</span></div>
 
     <div class="replay-body">
         <div class="min-w-0">
             {% if replay.context is not empty %}
-                <ol class="replay-context mb-2" data-replay-target="context" hidden aria-label="Activity before the request, related by timing only">
-                    {% for c in replay.context %}
-                        <li class="replay-ctx" title="{{ c.reason }}">
-                            <span class="font-mono text-2xs text-fg-3">{{ (c.t_ms / 1000)|number_format(1) }} s</span>
-                            <span class="min-w-0 truncate text-sm text-fg-2">{{ c.name }}</span>
-                            <span class="text-2xs text-fg-3">{{ c.service }}</span>
-                        </li>
-                    {% endfor %}
-                </ol>
+                <details class="replay-before mb-2">
+                    <summary class="inline-flex cursor-pointer items-center gap-2 text-sm text-fg-2">Before the request <span class="badge badge-outline-dashed">inferred from timing</span></summary>
+                    <ol class="replay-context mt-2" aria-label="Activity before the request, related by timing only">
+                        {% for c in replay.context %}
+                            <li class="replay-ctx" title="{{ c.reason }}">
+                                <span class="font-mono text-2xs text-fg-3">{{ (c.t_ms / 1000)|number_format(1) }} s</span>
+                                <span class="min-w-0 truncate text-sm text-fg-2">{{ c.name }}</span>
+                                <span class="text-2xs text-fg-3">{{ c.service }}</span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </details>
             {% endif %}
-            <ol class="replay-story" aria-label="Steps of the failing request">
+
+            {# Sequence view, drawn by replay_controller.js #}
+            <div class="replay-stage" data-replay-target="stage" role="img" aria-label="Sequence diagram of the failing request between {{ replay.participants|map(p => p.label)|join(', ') }}"></div>
+
+            {# List view: accessible text equivalent, and what you see without JavaScript #}
+            <ol class="replay-story" data-replay-target="list" aria-label="Steps of the failing request">
                 {% for s in steps %}
                     <li class="replay-step" data-replay-target="step" data-index="{{ s.index }}" {% if s.role %}data-role="{{ s.role }}"{% endif %} {% if s.effect %}data-effect="{{ s.effect }}"{% endif %} {% if s.error %}data-error{% endif %}>
                         <button type="button" class="replay-step-btn" data-action="replay#jump" data-replay-index-param="{{ s.index }}">

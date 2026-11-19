@@ -24,7 +24,7 @@ final class FailureReplay
     /**
      * @param array<string, mixed> $timeline
      *
-     * @return array{trace_id: ?string, duration_ms: float, steps: list<array<string, mixed>>, context: list<array<string, mixed>>, failure: ?int, rollback: ?int, undone: list<int>, survived: list<int>, outcome: ?string}|null
+     * @return array{trace_id: ?string, duration_ms: float, participants: list<array{id: string, label: string, kind: string}>, steps: list<array<string, mixed>>, context: list<array<string, mixed>>, failure: ?int, rollback: ?int, undone: list<int>, survived: list<int>, outcome: ?string}|null
      */
     public function build(array $timeline): ?array
     {
@@ -66,6 +66,7 @@ final class FailureReplay
         if (null !== $rollback) {
             $steps[$rollback]['role'] = 'rollback';
         }
+        $participants = $this->assignParticipants($steps);
         $final = null;
         foreach (array_reverse($steps) as $s) {
             if ('http_response' === $s['type'] && null !== $s['status']) {
@@ -77,6 +78,7 @@ final class FailureReplay
         return [
             'trace_id' => isset($timeline['trace_id']) ? (string) $timeline['trace_id'] : null,
             'duration_ms' => round($duration, 3),
+            'participants' => $participants,
             'steps' => $steps,
             'context' => $this->context($items, $start),
             'failure' => $failure,
@@ -85,6 +87,89 @@ final class FailureReplay
             'survived' => $survived,
             'outcome' => null !== $final ? \sprintf('%s %s', $final['service'], $final['name']) : null,
         ];
+    }
+
+    /**
+     * Who talks to whom at each step, for the sequence view: the client, each service, its database and
+     * cache, and called services. A request is attributed to the service whose outgoing call is still open
+     * (proven by the shared trace); otherwise to the client. Sets `from`, `to` and `kind` on every step.
+     *
+     * @param list<array<string, mixed>> $steps
+     *
+     * @return list<array{id: string, label: string, kind: string}>
+     */
+    private function assignParticipants(array &$steps): array
+    {
+        $participants = [];
+        $add = static function (string $id, string $label, string $kind) use (&$participants): string {
+            $participants[$id] ??= ['id' => $id, 'label' => $label, 'kind' => $kind];
+
+            return $id;
+        };
+        $client = $add('client', 'Client', 'client');
+        $callers = []; // service => who sent it the request (stack per service)
+        $openCalls = []; // outgoing calls waiting for their request: list of [service, index]
+
+        foreach ($steps as $i => &$s) {
+            $svc = $add('svc:'.$s['service'], (string) $s['service'], 'service');
+            $from = $svc;
+            $to = $svc;
+            $kind = 'self';
+            switch ($s['type']) {
+                case 'http_request':
+                    $caller = $client;
+                    foreach (array_reverse($openCalls, true) as $k => [$callerSvc, $callIdx]) {
+                        if ($callerSvc !== $s['service']) {
+                            $caller = 'svc:'.$callerSvc;
+                            $steps[$callIdx]['to'] = $svc; // the outgoing call lands on this service
+                            unset($openCalls[$k]);
+                            break;
+                        }
+                    }
+                    $callers[$s['service']][] = $caller;
+                    // From another service, the outgoing call already drew the arrow: this is its arrival.
+                    [$from, $to, $kind] = [$caller, $svc, $caller === $client ? 'request' : 'arrive'];
+                    break;
+                case 'http_response':
+                    $caller = array_pop($callers[$s['service']]) ?? $client;
+                    [$from, $to, $kind] = [$svc, $caller, 'return'];
+                    break;
+                case 'external_http':
+                    $host = preg_match('#^\S+\s+([^/\s]+)#', (string) $s['name'], $m) ? $m[1] : 'external';
+                    $to = $add('ext:'.$host, $host, 'external');
+                    $openCalls[] = [$s['service'], $i];
+                    $kind = 'call';
+                    break;
+                case 'db_query':
+                case 'transaction':
+                    $to = $add('db:'.$s['service'], $s['service'].' database', 'database');
+                    $kind = 'transaction' === $s['type'] ? 'transaction' : 'query';
+                    break;
+                case 'cache':
+                    $to = $add('cache:'.$s['service'], 'cache', 'cache');
+                    $kind = 'cache';
+                    break;
+                case 'exception':
+                    $kind = 'exception';
+                    break;
+                case 'log':
+                    $kind = 'note';
+                    break;
+            }
+            $s['from'] = $from;
+            $s['to'] = $s['to'] ?? $to;
+            $s['kind'] = $kind;
+        }
+        unset($s);
+
+        // A call whose target turned out to be a traced service no longer needs a separate external column.
+        $used = [];
+        foreach ($steps as $s) {
+            $used[$s['from']] = true;
+            $used[$s['to']] = true;
+        }
+
+        return array_values(array_filter($participants, static fn (array $p): bool => isset($used[$p['id']])));
     }
 
     /**

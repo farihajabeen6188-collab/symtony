@@ -32,6 +32,14 @@ export default class extends Controller {
         this.selected = null;
         this.byId = new Map(this.items.map((i) => [i.id, i]));
         this.bySpan = new Map(this.items.filter((i) => i.span_id).map((i) => [i.span_id, i]));
+        this.children = new Map();
+        for (const i of this.items) {
+            if (!i.parent_span_id) continue;
+            if (!this.children.has(i.parent_span_id)) this.children.set(i.parent_span_id, []);
+            this.children.get(i.parent_span_id).push(i);
+        }
+        this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.entered = false;
         this.ro = new ResizeObserver(() => this.render());
         this.ro.observe(this.canvasTarget);
         this.render();
@@ -39,6 +47,48 @@ export default class extends Controller {
 
     disconnect() {
         this.ro?.disconnect();
+        cancelAnimationFrame(this.anim);
+    }
+
+    // Glide to a new time window (180 ms, ease-out) instead of jumping; instant with reduced motion.
+    animateTo(target) {
+        cancelAnimationFrame(this.anim);
+        if (this.reduced) {
+            this.view = target;
+            this.render();
+            return;
+        }
+        const from = [...this.view];
+        const t0 = performance.now();
+        const frame = (now) => {
+            const p = Math.min(1, (now - t0) / 180);
+            const e = 1 - (1 - p) ** 3;
+            this.view = [from[0] + (target[0] - from[0]) * e, from[1] + (target[1] - from[1]) * e];
+            this.render();
+            if (p < 1) this.anim = requestAnimationFrame(frame);
+        };
+        this.anim = requestAnimationFrame(frame);
+    }
+
+    // The causal chain of an item: its parents up to the request, and everything it called.
+    relatedIds(id) {
+        const out = this.ancestorIds(id);
+        const queue = [this.byId.get(id)];
+        while (queue.length) {
+            const cur = queue.shift();
+            for (const child of (cur?.span_id && this.children.get(cur.span_id)) || []) {
+                if (!out.has(child.id)) { out.add(child.id); queue.push(child); }
+            }
+        }
+        return out;
+    }
+
+    focusChain(id) {
+        const svg = this.canvasTarget.querySelector('svg');
+        if (!svg) return;
+        const related = id ? this.relatedIds(id) : null;
+        svg.classList.toggle('tl-focusing', !!related);
+        svg.querySelectorAll('.tl-item').forEach((g) => g.classList.toggle('is-related', !!related && related.has(g.dataset.id)));
     }
 
     // Default view: the request itself. Inferred context stays in the minimap until you zoom out.
@@ -149,10 +199,14 @@ export default class extends Controller {
             t.textContent = (link.proven ? 'Proven: ' : 'Inferred: ') + link.reason;
         }
 
-        // Items
+        // Items (grow in left to right on the first render)
+        const enter = !this.entered && !this.reduced;
+        if (enter) svg.classList.add('tl-enter');
+        const ordered = enter ? [...items].sort((a, b) => a.offset_ms - b.offset_ms) : items;
+        const delay = new Map(ordered.map((i, n) => [i.id, Math.min(n * 12, 480)]));
         for (const item of items) {
             const p = pos(item);
-            const g = el('g', { class: 'cursor-pointer', 'data-id': item.id, tabindex: -1 }, plot);
+            const g = el('g', { class: 'tl-item cursor-pointer', 'data-id': item.id, tabindex: -1, style: enter ? `--d: ${delay.get(item.id)}ms` : null }, plot);
             const isSel = this.selected === item.id;
             const stroke = isSel ? 'var(--accent)' : item.error ? 'var(--err)' : !item.proven ? 'var(--warn)' : 'var(--line-strong)';
             if (POINTS.has(item.type) || item.duration_ms == null) {
@@ -167,9 +221,9 @@ export default class extends Controller {
                 }
             }
             el('rect', { x: Math.min(p.x1, p.x2) - 4, y: p.cy - ROW_H / 2, width: Math.max(p.x2 - p.x1, 0) + 8, height: ROW_H, fill: 'transparent' }, g);
-            g.addEventListener('mouseenter', (e) => this.showTip(e, item));
+            g.addEventListener('mouseenter', (e) => { this.showTip(e, item); this.focusChain(item.id); });
             g.addEventListener('mousemove', (e) => this.moveTip(e));
-            g.addEventListener('mouseleave', () => this.hideTip());
+            g.addEventListener('mouseleave', () => { this.hideTip(); this.focusChain(null); });
             g.addEventListener('click', () => this.select(item.id, true));
         }
 
@@ -183,8 +237,29 @@ export default class extends Controller {
             }
         }
 
+        // Cursor crosshair with the time under the pointer
+        const cursor = el('g', { class: 'tl-cursor', 'pointer-events': 'none', visibility: 'hidden' }, svg);
+        const cLine = el('line', { y1: AXIS_H, y2: height }, cursor);
+        const cBox = el('rect', { y: 4, height: 18, rx: 4 }, cursor);
+        const cText = el('text', { y: 17, 'text-anchor': 'middle', 'font-size': 10 }, cursor);
+        svg.addEventListener('mousemove', (e) => {
+            const r = svg.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            if (x < LABEL_W || x > LABEL_W + this.plotW) { cursor.setAttribute('visibility', 'hidden'); return; }
+            cursor.setAttribute('visibility', 'visible');
+            cLine.setAttribute('x1', x); cLine.setAttribute('x2', x);
+            const label = `+${fmtMs(this.msAt(x))}`;
+            cText.textContent = label;
+            cText.setAttribute('x', x);
+            const w = label.length * 6.2 + 12;
+            cBox.setAttribute('x', x - w / 2); cBox.setAttribute('width', w);
+        });
+        svg.addEventListener('mouseleave', () => cursor.setAttribute('visibility', 'hidden'));
+
         this.attachPan(svg);
         this.canvasTarget.replaceChildren(svg);
+        // In a hidden tab the entrance would play unseen; keep it for when the timeline is shown.
+        if (this.canvasTarget.clientWidth > 0) this.entered = true;
         this.renderMinimap();
         if (this.hasReadoutTarget) {
             const [a, b] = this.view;
@@ -298,17 +373,22 @@ export default class extends Controller {
             if (!e.ctrlKey && !e.metaKey) return; // plain wheel scrolls the page
             e.preventDefault();
             const r = svg.getBoundingClientRect();
-            this.zoomAt(this.msAt(e.clientX - r.left), e.deltaY < 0 ? 0.7 : 1.4);
+            this.zoomAt(this.msAt(e.clientX - r.left), e.deltaY < 0 ? 0.7 : 1.4, false);
         }, { passive: false });
     }
 
     // ---------- interactions ----------
-    zoomAt(center, factor) {
+    zoomAt(center, factor, animate = true) {
         const [a, b] = this.view;
         const span = Math.max((b - a) * factor, 0.05);
         const ratio = (center - a) / (b - a);
-        this.view = [center - span * ratio, center + span * (1 - ratio)];
-        this.render();
+        const target = [center - span * ratio, center + span * (1 - ratio)];
+        if (animate) {
+            this.animateTo(target);
+        } else {
+            this.view = target;
+            this.render();
+        }
     }
 
     zoomIn() {
@@ -321,13 +401,11 @@ export default class extends Controller {
     }
 
     reset() {
-        this.view = [...this.home];
-        this.render();
+        this.animateTo([...this.home]);
     }
 
     showAll() {
-        this.view = this.paddedFull();
-        this.render();
+        this.animateTo(this.paddedFull());
     }
 
     jumpToFirstFailure() {
@@ -335,8 +413,9 @@ export default class extends Controller {
         if (!id) return;
         const item = this.byId.get(id);
         const pad = Math.max(item.duration_ms || 0, 20) * 6;
-        this.view = [item.offset_ms - pad, item.offset_ms + (item.duration_ms || 0) + pad];
-        this.select(id, false);
+        this.selected = id;
+        this.animateTo([item.offset_ms - pad, item.offset_ms + (item.duration_ms || 0) + pad]);
+        this.canvasTarget.focus({ preventScroll: true });
     }
 
     select(id, open) {
