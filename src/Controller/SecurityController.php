@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Infrastructure\Security\DemoSignIn;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -13,12 +13,8 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 final class SecurityController extends AbstractController
 {
     #[Route('/login', name: 'app_login')]
-    public function login(
-        AuthenticationUtils $auth,
-        #[Autowire(env: 'SYMTONY_DEMO_EMAIL')] string $demoEmail,
-        #[Autowire(env: 'SYMTONY_DEMO_PASSWORD')] string $demoPassword,
-        #[Autowire('%kernel.environment%')] string $environment,
-    ): Response {
+    public function login(AuthenticationUtils $auth, DemoSignIn $demoSignIn): Response
+    {
         if (null !== $this->getUser()) {
             return $this->redirectToRoute('app_overview');
         }
@@ -26,8 +22,8 @@ final class SecurityController extends AbstractController
         return $this->render('security/login.html.twig', [
             'last_email' => $auth->getLastUsername(),
             'error' => $auth->getLastAuthenticationError(),
-            // Show the local demo credentials only outside production.
-            'demo' => 'prod' !== $environment ? ['email' => $demoEmail, 'password' => $demoPassword] : null,
+            // Local setups always show the demo account; production only when SYMTONY_PUBLIC_DEMO=1.
+            'demo' => $demoSignIn->credentials(),
         ]);
     }
 

@@ -20,6 +20,8 @@ TRUSTED_PROXIES=REMOTE_ADDR
 ENV
     echo "Wrote .env.local (prod, public URL ${PUBLIC_URL})"
 fi
+# The codespace is the public hackathon demo: offer one-click sign-in with the shared demo account.
+grep -q '^SYMTONY_PUBLIC_DEMO=' .env.local || echo 'SYMTONY_PUBLIC_DEMO=1' >> .env.local
 
 # The image sets APP_ENV=dev as a real environment variable, which wins over .env.local.
 # Override it for the public services so the codespace never runs in dev mode (no profiler, no debug).
