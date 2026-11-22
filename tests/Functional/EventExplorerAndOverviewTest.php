@@ -62,6 +62,20 @@ final class EventExplorerAndOverviewTest extends WebTestCase
         self::assertSelectorTextContains('#getting-started [data-step="replay"] a', $checkout->getReference());
     }
 
+    public function testSeededHistoryDoesNotCountAsBreakingTheDemoShop(): void
+    {
+        $client = $this->signedInClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $factory = new EventFactory($em);
+        $shop = $factory->application($em->getRepository(Workspace::class)->findOneBy(['slug' => 'demo']), 'acme-shop');
+        $redis = $factory->exception($shop, 'RedisException', 'Connection reset by peer');
+        static::getContainer()->get(IncidentGrouper::class)->group([$redis->getId()->toRfc4122()]);
+
+        $client->request('GET', '/app');
+        self::assertSelectorExists('#getting-started [data-step="scenario"][data-done="false"][aria-current="step"]');
+        self::assertSelectorNotExists('#getting-started [data-step="replay"] a');
+    }
+
     public function testSearchFilterCursorAndPanel(): void
     {
         $client = $this->signedInClient();
