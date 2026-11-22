@@ -20,7 +20,17 @@ final readonly class DemoSignIn
         #[Autowire(env: 'SYMTONY_DEMO_PASSWORD')] private string $password,
         #[Autowire('%kernel.environment%')] private string $environment,
         #[Autowire(env: 'bool:SYMTONY_PUBLIC_DEMO')] private bool $publicDemo,
+        #[Autowire(env: 'bool:default::SYMTONY_DEMO_AUTO_SIGN_IN')] private bool $autoSignIn = false,
     ) {
+    }
+
+    /**
+     * Whether visitors are signed in as the demo account without seeing the form
+     * (SYMTONY_DEMO_AUTO_SIGN_IN=1, only where the demo account is offered at all).
+     */
+    public function autoSignIn(): bool
+    {
+        return $this->autoSignIn && null !== $this->credentials();
     }
 
     /**

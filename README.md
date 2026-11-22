@@ -28,7 +28,8 @@ On Windows without `make`, use the PowerShell twin of every target:
 Open http://localhost:8080 and choose **Run the demo**. The sign-in page shows the local demo account
 (`demo@symtony.local` / `symtony-demo`, from `.env`; change it in `.env.local` for anything shared).
 In production the account is hidden unless `SYMTONY_PUBLIC_DEMO=1` is set; the public Codespace demo sets it, so
-the sign-in page offers **Sign in as the demo account**.
+the sign-in page offers **Sign in as the demo account**. With `SYMTONY_DEMO_AUTO_SIGN_IN=1` (also set by the
+Codespace) visitors skip the sign-in page entirely; signing out shows the normal form.
 
 ### The demo story
 
