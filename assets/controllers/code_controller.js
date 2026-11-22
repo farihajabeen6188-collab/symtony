@@ -2,9 +2,11 @@ import { Controller } from '@hotwired/stimulus';
 import hljs from 'highlight.js/lib/core';
 import php from 'highlight.js/lib/languages/php';
 import json from 'highlight.js/lib/languages/json';
+import diff from 'highlight.js/lib/languages/diff';
 
 hljs.registerLanguage('php', php);
 hljs.registerLanguage('json', json);
+hljs.registerLanguage('diff', diff);
 
 export default class extends Controller {
     static targets = ['source'];

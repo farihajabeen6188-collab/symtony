@@ -1,0 +1,34 @@
+{# AI fix verdict from the real run of the latest batch. Polls while running. #}
+{% set status = fix_verdict.status %}
+{% set run = fix_verdict.run %}
+<turbo-frame id="fix-verdict" data-controller="poll" data-poll-url-value="{{ path('app_fix_verdict', {id: fix.id}) }}" data-poll-final-value="{{ status == 'running' ? 'false' : 'true' }}">
+    <div class="flex flex-wrap items-center gap-2">
+        {% if status == 'fix_verified' %}
+            <span class="badge badge-ok">{{ ux_icon('lucide:shield-check') }}AI fix verified</span>
+            <span class="text-sm text-fg-2">With this change applied to the buggy build, the regression test passes.</span>
+        {% elseif status == 'fix_rejected' %}
+            <span class="badge badge-err">{{ ux_icon('lucide:circle-alert') }}Fix rejected</span>
+            <span class="text-sm text-fg-2">The change applies, but the regression test still fails. Do not use it.</span>
+        {% elseif status == 'fix_not_applied' %}
+            <span class="badge badge-warn">{{ ux_icon('lucide:circle-alert') }}Does not apply</span>
+            <span class="text-sm text-fg-2">The diff does not match the code, so nothing was tested.</span>
+        {% elseif status == 'runner_error' %}
+            <span class="badge badge-err">{{ ux_icon('lucide:server-crash') }}Runner error</span>
+            <span class="text-sm text-fg-2">The run could not complete; this says nothing about the fix.</span>
+        {% elseif status == 'running' %}
+            <span class="badge badge-accent">{{ ux_icon('lucide:loader') }}Running</span>
+            <span class="inline-flex items-center gap-2 text-sm text-fg-2"><twig:Loader class="h-4 w-5" label="Running" />Applying the fix and running the test in the isolated runner…</span>
+        {% else %}
+            <span class="badge badge-outline-dashed">{{ ux_icon('lucide:file-code') }}Unverified proposal</span>
+            <span class="text-sm text-fg-2">Not run yet. Only a real run decides whether this fix works.</span>
+        {% endif %}
+    </div>
+    {% if run and run.finished %}
+        <p class="mt-2 mono text-2xs text-fg-3">exit {{ run.exitCode ?? '—' }} · {{ run.durationMs is not null ? (run.durationMs / 1000)|number_format(2) ~ ' s' : '—' }}{% if run.assertions is not null %} · {{ run.assertions }} assertions, {{ run.failures }} failures, {{ run.errors }} errors{% endif %}</p>
+        {% if status != 'fix_verified' and run.output %}
+            <details class="mt-2"><summary class="cursor-pointer text-xs text-fg-3">Runner output</summary>
+                <twig:CodeBlock code="{{ run.output }}" lang="text" max_height="16rem" />
+            </details>
+        {% endif %}
+    {% endif %}
+</turbo-frame>

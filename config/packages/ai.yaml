@@ -51,6 +51,19 @@ ai:
                     - 'App\Infrastructure\AI\Tool\SourceFileTool'
             max_tool_calls: 12
 
+        # Fix writer: proposes a minimal diff that makes a verified regression test pass. Only a proposal:
+        # static checks, human review and a real run in the isolated runner decide whether it counts.
+        fixer:
+            platform: 'App\Infrastructure\AI\SelectedPlatform'
+            model: '%env(symtony_ai_model:SYMTONY_AI_MODEL)%'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/fixer.md'
+            tools:
+                services:
+                    - 'App\Infrastructure\AI\Tool\EvidenceTools'
+                    - 'App\Infrastructure\AI\Tool\SourceFileTool'
+            max_tool_calls: 12
+
         # Assistant panel on incident/investigation pages: answers questions from the same evidence tools.
         assistant:
             platform: 'App\Infrastructure\AI\SelectedPlatform'

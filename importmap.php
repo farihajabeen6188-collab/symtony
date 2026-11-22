@@ -41,4 +41,7 @@ return [
         'version' => '1.6.32',
         'type' => 'css',
     ],
+    'highlight.js/lib/languages/diff' => [
+        'version' => '11.12.0',
+    ],
 ];

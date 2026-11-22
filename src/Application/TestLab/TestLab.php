@@ -159,7 +159,7 @@ final class TestLab
         }
         $this->em->flush();
 
-        if ($done && [] !== $runs && self::VERIFIED === $this->verdict($runs[0]->getTest())['status']) {
+        if ($done && [] !== $runs && 'proposed' !== $runs[0]->getVariant() && self::VERIFIED === $this->verdict($runs[0]->getTest())['status']) {
             $this->notifier->testVerified($runs[0]->getTest(), $batchId);
             $this->em->flush();
         }
@@ -181,7 +181,8 @@ final class TestLab
      */
     public function verdict(RegressionTest $test): array
     {
-        $latest = $this->em->getRepository(TestExecution::class)->findOneBy(['test' => $test], ['createdAt' => 'DESC']);
+        // AI fix runs ("proposed") have their own verdict (FixLab); the test's proof is its buggy + reference-fix pair.
+        $latest = $this->em->getRepository(TestExecution::class)->findOneBy(['test' => $test, 'variant' => ['buggy', 'fixed']], ['createdAt' => 'DESC']);
         if (!$latest instanceof TestExecution) {
             return ['status' => self::UNVERIFIED, 'buggy' => null, 'fixed' => null];
         }

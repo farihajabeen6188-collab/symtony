@@ -3,7 +3,8 @@
 #
 # Runs inside a container with NO network, a read-only root filesystem and tmpfs scratch space.
 # It only talks to SYMTONY through the jobs directory:
-#   /jobs/<id>/job.json   {"variant": "buggy"|"fixed", "patch": "fixes/x.patch", "test_file": "tests/Symtony/X.php", "timeout": 60}
+#   /jobs/<id>/job.json   {"variant": "buggy"|"fixed"|"proposed", "patch": "fixes/x.patch", "test_file": "tests/Symtony/X.php", "timeout": 60}
+#   /jobs/<id>/fix.patch  (proposed only) an AI-written, human-reviewed diff; it may only touch src/ files
 #   /jobs/<id>/Test.php   the reviewed test
 #   /jobs/<id>/result.json  written here when done (exit code, duration, junit, output)
 # The command it runs is fixed. Nothing in a job can choose what is executed besides the test file itself.
@@ -20,7 +21,7 @@ json_escape() { php -r 'echo json_encode(stream_get_contents(STDIN), JSON_UNESCA
 run_job() {
     dir=$1
     id=$(basename "$dir")
-    variant=$(php -r '$j=json_decode(file_get_contents($argv[1]),true); echo in_array($j["variant"]??"", ["buggy","fixed"], true) ? $j["variant"] : "buggy";' "$dir/job.json")
+    variant=$(php -r '$j=json_decode(file_get_contents($argv[1]),true); echo in_array($j["variant"]??"", ["buggy","fixed","proposed"], true) ? $j["variant"] : "buggy";' "$dir/job.json")
     patch=$(php -r '$j=json_decode(file_get_contents($argv[1]),true); $p=(string)($j["patch"]??""); echo preg_match("#^fixes/[A-Za-z0-9._-]+\.patch$#", $p) ? $p : "";' "$dir/job.json")
     timeout_s=$(php -r '$j=json_decode(file_get_contents($argv[1]),true); echo max(5, min(120, (int)($j["timeout"]??60)));' "$dir/job.json")
     log "job $id: variant=$variant"
@@ -40,6 +41,15 @@ run_job() {
             status=patch
         fi
     fi
+    if [ "$status" = ok ] && [ "$variant" = proposed ]; then
+        # Defence in depth: the app already checked this. Only application sources, no new/deleted files.
+        if [ ! -f "$dir/fix.patch" ] \
+            || grep -E '^(\+\+\+|---) ' "$dir/fix.patch" | grep -vqE '^(\+\+\+ b|--- a)/src/[A-Za-z0-9_/.-]+([[:space:]]|$)' \
+            || grep -qE '^(\+\+\+|---) .*\.\.' "$dir/fix.patch" \
+            || ! (cd "$work" && patch -p1 -s --no-backup-if-mismatch < "$dir/fix.patch"); then
+            status=patch
+        fi
+    fi
 
     class=$(php -r '$j=json_decode(file_get_contents($argv[1]),true); $c=(string)($j["class_name"]??""); echo preg_match("/^[A-Za-z][A-Za-z0-9_]{0,100}$/", $c) ? $c : "RegressionTest";' "$dir/job.json")
     test_file=tests/Symtony/$class.php
@@ -51,7 +61,7 @@ run_job() {
         output=$(cd "$work" && APP_ENV=test SYMFONY_DEPRECATIONS_HELPER=disabled timeout "$timeout_s" php -d memory_limit=384M vendor/bin/phpunit --no-progress --colors=never --log-junit /tmp/junit-$id.xml "$test_file" 2>&1)
         code=$?
     elif [ "$status" = patch ]; then
-        output="The reference fix could not be applied."
+        if [ "$variant" = proposed ]; then output="The proposed fix could not be applied."; else output="The reference fix could not be applied."; fi
     else
         output="The isolated workspace could not be prepared."
     fi

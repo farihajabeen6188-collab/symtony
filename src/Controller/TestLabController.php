@@ -55,15 +55,19 @@ final class TestLabController extends AbstractController
     }
 
     #[Route('/app/test-lab/{id}', name: 'app_test_show', requirements: ['id' => '[0-9a-f-]{36}'], methods: ['GET'])]
-    public function show(string $id): Response
+    public function show(string $id, \App\Application\TestLab\FixLab $fixes): Response
     {
         $test = $this->test($id);
+        $fix = $fixes->latest($test);
 
         return $this->render('test_lab/show.html.twig', [
             'test' => $test,
             'verdict' => $this->lab->verdict($test),
             'history' => $this->em->getRepository(TestExecution::class)->findBy(['test' => $test], ['createdAt' => 'DESC'], 40),
             'runner_online' => $this->lab->runnerOnline(),
+            'fix' => $fix,
+            'fix_verdict' => null !== $fix ? $fixes->verdict($fix) : null,
+            'fix_blocked' => $fixes->cannotPropose($test),
             'evidence' => null !== $test->getInvestigation() ? $this->em->getRepository(\App\Domain\Investigation\EvidenceItem::class)->findBy(['investigation' => $test->getInvestigation()]) : [],
         ]);
     }
