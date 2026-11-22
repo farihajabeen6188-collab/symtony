@@ -37,15 +37,15 @@
             {% if ai.configured %}<span class="badge badge-ok">Configured</span>{% else %}<span class="badge badge-warn">Not configured</span>{% endif %}
         </div>
         <dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 p-4 text-sm">
-            <dt class="text-fg-3">Platform</dt><dd class="text-fg">Hugging Face Inference Providers</dd>
+            <dt class="text-fg-3">Platform</dt><dd class="text-fg">{{ ai.platformLabel }} <span class="mono text-fg-3">({{ ai.platform }})</span></dd>
             <dt class="text-fg-3">Model</dt><dd class="mono truncate text-fg">{{ ai.model ?: '—' }}</dd>
-            <dt class="text-fg-3">Inference provider</dt><dd class="text-fg">{{ ai.provider ?? 'Routed by Hugging Face' }}</dd>
-            <dt class="text-fg-3">API key</dt><dd class="text-fg">{{ ai.hasKey ? 'Set (hidden)' : 'Not set' }}</dd>
+            {% if ai.platform == 'huggingface' %}<dt class="text-fg-3">Inference provider</dt><dd class="text-fg">{{ ai.provider ?? 'Routed by Hugging Face' }}</dd>{% endif %}
+            <dt class="text-fg-3">Key or URL</dt><dd class="text-fg">{{ ai.hasKey ? 'Set (hidden)' : 'Not set' }}</dd>
             <dt class="text-fg-3">Model calls</dt><dd class="text-fg">{{ ai.enabled ? 'Enabled' : 'Disabled (SYMTONY_AI_ENABLED=0)' }}</dd>
         </dl>
         <div class="border-t border-line p-4 text-sm text-fg-2">
             {% if not ai.configured %}<p class="mb-2 text-fg">{{ ai.whyNotConfigured }}</p>{% endif %}
-            <p>Keys live in <code>.env.local</code>, never in the database, and are never shown. Without a key, investigations use the deterministic analyzers only and say so; the assistant and model-written tests stay off.</p>
+            <p>Choose the provider with <code>SYMTONY_AI_PROVIDER</code> (Hugging Face, OpenAI, Anthropic, Gemini, OpenRouter, Mistral, DeepSeek or any OpenAI-compatible endpoint){% if not ai.hasKey %} and set <code>{{ ai.keyEnv }}</code>{% endif %}. Keys live in <code>.env.local</code>, never in the database, and are never shown. Without a key, investigations use the deterministic analyzers only and say so; the assistant and model-written tests stay off.</p>
         </div>
     </section>
 
