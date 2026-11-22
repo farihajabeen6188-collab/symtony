@@ -25,6 +25,13 @@ final class DemoSignInTest extends TestCase
         self::assertTrue($public['public']);
     }
 
+    public function testAutoSignInOnlyWhereTheDemoAccountIsOffered(): void
+    {
+        self::assertTrue((new DemoSignIn('demo@symtony.local', 'symtony-demo', 'prod', true, true))->autoSignIn());
+        self::assertFalse((new DemoSignIn('demo@symtony.local', 'symtony-demo', 'prod', true, false))->autoSignIn());
+        self::assertFalse((new DemoSignIn('demo@symtony.local', 'symtony-demo', 'prod', false, true))->autoSignIn(), 'A private production install never signs visitors in.');
+    }
+
     public function testNothingIsOfferedWithoutConfiguredCredentials(): void
     {
         self::assertNull((new DemoSignIn('', 'symtony-demo', 'prod', true))->credentials());

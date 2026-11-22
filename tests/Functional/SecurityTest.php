@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+
 final class SecurityTest extends WebTestCase
 {
     public function testAnonymousUserIsRedirectedToLogin(): void
@@ -43,6 +44,25 @@ final class SecurityTest extends WebTestCase
         self::assertResponseRedirects('/app');
         $client->followRedirect();
         self::assertSelectorTextContains('h1', 'Overview');
+    }
+
+    public function testPublicDemoOpensTheAppWithoutASignInPage(): void
+    {
+        $_SERVER['SYMTONY_DEMO_AUTO_SIGN_IN'] = $_ENV['SYMTONY_DEMO_AUTO_SIGN_IN'] = '1';
+        try {
+            $client = static::createClient();
+            $this->demoUser();
+            $client->followRedirects();
+
+            $client->request('GET', '/app/incidents');
+            self::assertSelectorTextContains('h1', 'Incidents', 'No sign-in page: the visitor lands where they were going.');
+
+            // After signing out the form is shown instead of signing straight back in.
+            $client->request('GET', '/logout');
+            self::assertSelectorTextContains('h1', 'Sign in');
+        } finally {
+            unset($_SERVER['SYMTONY_DEMO_AUTO_SIGN_IN'], $_ENV['SYMTONY_DEMO_AUTO_SIGN_IN']);
+        }
     }
 
     public function testWrongPasswordShowsAnError(): void
