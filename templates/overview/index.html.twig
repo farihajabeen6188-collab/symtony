@@ -44,6 +44,8 @@
         </twig:EmptyState>
     </div>
 {% else %}
+    {{ include('overview/_getting_started.html.twig') }}
+
     <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <twig:MetricCard label="Applications" value="{{ metrics.applications }}" hint="{{ metrics.connected }} sending events now" href="{{ path('app_applications') }}" />
         <twig:MetricCard label="Open incidents" value="{{ metrics.open_incidents }}" tone="{{ metrics.open_incidents > 0 ? 'fg' : 'ok' }}" hint="Across all applications" href="{{ path('app_incidents') }}" />

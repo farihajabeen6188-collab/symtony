@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class OverviewController extends AbstractController
 {
     #[Route('/app', name: 'app_overview', methods: ['GET'])]
-    public function __invoke(WorkspaceContext $context, OverviewQueries $queries, UiPreferences $prefs, \App\Application\Query\InvestigationQueries $investigations): Response
+    public function __invoke(WorkspaceContext $context, OverviewQueries $queries, UiPreferences $prefs, \App\Application\Query\InvestigationQueries $investigations, \App\Application\Query\GettingStarted $guide): Response
     {
         $ws = $context->workspace();
         $range = $prefs->timeRange();
@@ -30,6 +30,7 @@ final class OverviewController extends AbstractController
             'activity' => $queries->activity($ws),
             'inv_metrics' => $investigations->metrics($ws, $range),
             'active_investigations' => $investigations->active($ws),
+            'guide' => $guide->steps($ws),
         ]);
     }
 }
