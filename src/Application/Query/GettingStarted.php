@@ -36,7 +36,7 @@ final class GettingStarted
 
         $demoApp = $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace, 'slug' => DemoInstaller::APP_SLUG])
             ?? $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace], ['createdAt' => 'ASC']);
-        $incident = $this->em->getRepository(Incident::class)->findOneBy(['workspace' => $workspace], ['createdAt' => 'DESC']);
+        $incident = $this->storyIncident($workspace);
         $investigation = $conn->fetchAssociative(
             "SELECT id, status FROM investigation WHERE workspace_id = :ws ORDER BY (status = 'completed') DESC, created_at DESC LIMIT 1",
             ['ws' => $wsId],
@@ -125,5 +125,20 @@ final class GettingStarted
         $done = \count(array_filter($steps, static fn (array $s): bool => $s['done']));
 
         return ['steps' => $steps, 'done' => $done, 'total' => \count($steps), 'current' => $current];
+    }
+
+    /**
+     * The incident the tour is about: the demo checkout failure (a stock constraint violation) when it
+     * exists, otherwise the most recently seen open incident, otherwise the most recent one.
+     */
+    private function storyIncident(Workspace $workspace): ?Incident
+    {
+        $byRecent = fn (string $where): ?Incident => $this->em->createQuery(
+            'SELECT i FROM '.Incident::class.' i WHERE i.workspace = :ws'.$where.' ORDER BY i.lastSeenAt DESC'
+        )->setParameter('ws', $workspace)->setMaxResults(1)->getOneOrNullResult();
+
+        return $byRecent(" AND i.title LIKE '%stock_non_negative%'")
+            ?? $byRecent(" AND i.status <> 'resolved'")
+            ?? $byRecent('');
     }
 }
