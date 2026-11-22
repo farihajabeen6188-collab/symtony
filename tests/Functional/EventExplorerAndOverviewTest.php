@@ -37,6 +37,12 @@ final class EventExplorerAndOverviewTest extends WebTestCase
         self::assertStringContainsString('2', $events);
         self::assertStringContainsString('1 errors', $events);
         self::assertSelectorTextContains('main', 'Service health');
+
+        // The guided tour starts at the first step, with progress read from real data.
+        self::assertSelectorTextContains('#getting-started', 'Start here');
+        self::assertSelectorExists('#getting-started [data-step="scenario"][data-done="false"][aria-current="step"]');
+        self::assertCount(6, $crawler->filter('#getting-started [data-step]'));
+        self::assertSelectorTextContains('#getting-started', '0 of 6 done');
     }
 
     public function testSearchFilterCursorAndPanel(): void

@@ -1,0 +1,46 @@
+{# Guided tour: what to do first, with progress read from this workspace's real data. #}
+{% set all_core_done = guide.steps|filter(s => not s.optional and not s.done)|length == 0 %}
+<details class="panel mb-6 overflow-hidden" id="getting-started" data-getting-started open>
+    <summary class="panel-header cursor-pointer list-none select-none">
+        <span class="flex min-w-0 items-center gap-3">
+            {{ ux_icon('lucide:compass', {class: 'h-5 w-5 flex-none text-accent'}) }}
+            <span class="min-w-0">
+                <span class="t-h2 block">Start here: from a failing checkout to a proven test</span>
+                <span class="block text-xs text-fg-3">A guided tour of SYMTONY on the bundled demo shop · about 3 minutes, no setup needed</span>
+            </span>
+        </span>
+        <span class="flex flex-none items-center gap-3">
+            <span class="badge {{ all_core_done ? 'badge-ok' : 'badge-accent' }}">{{ guide.done }} of {{ guide.total }} done</span>
+            {{ ux_icon('lucide:chevron-down', {class: 'h-4 w-4 text-fg-3'}) }}
+        </span>
+    </summary>
+
+    <ol class="grid gap-px bg-line md:grid-cols-2 xl:grid-cols-3">
+        {% for step in guide.steps %}
+            {% set current = guide.current == step.key %}
+            <li class="flex flex-col gap-3 p-4 {{ current ? 'bg-accent-soft' : 'bg-surface' }}" data-step="{{ step.key }}" data-done="{{ step.done ? 'true' : 'false' }}" {% if current %}aria-current="step"{% endif %}>
+                <div class="flex items-center gap-2.5">
+                    {% if step.done %}
+                        <span class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-ok-soft text-ok">{{ ux_icon('lucide:check', {class: 'h-3.5 w-3.5'}) }}</span>
+                    {% else %}
+                        <span class="flex h-6 w-6 flex-none items-center justify-center rounded-full border {{ current ? 'border-accent text-accent' : 'border-line-strong text-fg-3' }} mono text-xs">{{ loop.index }}</span>
+                    {% endif %}
+                    <h3 class="text-sm font-semibold text-fg">{{ step.title }}</h3>
+                    {% if step.optional %}<span class="badge">Optional</span>{% endif %}
+                    {% if current %}<span class="badge badge-accent">Next</span>{% endif %}
+                </div>
+                <p class="flex-1 text-sm text-fg-2">{{ step.text }}</p>
+                {% if step.note %}<p class="text-xs {{ step.done ? 'text-ok' : 'text-fg-3' }}">{{ step.note }}</p>{% endif %}
+                {% if step.action %}
+                    <a href="{{ path(step.action.route, step.action.params) }}{{ step.key == 'ai' ? '#ai' : '' }}" class="btn {{ current ? 'btn-primary' : 'btn-secondary' }} self-start">
+                        {{ step.action.label }}{{ ux_icon('lucide:arrow-right', {class: 'h-4 w-4'}) }}
+                    </a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+    <p class="border-t border-line px-4 py-3 text-xs text-fg-3">
+        This public demo is one shared workspace on sample data: steps someone else already did show as done, and you can repeat any of them.
+        Want it on your own machine? <code class="text-fg-2">git clone https://github.com/farihajabeen6188-collab/symtony</code> then <code class="text-fg-2">make up &amp;&amp; make demo</code>.
+    </p>
+</details>
