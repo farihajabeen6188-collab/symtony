@@ -77,6 +77,15 @@
             "bin/phpunit"
         ]
     },
+    "symfony/ai-anthropic-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "055b125ba7a6090b155b8b9dcbfabc881460863d"
+        }
+    },
     "symfony/ai-bundle": {
         "version": "1.0",
         "recipe": {
@@ -88,6 +97,24 @@
         "files": [
             "config/packages/ai.yaml"
         ]
+    },
+    "symfony/ai-deep-seek-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "7f65924ab862f1570070206bbde1b5f501863f22"
+        }
+    },
+    "symfony/ai-gemini-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "b703dbcb053eb9f41b2de73c5334a5214d4fcb57"
+        }
     },
     "symfony/ai-generic-platform": {
         "version": "1.0",
@@ -108,6 +135,33 @@
             "branch": "main",
             "version": "0.1",
             "ref": "68bc896a3d39a0155d55fb77635d9f7d1df66e8f"
+        }
+    },
+    "symfony/ai-mistral-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "900e107b11b561a6cffb55d4e43c5b1e123aaa63"
+        }
+    },
+    "symfony/ai-open-ai-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "1815c0412f5ef5da5f924ea5fe84ebd6a5422476"
+        }
+    },
+    "symfony/ai-open-router-platform": {
+        "version": "1.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "0.1",
+            "ref": "304a1318266967fa194ba62b139ee80637479bdf"
         }
     },
     "symfony/asset-mapper": {

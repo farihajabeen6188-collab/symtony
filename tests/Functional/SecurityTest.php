@@ -31,6 +31,20 @@ final class SecurityTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Overview');
     }
 
+    public function testDemoAccountCanSignInWithOneClick(): void
+    {
+        $client = static::createClient();
+        $this->demoUser();
+
+        $crawler = $client->request('GET', '/login');
+        self::assertSelectorTextContains('[data-demo-sign-in]', 'demo@symtony.local');
+        $client->submit($crawler->selectButton('Sign in as the demo account')->form());
+
+        self::assertResponseRedirects('/app');
+        $client->followRedirect();
+        self::assertSelectorTextContains('h1', 'Overview');
+    }
+
     public function testWrongPasswordShowsAnError(): void
     {
         $client = static::createClient();

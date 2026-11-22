@@ -27,6 +27,8 @@ On Windows without `make`, use the PowerShell twin of every target:
 
 Open http://localhost:8080 and choose **Run the demo**. The sign-in page shows the local demo account
 (`demo@symtony.local` / `symtony-demo`, from `.env`; change it in `.env.local` for anything shared).
+In production the account is hidden unless `SYMTONY_PUBLIC_DEMO=1` is set; the public Codespace demo sets it, so
+the sign-in page offers **Sign in as the demo account**.
 
 ### The demo story
 
@@ -45,17 +47,30 @@ Open http://localhost:8080 and choose **Run the demo**. The sign-in page shows t
 
 ## AI provider (optional)
 
-Without a key everything works on deterministic analyzers, and every screen says no model was used. To add
-the model, put a Hugging Face token in `.env.local` (never committed):
+Without a key everything works on deterministic analyzers, and every screen says no model was used. To add a
+model, choose **one** provider and put its key in `.env.local` (never committed). All providers go through
+Symfony AI platform bridges; the model must support tool calling.
+
+| `SYMTONY_AI_PROVIDER` | Key in `.env.local` | Default model (override with `SYMTONY_AI_MODEL`) |
+|---|---|---|
+| `huggingface` (default) | `HUGGINGFACE_API_KEY` (+ optional `HUGGINGFACE_PROVIDER`) | `Qwen/Qwen3.5-35B-A3B` |
+| `openai` | `OPENAI_API_KEY` | `gpt-5.4-mini` |
+| `anthropic` (Claude) | `ANTHROPIC_API_KEY` | `claude-sonnet-5-5` |
+| `gemini` | `GEMINI_API_KEY` | `gemini-3.5-flash` |
+| `openrouter` | `OPENROUTER_API_KEY` | `openai/gpt-5-mini` |
+| `mistral` | `MISTRAL_API_KEY` | `mistral-medium-latest` |
+| `deepseek` | `DEEPSEEK_API_KEY` | `deepseek-v4-flash` |
+| `generic` (Groq, Together, Fireworks, Ollama, LM Studio, vLLM...) | `GENERIC_BASE_URL` (+ `GENERIC_API_KEY` if needed) | none: set `SYMTONY_AI_MODEL` |
 
 ```dotenv
-HUGGINGFACE_API_KEY=hf_...
-SYMTONY_AI_MODEL=Qwen/Qwen3.5-35B-A3B   # any model with tool calling
-# HUGGINGFACE_PROVIDER=together         # optional: pin an inference provider
+SYMTONY_AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+# SYMTONY_AI_MODEL=claude-opus-5-5   # optional
 ```
 
-Then `make spike-ai` (`./dev.ps1 spike-ai`) checks tool calling and structured output against the real API.
-**Settings → AI provider** shows whether a key is configured (never the key).
+Restart with `docker compose restart app worker`, then `make spike-ai` (`./dev.ps1 spike-ai`) checks tool
+calling and structured output against the real API. **Settings → AI provider** shows the provider, model and
+whether a key is set (never the key).
 
 ## Connect an AI client over MCP
 

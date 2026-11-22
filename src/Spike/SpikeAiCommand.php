@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Spike;
 
+use App\Infrastructure\AI\AiSettings;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -25,10 +26,7 @@ final class SpikeAiCommand extends Command
     public function __construct(
         #[Autowire(service: 'ai.agent.spike')]
         private readonly AgentInterface $agent,
-        #[Autowire(env: 'SYMTONY_AI_MODEL')]
-        private readonly string $model,
-        #[Autowire(env: 'HUGGINGFACE_API_KEY')]
-        private readonly string $apiKey,
+        private readonly AiSettings $settings,
     ) {
         parent::__construct();
     }
@@ -36,10 +34,10 @@ final class SpikeAiCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('SYMTONY AI spike — model: '.$this->model);
+        $io->title(\sprintf('SYMTONY AI spike — %s, model: %s', $this->settings->platformLabel(), $this->settings->model()));
 
-        if ('' === trim($this->apiKey)) {
-            $io->warning('HUGGINGFACE_API_KEY is empty. Not tested — set it in .env.local and run again.');
+        if (!$this->settings->isConfigured()) {
+            $io->warning($this->settings->whyNotConfigured().' Not tested.');
 
             return Command::FAILURE;
         }
