@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Application\Incident\IncidentGrouper;
 use App\Domain\Event\EventType;
 use App\Domain\Event\Severity;
 use App\Domain\Workspace\Workspace;
 use App\Tests\Support\EventFactory;
+use App\Tests\Support\StaleCacheScenario;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class EventExplorerAndOverviewTest extends WebTestCase
@@ -43,6 +45,21 @@ final class EventExplorerAndOverviewTest extends WebTestCase
         self::assertSelectorExists('#getting-started [data-step="scenario"][data-done="false"][aria-current="step"]');
         self::assertCount(6, $crawler->filter('#getting-started [data-step]'));
         self::assertSelectorTextContains('#getting-started', '0 of 6 done');
+    }
+
+    public function testGuideLinksTheCheckoutIncidentEvenWhenANewerOneExists(): void
+    {
+        $client = $this->signedInClient();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $factory = new EventFactory($em);
+        $app = $factory->application($em->getRepository(Workspace::class)->findOneBy(['slug' => 'demo']), 'demo-shop');
+        $checkout = (new StaleCacheScenario($em, $app))->create(static::getContainer()->get(IncidentGrouper::class));
+        $redis = $factory->exception($app, 'RedisException', 'Connection reset by peer', new \DateTimeImmutable('+1 minute'));
+        static::getContainer()->get(IncidentGrouper::class)->group([$redis->getId()->toRfc4122()]);
+
+        $client->request('GET', '/app');
+        self::assertSelectorExists('#getting-started [data-step="scenario"][data-done="true"]');
+        self::assertSelectorTextContains('#getting-started [data-step="replay"] a', $checkout->getReference());
     }
 
     public function testSearchFilterCursorAndPanel(): void
