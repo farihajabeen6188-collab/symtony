@@ -54,6 +54,8 @@
             </div>
         </section>
 
+        {{ include('test_lab/_fix_panel.html.twig') }}
+
         <section aria-label="Test code">
             <twig:CodeBlock code="{{ test.code }}" lang="php" title="{{ test.fileName }}" line_numbers />
         </section>

@@ -1,0 +1,59 @@
+{# AI fix: the model proposes a diff; static checks, review and a real run decide. #}
+<section class="panel overflow-hidden" id="ai-fix" aria-labelledby="fix-h">
+    <div class="panel-header">
+        <h2 id="fix-h" class="t-h2 flex items-center gap-2">{{ ux_icon('lucide:sparkles', {class: 'h-4 w-4 text-ai'}) }}AI fix</h2>
+        <span class="text-xs text-fg-3">The model proposes · you review · the runner proves</span>
+    </div>
+    <div class="panel-body grid gap-4">
+        {% if not fix %}
+            <p class="text-sm text-fg-2">Ask the model for the smallest code change that makes this test pass. It reads the same redacted evidence and allow-listed source files and may only change application code, never tests. After your review, the change is applied to a fresh copy of the buggy build inside the isolated runner, and it counts only if this test turns green.</p>
+            {% if fix_blocked %}
+                <p class="text-sm text-fg-3">{{ fix_blocked }}</p>
+            {% endif %}
+            <form method="post" action="{{ path('app_fix_propose', {id: test.id}) }}" data-controller="busy" data-action="submit->busy#start">
+                <input type="hidden" name="_token" value="{{ token }}">
+                <button class="btn btn-ai" data-busy-target="button" {% if fix_blocked %}disabled{% endif %}>{{ ux_icon('lucide:sparkles') }}Propose a fix with AI</button>
+            </form>
+        {% else %}
+            <div class="flex flex-wrap items-center gap-2 text-xs text-fg-3">
+                <span class="badge badge-ai">{{ ux_icon('lucide:sparkles') }}{{ fix.source }}</span>
+                <span>proposed {{ fix.createdAt|ago }}</span>
+                {% if fix.citations is not empty %}<span>· cites {{ fix.citations|join(', ') }}</span>{% endif %}
+                {% if fix.sharedFiles is not empty %}<span>· read {{ fix.sharedFiles|join(', ') }}</span>{% endif %}
+            </div>
+            <p class="text-sm text-fg">{{ fix.summary }}</p>
+
+            {{ include('test_lab/_fix_verdict.html.twig') }}
+
+            <twig:CodeBlock code="{{ fix.diff }}" lang="diff" title="{{ fix.files|join(', ') ?: 'proposed change' }}" max_height="28rem" />
+
+            <div class="border-t border-line pt-4">
+                {% if not fix.passedStaticChecks %}
+                    <p class="text-sm text-err">This change cannot be run:</p>
+                    <ul class="mt-1 list-disc pl-5 text-sm text-err">{% for i in fix.staticIssues %}<li>{{ i }}</li>{% endfor %}</ul>
+                {% elseif not fix.reviewed %}
+                    <form method="post" action="{{ path('app_fix_review', {id: fix.id}) }}" class="grid gap-3">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <label class="flex items-start gap-2 text-sm text-fg"><input type="checkbox" class="checkbox mt-0.5" name="confirm" value="1" required> I read this change and it only does what the summary says. (Required before it can run.)</label>
+                        <div><button class="btn btn-secondary">{{ ux_icon('lucide:user-check') }}Mark as reviewed</button></div>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ path('app_fix_prove', {id: fix.id}) }}" class="flex flex-wrap items-center gap-3" data-controller="busy" data-action="submit->busy#start">
+                        <input type="hidden" name="_token" value="{{ token }}">
+                        <button class="btn btn-primary" data-busy-target="button" {% if not runner_online or fix_verdict.status == 'running' %}disabled{% endif %}>{{ ux_icon('lucide:flask-conical') }}Prove the fix: run the test with it applied</button>
+                        <span class="text-xs text-fg-3">Reviewed by {{ fix.reviewedBy ? fix.reviewedBy.name : 'a deleted user' }}. Applied to a fresh copy of the buggy build only.</span>
+                    </form>
+                {% endif %}
+                <div class="mt-3 flex flex-wrap gap-3">
+                    <a href="{{ path('app_fix_download', {id: fix.id}) }}" class="btn btn-ghost btn-sm">{{ ux_icon('lucide:download') }}Download .patch</a>
+                    {% if not fix_blocked %}
+                        <form method="post" action="{{ path('app_fix_propose', {id: test.id}) }}" data-controller="busy" data-action="submit->busy#start">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <button class="btn btn-ghost btn-sm" data-busy-target="button">{{ ux_icon('lucide:sparkles') }}Propose another fix</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>

@@ -27,7 +27,7 @@ class TestExecution
     #[ORM\JoinColumn(name: 'test_id', nullable: false, onDelete: 'CASCADE')]
     private RegressionTest $test;
 
-    /** buggy | fixed */
+    /** buggy | fixed | proposed (an AI fix applied to the buggy build) */
     #[ORM\Column(length: 8)]
     private string $variant;
 
@@ -71,7 +71,7 @@ class TestExecution
     {
         $this->id = Uuid::v7();
         $this->test = $test;
-        $this->variant = 'fixed' === $variant ? 'fixed' : 'buggy';
+        $this->variant = \in_array($variant, ['fixed', 'proposed'], true) ? $variant : 'buggy';
         $this->batchId = $batchId;
         $this->startedBy = $startedBy;
         $this->createdAt = new \DateTimeImmutable();

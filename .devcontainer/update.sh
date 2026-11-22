@@ -11,5 +11,5 @@ C="docker compose exec -T app"
 $C composer install --no-interaction --no-progress
 $C php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 bash .devcontainer/assets.sh
-docker compose restart app worker
+docker compose restart app worker runner
 echo "Updated to $(git log --oneline -1)"

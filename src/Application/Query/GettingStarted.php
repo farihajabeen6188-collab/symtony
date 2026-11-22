@@ -88,7 +88,7 @@ final class GettingStarted
             [
                 'key' => 'prove',
                 'title' => 'Prove it with a regression test',
-                'text' => 'From the investigation, generate a PHPUnit test, review it, then press Prove it. It only counts as a verified reproduction when it fails on the buggy build and passes with the fix.',
+                'text' => 'From the investigation, generate a PHPUnit test, review it, then press Prove it. It only counts as a verified reproduction when it fails on the buggy build and passes with the fix. With a model connected, the AI can then propose a fix that is proven the same way.',
                 'done' => null !== $verifiedTest,
                 'optional' => false,
                 'action' => null !== ($verifiedTest ?? $anyTest)

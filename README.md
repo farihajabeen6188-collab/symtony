@@ -2,7 +2,11 @@
 
 SYMTONY is application forensics for Symfony. It ingests what your app does, groups failures into
 incidents, reconstructs what happened as a timeline, investigates with evidence-cited AI, and proves
-that a regression test reproduces the bug (red on the buggy build, green with the fix).
+that a regression test reproduces the bug (red on the buggy build, green with the fix). With a model
+connected, the AI then proposes a code fix, and the same isolated runner proves it: the fix only counts
+when that test turns green with it applied.
+
+**Live demo, no sign-up:** https://symtony-live-4j4jpp6j9r7q257jx-8080.app.github.dev (follow *Start here* on the Overview).
 
 It ships with a small demo shop that has a real bug, so the whole story runs on your machine in minutes.
 
@@ -44,7 +48,11 @@ Codespace) visitors skip the sign-in page entirely; signing out shows the normal
    grounding validator verified.
 4. **Generate regression test → review → Prove it.** The test runs in an isolated container: red on the
    buggy build, green with the reference fix. Only then is it a *verified reproduction*.
-5. **MCP Integrations.** Create a token and ask Claude Code why checkout failed.
+5. **AI fix (needs a model).** On the verified test, press **Propose a fix with AI**. The model writes a
+   minimal diff (application files only, never tests); static checks and your review gate it; **Prove the
+   fix** applies it to a fresh copy of the buggy build in the isolated runner. It is an *AI fix verified*
+   only if the test passes; otherwise it is shown as rejected or as not applying.
+6. **MCP Integrations.** Create a token and ask Claude Code why checkout failed.
 
 ## AI provider (optional)
 
