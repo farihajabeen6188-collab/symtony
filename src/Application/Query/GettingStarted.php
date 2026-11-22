@@ -34,9 +34,10 @@ final class GettingStarted
         $conn = $this->em->getConnection();
         $wsId = $workspace->getId()->toRfc4122();
 
-        $demoApp = $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace, 'slug' => DemoInstaller::APP_SLUG])
-            ?? $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace], ['createdAt' => 'ASC']);
-        $incident = $this->storyIncident($workspace);
+        $shop = $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace, 'slug' => DemoInstaller::APP_SLUG]);
+        $demoApp = $shop ?? $this->em->getRepository(Application::class)->findOneBy(['workspace' => $workspace], ['createdAt' => 'ASC']);
+        // With the demo shop, the tour is about its checkout failure only: seeded history does not count as step 1.
+        $incident = $this->storyIncident($workspace, null !== $shop);
         $investigation = $conn->fetchAssociative(
             "SELECT id, status FROM investigation WHERE workspace_id = :ws ORDER BY (status = 'completed') DESC, created_at DESC LIMIT 1",
             ['ws' => $wsId],
@@ -128,17 +129,22 @@ final class GettingStarted
     }
 
     /**
-     * The incident the tour is about: the demo checkout failure (a stock constraint violation) when it
-     * exists, otherwise the most recently seen open incident, otherwise the most recent one.
+     * The incident the tour is about. With the demo shop: its checkout failure (a stock constraint
+     * violation), or none until the scenario has run. Otherwise: the most recently seen open incident,
+     * then the most recent one.
      */
-    private function storyIncident(Workspace $workspace): ?Incident
+    private function storyIncident(Workspace $workspace, bool $demoShop): ?Incident
     {
         $byRecent = fn (string $where): ?Incident => $this->em->createQuery(
             'SELECT i FROM '.Incident::class.' i WHERE i.workspace = :ws'.$where.' ORDER BY i.lastSeenAt DESC'
         )->setParameter('ws', $workspace)->setMaxResults(1)->getOneOrNullResult();
 
-        return $byRecent(" AND i.title LIKE '%stock_non_negative%'")
-            ?? $byRecent(" AND i.status <> 'resolved'")
+        $checkout = $byRecent(" AND i.title LIKE '%stock_non_negative%'");
+        if (null !== $checkout || $demoShop) {
+            return $checkout;
+        }
+
+        return $byRecent(" AND i.status <> 'resolved'")
             ?? $byRecent('');
     }
 }
